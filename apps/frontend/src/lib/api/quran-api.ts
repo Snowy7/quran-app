@@ -225,20 +225,60 @@ function getGlobalAyahNumber(surahId: number, ayahNumber: number): number {
   return globalNumber + ayahNumber;
 }
 
-// Reciter mapping to Islamic Network CDN identifiers
-const RECITER_IDENTIFIERS: Record<string, string> = {
-  'Alafasy_128kbps': 'ar.alafasy',
-  'Abdul_Basit_Murattal_192kbps': 'ar.abdulbasitmurattal',
-  'Husary_128kbps': 'ar.husary',
-  'Minshawy_Murattal_128kbps': 'ar.minshawi',
-  'Saood_ash-Shuraym_128kbps': 'ar.shatri', // Using similar reciter
-};
+// Reciter mapping for different CDNs
+const RECITERS = {
+  'Alafasy_128kbps': {
+    everyayah: 'Alafasy_128kbps',
+    qurancdn: 7, // Mishari Rashid al-`Afasy
+  },
+  'Abdul_Basit_Murattal_192kbps': {
+    everyayah: 'Abdul_Basit_Murattal_192kbps',
+    qurancdn: 1, // Abdul Basit (Murattal)
+  },
+  'Husary_128kbps': {
+    everyayah: 'Husary_128kbps',
+    qurancdn: 6, // Mahmoud Khalil Al-Husary
+  },
+  'Minshawy_Murattal_128kbps': {
+    everyayah: 'Minshawy_Murattal_128kbps',
+    qurancdn: 9, // Mohamed Siddiq al-Minshawi
+  },
+  'Saood_ash-Shuraym_128kbps': {
+    everyayah: 'Saood_ash-Shuraym_128kbps',
+    qurancdn: 11, // Saud Al-Shuraim
+  },
+} as const;
 
+type ReciterId = keyof typeof RECITERS;
+
+// Get audio URL from primary CDN (EveryAyah - good CORS support)
 export function getAyahAudioUrl(reciterId: string, surahId: number, ayahNumber: number): string {
-  // Use Islamic Network CDN which has proper CORS headers
-  const reciterIdentifier = RECITER_IDENTIFIERS[reciterId] || 'ar.alafasy';
-  const globalAyah = getGlobalAyahNumber(surahId, ayahNumber);
-  return `https://cdn.islamic.network/quran/audio/128/${reciterIdentifier}/${globalAyah}.mp3`;
+  const reciterKey = (reciterId in RECITERS ? reciterId : 'Alafasy_128kbps') as ReciterId;
+  const everyayahReciter = RECITERS[reciterKey].everyayah;
+
+  // Format: 001001.mp3 for surah 1, ayah 1
+  const paddedSurah = surahId.toString().padStart(3, '0');
+  const paddedAyah = ayahNumber.toString().padStart(3, '0');
+
+  // EveryAyah CDN - has good CORS headers
+  return `https://everyayah.com/data/${everyayahReciter}/${paddedSurah}${paddedAyah}.mp3`;
+}
+
+// Get fallback audio URL from Quran.com CDN
+export function getAyahAudioUrlFallback(reciterId: string, surahId: number, ayahNumber: number): string {
+  const reciterKey = (reciterId in RECITERS ? reciterId : 'Alafasy_128kbps') as ReciterId;
+  const qurancdnReciter = RECITERS[reciterKey].qurancdn;
+
+  // Quran.com audio CDN format
+  return `https://audio.qurancdn.com/${qurancdnReciter}/${surahId}/${ayahNumber}.mp3`;
+}
+
+// Get all possible audio URLs for an ayah (for fallback chain)
+export function getAyahAudioUrls(reciterId: string, surahId: number, ayahNumber: number): string[] {
+  return [
+    getAyahAudioUrl(reciterId, surahId, ayahNumber),
+    getAyahAudioUrlFallback(reciterId, surahId, ayahNumber),
+  ];
 }
 
 // Alternative: Get full surah audio URL from QuranicAudio
