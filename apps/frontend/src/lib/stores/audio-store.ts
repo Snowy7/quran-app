@@ -33,30 +33,37 @@ function getDeviceInfo() {
 
 // Track audio events with PostHog
 function trackAudioEvent(event: string, properties: Record<string, unknown> = {}) {
-  posthog.capture(event, {
-    ...properties,
-    ...getDeviceInfo(),
-    timestamp: new Date().toISOString(),
-  });
+  try {
+    if (posthog.__loaded) {
+      posthog.capture(event, {
+        ...properties,
+        ...getDeviceInfo(),
+        timestamp: new Date().toISOString(),
+      });
+    }
+  } catch (e) {
+    console.warn('PostHog tracking failed:', e);
+  }
 }
 
 // Track audio errors with full context
 function trackAudioError(errorType: string, error: unknown, context: Record<string, unknown> = {}) {
   const errorMsg = formatError(error);
 
-  posthog.capture('audio_error', {
-    error_type: errorType,
-    error_message: errorMsg,
-    error_raw: String(error),
-    ...context,
-    ...getDeviceInfo(),
-    timestamp: new Date().toISOString(),
-  });
-
-  // Also capture as exception for PostHog error tracking
-  posthog.captureException(new Error(`[Audio ${errorType}] ${errorMsg}`), {
-    extra: { ...context, ...getDeviceInfo() },
-  });
+  try {
+    if (posthog.__loaded) {
+      posthog.capture('audio_error', {
+        error_type: errorType,
+        error_message: errorMsg,
+        error_raw: String(error),
+        ...context,
+        ...getDeviceInfo(),
+        timestamp: new Date().toISOString(),
+      });
+    }
+  } catch (e) {
+    console.warn('PostHog error tracking failed:', e);
+  }
 }
 
 interface AudioState {
