@@ -1,0 +1,19 @@
+# Monorepo Template Docker Compose
+# For local development: docker-compose up -d
+
+services:
+  # Frontend - Vite + React SPA
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        - VITE_CONVEX_URL=${VITE_CONVEX_URL}
+        - VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+# Example .env file:
+# VITE_CONVEX_URL=https://your-deployment.convex.cloud
+# VITE_CLERK_PUBLISHABLE_KEY=pk_test_xxx
