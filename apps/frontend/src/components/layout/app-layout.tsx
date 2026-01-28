@@ -1,5 +1,6 @@
 import { useEffect, createContext, useContext } from 'react';
 import { Outlet } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { BottomNav } from './bottom-nav';
 import { Sidebar, useSidebar } from './sidebar';
 import { GlobalAudioPlayer } from '@/components/audio';
@@ -53,6 +54,17 @@ export function AppLayout() {
         <Outlet />
         <GlobalAudioPlayer />
         <BottomNav />
+        <Toaster
+          position="bottom-center"
+          toastOptions={{
+            className: 'mb-20',
+            style: {
+              background: 'hsl(var(--card))',
+              color: 'hsl(var(--card-foreground))',
+              border: '1px solid hsl(var(--border))',
+            },
+          }}
+        />
       </div>
     </SidebarContext.Provider>
   );

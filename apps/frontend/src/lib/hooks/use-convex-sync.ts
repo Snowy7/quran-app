@@ -253,7 +253,7 @@ export function useConvexSync() {
       if (!localSettings || cloudData.settings.updatedAt > (localSettings.lastSyncedAt || 0)) {
         const newSettings: UserSettings = {
           id: 'current',
-          theme: cloudData.settings.theme as 'light' | 'dark' | 'sepia' | 'system',
+          theme: cloudData.settings.theme as 'light' | 'dark' | 'system',
           arabicFontSize: cloudData.settings.arabicFontSize,
           arabicFontFamily: localSettings?.arabicFontFamily || 'amiri',
           translationFontSize: cloudData.settings.translationFontSize,

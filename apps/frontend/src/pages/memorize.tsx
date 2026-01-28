@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle, BookOpen, AlertCircle, ChevronRight, ArrowLeft, Check, MoreVertical } from 'lucide-react';
 import { Button, Progress, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@template/ui';
+import { toast } from 'sonner';
 import { useOfflineMemorization } from '@/lib/hooks';
 import { SURAHS } from '@/data/surahs';
 import type { MemorizationStatus } from '@/types/quran';
@@ -30,16 +31,26 @@ export default function MemorizePage() {
 
   // Mark entire surah as memorized (for importing existing progress)
   const markSurahAsMemorized = useCallback(async (surah: typeof SURAHS[0]) => {
-    // Mark all ayahs as memorized
-    for (let i = 1; i <= surah.numberOfAyahs; i++) {
-      await markAyahMemorized(surah.id, i);
+    try {
+      // Mark all ayahs as memorized
+      for (let i = 1; i <= surah.numberOfAyahs; i++) {
+        await markAyahMemorized(surah.id, i);
+      }
+      setBulkMarkDialog({ isOpen: false, surah: null });
+      toast.success(`${surah.englishName} marked as memorized`);
+    } catch (error) {
+      toast.error('Failed to mark surah as memorized');
     }
-    setBulkMarkDialog({ isOpen: false, surah: null });
   }, [markAyahMemorized]);
 
   // Reset surah memorization
   const resetSurahMemorization = useCallback(async (surahId: number) => {
-    await updateMemorizationStatus(surahId, 'not_started');
+    try {
+      await updateMemorizationStatus(surahId, 'not_started');
+      toast.success('Progress reset');
+    } catch (error) {
+      toast.error('Failed to reset progress');
+    }
   }, [updateMemorizationStatus]);
 
   const filteredSurahs = SURAHS.filter((surah) => {

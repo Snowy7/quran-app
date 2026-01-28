@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, BookMarked, Play, Pause, ChevronLeft, ChevronRight, Settings2, BookOpen, Layers, CheckCircle2 } from 'lucide-react';
 import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@template/ui';
+import { toast } from 'sonner';
 import { useOfflineSettings, useOfflineReadingProgress, useIsBookmarked, useOfflineBookmarks, useOfflineMemorization, useSurahMemorization } from '@/lib/hooks';
 import { useAudioStore } from '@/lib/stores/audio-store';
 import { getSurahById, SURAHS, BISMILLAH, SURAH_WITHOUT_BISMILLAH } from '@/data/surahs';
@@ -375,13 +376,8 @@ function AyahCard({
     }
   }, [isCurrentAyah]);
 
-  // Handle bookmark toggle - use void to prevent async issues on mobile
-  const handleBookmarkClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    console.log('[Reader] Bookmark clicked:', { surahId, ayahNumber: ayah.numberInSurah, isBookmarked });
-
+  // Handle bookmark toggle
+  const handleBookmarkClick = useCallback(() => {
     if (isBookmarked) {
       getBookmark(surahId, ayah.numberInSurah)
         .then((bookmark) => {
@@ -389,20 +385,34 @@ function AyahCard({
             return removeBookmark(bookmark.clientId);
           }
         })
-        .catch((err) => console.error('[Reader] Failed to remove bookmark:', err));
+        .then(() => {
+          toast.success('Bookmark removed');
+        })
+        .catch((err) => {
+          console.error('[Reader] Failed to remove bookmark:', err);
+          toast.error('Failed to remove bookmark');
+        });
     } else {
       addBookmark(surahId, ayah.numberInSurah)
-        .then(() => console.log('[Reader] Bookmark added successfully'))
-        .catch((err) => console.error('[Reader] Failed to add bookmark:', err));
+        .then(() => {
+          toast.success('Bookmark added');
+        })
+        .catch((err) => {
+          console.error('[Reader] Failed to add bookmark:', err);
+          toast.error('Failed to add bookmark');
+        });
     }
   }, [isBookmarked, surahId, ayah.numberInSurah, getBookmark, removeBookmark, addBookmark]);
 
   // Handle memorization toggle
-  const handleMemorizedClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleMemorizedClick = useCallback(() => {
     onToggleMemorized();
-  }, [onToggleMemorized]);
+    if (isMemorized) {
+      toast.success('Unmarked as memorized');
+    } else {
+      toast.success('Marked as memorized');
+    }
+  }, [onToggleMemorized, isMemorized]);
 
   const fontSize = settings.arabicFontSize || 28;
 
@@ -422,56 +432,60 @@ function AyahCard({
         )}>
           {ayah.numberInSurah}
         </span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {/* Memorization toggle */}
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
+            className={cn(
+              'h-9 w-9 rounded-lg flex items-center justify-center transition-colors',
+              'hover:bg-secondary active:bg-secondary/80 touch-manipulation',
+              isMemorized && 'bg-emerald-500/10'
+            )}
             onClick={handleMemorizedClick}
-            title={isMemorized ? "Mark as not memorized" : "Mark as memorized"}
+            aria-label={isMemorized ? "Mark as not memorized" : "Mark as memorized"}
           >
             <CheckCircle2
               className={cn(
-                'h-4 w-4',
-                isMemorized && 'fill-emerald-500 text-emerald-500'
+                'h-5 w-5',
+                isMemorized ? 'fill-emerald-500 text-emerald-500' : 'text-muted-foreground'
               )}
             />
-          </Button>
+          </button>
           {/* Bookmark toggle */}
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
+            className={cn(
+              'h-9 w-9 rounded-lg flex items-center justify-center transition-colors',
+              'hover:bg-secondary active:bg-secondary/80 touch-manipulation',
+              isBookmarked && 'bg-primary/10'
+            )}
             onClick={handleBookmarkClick}
-            title={isBookmarked ? "Remove bookmark" : "Add bookmark"}
+            aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
           >
             <BookMarked
               className={cn(
-                'h-4 w-4',
-                isBookmarked && 'fill-primary text-primary'
+                'h-5 w-5',
+                isBookmarked ? 'fill-primary text-primary' : 'text-muted-foreground'
               )}
             />
-          </Button>
+          </button>
           {/* Play/Pause */}
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="icon"
             className={cn(
-              'h-8 w-8 transition-colors',
+              'h-9 w-9 rounded-lg flex items-center justify-center transition-colors',
+              'hover:bg-secondary active:bg-secondary/80 touch-manipulation',
               isCurrentAyah && 'text-primary bg-primary/10'
             )}
             onClick={onPlay}
+            aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
-              <Pause className="h-4 w-4" />
+              <Pause className="h-5 w-5" />
             ) : (
-              <Play className="h-4 w-4" />
+              <Play className="h-5 w-5" />
             )}
-          </Button>
+          </button>
         </div>
       </div>
 
