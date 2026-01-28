@@ -7,15 +7,19 @@ const KAABA_LNG = 39.8262;
 // Timeout for compass detection (ms)
 const COMPASS_TIMEOUT = 3000;
 
+// Smoothing factor for compass (0-1, higher = smoother but slower)
+const SMOOTHING_FACTOR = 0.3;
+
 interface QiblaState {
-  qiblaDirection: number | null; // Degrees from North
-  compassHeading: number | null; // Current compass heading
+  qiblaDirection: number | null; // Degrees from North to Qibla
+  compassHeading: number | null; // Current device heading (degrees from North)
+  smoothedHeading: number | null; // Smoothed compass heading
   needsCalibration: boolean;
   loading: boolean;
   error: string | null;
   permissionStatus: 'granted' | 'denied' | 'prompt' | 'unsupported' | 'unavailable';
   userLocation: { lat: number; lng: number } | null;
-  compassChecked: boolean; // Whether we've finished checking for compass
+  compassChecked: boolean;
 }
 
 function toRadians(degrees: number): number {
@@ -26,13 +30,11 @@ function toDegrees(radians: number): number {
   return radians * (180 / Math.PI);
 }
 
+// Calculate bearing from user location to Kaaba
 function calculateQiblaDirection(userLat: number, userLng: number): number {
   const lat1 = toRadians(userLat);
   const lat2 = toRadians(KAABA_LAT);
-  const lng1 = toRadians(userLng);
-  const lng2 = toRadians(KAABA_LNG);
-
-  const dLng = lng2 - lng1;
+  const dLng = toRadians(KAABA_LNG - userLng);
 
   const x = Math.sin(dLng) * Math.cos(lat2);
   const y = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
@@ -40,15 +42,33 @@ function calculateQiblaDirection(userLat: number, userLng: number): number {
   let bearing = toDegrees(Math.atan2(x, y));
 
   // Normalize to 0-360
-  bearing = (bearing + 360) % 360;
+  return (bearing + 360) % 360;
+}
 
-  return bearing;
+// Normalize angle to 0-360
+function normalizeAngle(angle: number): number {
+  return ((angle % 360) + 360) % 360;
+}
+
+// Calculate the shortest angular distance for smoothing
+function angleDifference(a: number, b: number): number {
+  const diff = normalizeAngle(b - a);
+  return diff > 180 ? diff - 360 : diff;
+}
+
+// Smooth angle transitions (handles wrap-around at 0/360)
+function smoothAngle(current: number | null, target: number, factor: number): number {
+  if (current === null) return target;
+
+  const diff = angleDifference(current, target);
+  return normalizeAngle(current + diff * factor);
 }
 
 export function useQibla() {
   const [state, setState] = useState<QiblaState>({
     qiblaDirection: null,
     compassHeading: null,
+    smoothedHeading: null,
     needsCalibration: false,
     loading: true,
     error: null,
@@ -57,45 +77,51 @@ export function useQibla() {
     compassChecked: false,
   });
 
-  const watchIdRef = useRef<number | null>(null);
   const isUnmountedRef = useRef(false);
   const compassTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const compassReceivedRef = useRef(false);
+  const lastHeadingRef = useRef<number | null>(null);
+  const orientationListenerRef = useRef<((event: DeviceOrientationEvent) => void) | null>(null);
 
-  // Handle device orientation
+  // Handle device orientation event
   const handleOrientation = useCallback((event: DeviceOrientationEvent) => {
     if (isUnmountedRef.current) return;
 
-    // Get compass heading
-    // webkitCompassHeading is available on iOS
-    // alpha with absolute:true works on Android
     let heading: number | null = null;
 
+    // iOS: webkitCompassHeading gives true north heading directly
     if ('webkitCompassHeading' in event && typeof (event as any).webkitCompassHeading === 'number') {
       heading = (event as any).webkitCompassHeading;
-    } else if (event.alpha !== null) {
-      // For Android, alpha is the compass heading when absolute is true
-      // But it's relative to the device's initial position otherwise
-      // We need to compensate based on device orientation
-      heading = event.absolute ? (360 - event.alpha) : null;
-
-      // On some devices, even without absolute, we can use alpha as a rough compass
-      if (heading === null && event.alpha !== null) {
-        heading = (360 - event.alpha) % 360;
-      }
+    }
+    // Android/Other: Use alpha value
+    // When absolute is true, alpha is relative to true north
+    // When absolute is false, alpha is relative to device's initial position
+    else if (event.alpha !== null) {
+      // alpha: 0-360, represents rotation around z-axis
+      // On most devices, we need to convert alpha to compass heading
+      // Compass heading = (360 - alpha) when device is flat
+      heading = normalizeAngle(360 - event.alpha);
     }
 
-    if (heading !== null) {
+    if (heading !== null && !isNaN(heading)) {
       compassReceivedRef.current = true;
+
       // Clear timeout since we got compass data
       if (compassTimeoutRef.current) {
         clearTimeout(compassTimeoutRef.current);
         compassTimeoutRef.current = null;
       }
+
+      // Apply smoothing to reduce jitter
+      const smoothed = smoothAngle(lastHeadingRef.current, heading, SMOOTHING_FACTOR);
+      lastHeadingRef.current = smoothed;
+
       setState(prev => ({
         ...prev,
         compassHeading: heading,
+        smoothedHeading: smoothed,
         compassChecked: true,
+        permissionStatus: 'granted',
         needsCalibration: (event as any).webkitCompassAccuracy !== undefined
           ? (event as any).webkitCompassAccuracy < 0 || (event as any).webkitCompassAccuracy > 50
           : false,
@@ -105,18 +131,56 @@ export function useQibla() {
 
   // Request device orientation permission (required for iOS 13+)
   const requestCompassPermission = useCallback(async () => {
+    // Try to use the absolute orientation event first (more reliable on Android)
+    if ('ondeviceorientationabsolute' in window) {
+      const handler = (event: DeviceOrientationEvent) => {
+        handleOrientation(event);
+      };
+      orientationListenerRef.current = handler;
+      window.addEventListener('deviceorientationabsolute' as any, handler, true);
+      setState(prev => ({ ...prev, permissionStatus: 'granted' }));
+
+      // Set timeout for compass detection
+      compassTimeoutRef.current = setTimeout(() => {
+        if (!compassReceivedRef.current && !isUnmountedRef.current) {
+          setState(prev => ({
+            ...prev,
+            compassChecked: true,
+            permissionStatus: 'unavailable',
+          }));
+        }
+      }, COMPASS_TIMEOUT);
+
+      return true;
+    }
+
+    // iOS 13+ requires permission
     if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
       try {
         const permission = await (DeviceOrientationEvent as any).requestPermission();
         if (permission === 'granted') {
-          window.addEventListener('deviceorientation', handleOrientation, true);
+          const handler = handleOrientation;
+          orientationListenerRef.current = handler;
+          window.addEventListener('deviceorientation', handler, true);
           setState(prev => ({ ...prev, permissionStatus: 'granted' }));
+
+          // Set timeout for compass detection
+          compassTimeoutRef.current = setTimeout(() => {
+            if (!compassReceivedRef.current && !isUnmountedRef.current) {
+              setState(prev => ({
+                ...prev,
+                compassChecked: true,
+                permissionStatus: 'unavailable',
+              }));
+            }
+          }, COMPASS_TIMEOUT);
+
           return true;
         } else {
           setState(prev => ({
             ...prev,
             permissionStatus: 'denied',
-            error: 'Compass permission denied',
+            compassChecked: true,
           }));
           return false;
         }
@@ -124,14 +188,35 @@ export function useQibla() {
         setState(prev => ({
           ...prev,
           permissionStatus: 'denied',
-          error: 'Failed to request compass permission',
+          compassChecked: true,
         }));
         return false;
       }
     } else {
       // No permission needed, just add listener
-      window.addEventListener('deviceorientation', handleOrientation, true);
+      const handler = handleOrientation;
+      orientationListenerRef.current = handler;
+
+      // Try absolute first, fall back to regular
+      if ('ondeviceorientationabsolute' in window) {
+        window.addEventListener('deviceorientationabsolute' as any, handler, true);
+      } else {
+        window.addEventListener('deviceorientation', handler, true);
+      }
+
       setState(prev => ({ ...prev, permissionStatus: 'granted' }));
+
+      // Set timeout for compass detection
+      compassTimeoutRef.current = setTimeout(() => {
+        if (!compassReceivedRef.current && !isUnmountedRef.current) {
+          setState(prev => ({
+            ...prev,
+            compassChecked: true,
+            permissionStatus: 'unavailable',
+          }));
+        }
+      }, COMPASS_TIMEOUT);
+
       return true;
     }
   }, [handleOrientation]);
@@ -140,7 +225,18 @@ export function useQibla() {
   const initializeQibla = useCallback(async () => {
     if (isUnmountedRef.current) return;
 
-    setState(prev => ({ ...prev, loading: true, error: null }));
+    // Reset state
+    compassReceivedRef.current = false;
+    lastHeadingRef.current = null;
+
+    setState(prev => ({
+      ...prev,
+      loading: true,
+      error: null,
+      compassHeading: null,
+      smoothedHeading: null,
+      compassChecked: false,
+    }));
 
     // Check if geolocation is supported
     if (!('geolocation' in navigator)) {
@@ -148,6 +244,7 @@ export function useQibla() {
         ...prev,
         loading: false,
         error: 'Geolocation not supported',
+        compassChecked: true,
       }));
       return;
     }
@@ -174,27 +271,15 @@ export function useQibla() {
         loading: false,
       }));
 
-      // Check if device orientation is supported
+      // Check if device orientation is supported and request permission
       if ('DeviceOrientationEvent' in window) {
         // Check if permission is needed (iOS 13+)
         if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-          setState(prev => ({ ...prev, permissionStatus: 'prompt' }));
+          // Will need user interaction to request permission
+          setState(prev => ({ ...prev, permissionStatus: 'prompt', compassChecked: true }));
         } else {
-          // No permission needed, start listening
-          window.addEventListener('deviceorientation', handleOrientation, true);
-          setState(prev => ({ ...prev, permissionStatus: 'granted' }));
-
-          // Set a timeout to check if compass data arrives
-          compassTimeoutRef.current = setTimeout(() => {
-            if (!compassReceivedRef.current && !isUnmountedRef.current) {
-              // No compass data received, mark as unavailable
-              setState(prev => ({
-                ...prev,
-                compassChecked: true,
-                permissionStatus: 'unavailable',
-              }));
-            }
-          }, COMPASS_TIMEOUT);
+          // No permission needed, start listening immediately
+          await requestCompassPermission();
         }
       } else {
         setState(prev => ({
@@ -210,20 +295,21 @@ export function useQibla() {
       let errorMessage = 'Could not get location';
 
       if (geoError.code === 1) {
-        errorMessage = 'Location permission denied';
+        errorMessage = 'Location permission denied. Please enable location access.';
       } else if (geoError.code === 2) {
-        errorMessage = 'Location unavailable';
+        errorMessage = 'Location unavailable. Please check your GPS.';
       } else if (geoError.code === 3) {
-        errorMessage = 'Location request timed out';
+        errorMessage = 'Location request timed out. Please try again.';
       }
 
       setState(prev => ({
         ...prev,
         loading: false,
         error: errorMessage,
+        compassChecked: true,
       }));
     }
-  }, [handleOrientation]);
+  }, [requestCompassPermission]);
 
   // Cleanup
   useEffect(() => {
@@ -232,37 +318,54 @@ export function useQibla() {
 
     return () => {
       isUnmountedRef.current = true;
-      window.removeEventListener('deviceorientation', handleOrientation, true);
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
+
+      // Remove orientation listeners
+      if (orientationListenerRef.current) {
+        window.removeEventListener('deviceorientation', orientationListenerRef.current, true);
+        window.removeEventListener('deviceorientationabsolute' as any, orientationListenerRef.current, true);
       }
+
       if (compassTimeoutRef.current !== null) {
         clearTimeout(compassTimeoutRef.current);
       }
     };
-  }, [handleOrientation]);
+  }, []);
 
   // Initialize on mount
   useEffect(() => {
     initializeQibla();
   }, [initializeQibla]);
 
-  // Get the angle to rotate the compass needle
+  // Calculate the rotation for the compass needle
+  // This is the angle to rotate the needle so it points to Qibla
   const getCompassRotation = useCallback(() => {
     if (state.qiblaDirection === null) return 0;
-    if (state.compassHeading === null) {
-      // No compass, just show the qibla direction from north
-      return state.qiblaDirection;
+
+    // If we have compass data, rotate based on device heading
+    if (state.smoothedHeading !== null) {
+      // The needle should point to Qibla
+      // qiblaDirection is the bearing from North to Qibla
+      // smoothedHeading is the current device heading (which way the device is pointing)
+      // We need to rotate the needle by (qiblaDirection - heading) to point to Qibla
+      return normalizeAngle(state.qiblaDirection - state.smoothedHeading);
     }
-    // Rotate based on compass heading to point toward Qibla
-    return state.qiblaDirection - state.compassHeading;
-  }, [state.qiblaDirection, state.compassHeading]);
+
+    // No compass, just show the static qibla direction from north
+    return state.qiblaDirection;
+  }, [state.qiblaDirection, state.smoothedHeading]);
 
   return {
-    ...state,
+    qiblaDirection: state.qiblaDirection,
+    compassHeading: state.smoothedHeading, // Return smoothed heading
+    rawCompassHeading: state.compassHeading, // Raw heading for debugging
+    needsCalibration: state.needsCalibration,
+    loading: state.loading,
+    error: state.error,
+    permissionStatus: state.permissionStatus,
+    userLocation: state.userLocation,
     requestCompassPermission,
     refresh: initializeQibla,
     compassRotation: getCompassRotation(),
-    hasCompass: state.permissionStatus === 'granted' && state.compassHeading !== null,
+    hasCompass: state.permissionStatus === 'granted' && state.smoothedHeading !== null,
   };
 }
