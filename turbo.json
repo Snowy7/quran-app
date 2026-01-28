@@ -4,7 +4,9 @@
     "CONVEX_DEPLOYMENT",
     "VITE_CONVEX_URL",
     "VITE_CLERK_PUBLISHABLE_KEY",
-    "CLERK_SECRET_KEY"
+    "CLERK_SECRET_KEY",
+    "VITE_PUBLIC_POSTHOG_KEY",
+    "VITE_PUBLIC_POSTHOG_HOST"
   ],
   "tasks": {
     "build": {

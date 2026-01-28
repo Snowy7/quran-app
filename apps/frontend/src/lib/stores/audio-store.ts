@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Howl, Howler } from 'howler';
 import { toast } from 'sonner';
+import posthog from 'posthog-js';
 import { getAyahAudioUrl } from '@/lib/api/quran-api';
 import { getOfflineSurahWithTranslation } from '@/data/quran-data';
 
@@ -11,6 +12,51 @@ function formatError(err: unknown): string {
     return String((err as { message: unknown }).message);
   }
   return 'Unknown error';
+}
+
+// Get device info for debugging
+function getDeviceInfo() {
+  return {
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    vendor: navigator.vendor,
+    language: navigator.language,
+    online: navigator.onLine,
+    cookieEnabled: navigator.cookieEnabled,
+    screenWidth: window.screen.width,
+    screenHeight: window.screen.height,
+    devicePixelRatio: window.devicePixelRatio,
+    isMobile: isMobile(),
+    audioContextState: Howler.ctx?.state || 'unknown',
+  };
+}
+
+// Track audio events with PostHog
+function trackAudioEvent(event: string, properties: Record<string, unknown> = {}) {
+  posthog.capture(event, {
+    ...properties,
+    ...getDeviceInfo(),
+    timestamp: new Date().toISOString(),
+  });
+}
+
+// Track audio errors with full context
+function trackAudioError(errorType: string, error: unknown, context: Record<string, unknown> = {}) {
+  const errorMsg = formatError(error);
+
+  posthog.capture('audio_error', {
+    error_type: errorType,
+    error_message: errorMsg,
+    error_raw: String(error),
+    ...context,
+    ...getDeviceInfo(),
+    timestamp: new Date().toISOString(),
+  });
+
+  // Also capture as exception for PostHog error tracking
+  posthog.captureException(new Error(`[Audio ${errorType}] ${errorMsg}`), {
+    extra: { ...context, ...getDeviceInfo() },
+  });
 }
 
 interface AudioState {
@@ -355,11 +401,23 @@ function playAyahInternal(
     },
     onplay: () => {
       useAudioStore.setState({ isPlaying: true, isLoading: false });
+      // Track successful play
+      trackAudioEvent('audio_play_started', {
+        surah_id: surahId,
+        ayah_index: ayahIndex,
+        reciter_id: reciterId,
+        audio_url: audioUrl,
+        html5_mode: !useMobile,
+      });
     },
     onpause: () => {
       useAudioStore.setState({ isPlaying: false });
     },
     onend: () => {
+      trackAudioEvent('audio_play_completed', {
+        surah_id: surahId,
+        ayah_index: ayahIndex,
+      });
       if (autoPlayNext && ayahIndex < currentAyahs.length - 1) {
         // Auto-play next ayah
         const nextIndex = ayahIndex + 1;
@@ -373,6 +431,18 @@ function playAyahInternal(
       const errorMsg = `Audio load error: ${formatError(err)}`;
       console.error(errorMsg, err);
       toast.error(errorMsg, { duration: 5000 });
+
+      // Track error with full context
+      trackAudioError('load_error', err, {
+        surah_id: surahId,
+        ayah_index: ayahIndex,
+        ayah_number: ayah.numberInSurah,
+        reciter_id: reciterId,
+        audio_url: audioUrl,
+        html5_mode: !useMobile,
+        howl_state: howlInstance?.state(),
+      });
+
       useAudioStore.setState({
         isPlaying: false,
         isLoading: false,
@@ -382,8 +452,10 @@ function playAyahInternal(
       // Try with different format on error
       if (!howlInstance?.state() || howlInstance.state() === 'unloaded') {
         toast.info('Retrying with different audio mode...');
+        trackAudioEvent('audio_retry_attempt', { audio_url: audioUrl });
         retryWithFallback(audioUrl, playbackSpeed, () => {
           toast.success('Audio loaded successfully');
+          trackAudioEvent('audio_retry_success', { audio_url: audioUrl });
           useAudioStore.setState({ isPlaying: true, isLoading: false, error: null });
           preloadNextAyah(surahId, ayahIndex, reciterId, playbackSpeed);
         }, () => {
@@ -400,6 +472,16 @@ function playAyahInternal(
     onplayerror: (_id, err) => {
       const errorMsg = `Audio play error: ${formatError(err)}`;
       console.error(errorMsg, err);
+
+      // Track play error
+      trackAudioError('play_error', err, {
+        surah_id: surahId,
+        ayah_index: ayahIndex,
+        reciter_id: reciterId,
+        audio_url: audioUrl,
+        html5_mode: !useMobile,
+        audio_context_state: Howler.ctx?.state,
+      });
 
       // Unlock audio context and retry
       const ctx = Howler.ctx;
@@ -435,9 +517,11 @@ function retryWithFallback(
     howlInstance.unload();
   }
 
+  const useHtml5 = isMobile(); // Flip the html5 setting for retry
+
   howlInstance = new Howl({
     src: [audioUrl],
-    html5: isMobile(), // Flip the html5 setting for retry
+    html5: useHtml5,
     rate: playbackSpeed,
     preload: true,
     onplay: onPlay,
@@ -446,6 +530,14 @@ function retryWithFallback(
       const errorMsg = `Audio unavailable: ${formatError(err)}`;
       console.error('Retry also failed:', errorMsg, err);
       toast.error(errorMsg, { duration: 5000 });
+
+      // Track retry failure
+      trackAudioError('retry_load_error', err, {
+        audio_url: audioUrl,
+        html5_mode: useHtml5,
+        retry_attempt: true,
+      });
+
       useAudioStore.setState({
         isPlaying: false,
         isLoading: false,
@@ -456,6 +548,14 @@ function retryWithFallback(
       const errorMsg = `Playback failed: ${formatError(err)}`;
       console.error('Retry playback error:', errorMsg, err);
       toast.error(errorMsg, { duration: 5000 });
+
+      // Track retry play failure
+      trackAudioError('retry_play_error', err, {
+        audio_url: audioUrl,
+        html5_mode: useHtml5,
+        retry_attempt: true,
+      });
+
       useAudioStore.setState({
         isPlaying: false,
         error: errorMsg,
