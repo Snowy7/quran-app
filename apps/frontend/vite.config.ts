@@ -49,6 +49,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        // Increase cache size limit to accommodate bundled Quran data (4-5MB)
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // 6MB
         runtimeCaching: [
           {
             // Cache Quran text API responses
@@ -66,13 +68,29 @@ export default defineConfig({
             },
           },
           {
-            // Cache audio files with range request support
-            urlPattern: /^https:\/\/everyayah\.com\/data\/.*/i,
+            // Cache audio files from Islamic Network CDN
+            urlPattern: /^https:\/\/cdn\.islamic\.network\/quran\/audio\/.*/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'audio-cache',
               expiration: {
-                maxEntries: 500,
+                maxEntries: 1000,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+              },
+              cacheableResponse: {
+                statuses: [0, 200, 206],
+              },
+              rangeRequests: true,
+            },
+          },
+          {
+            // Cache audio files from QuranicAudio
+            urlPattern: /^https:\/\/download\.quranicaudio\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'audio-cache-full',
+              expiration: {
+                maxEntries: 200,
                 maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
               },
               cacheableResponse: {
@@ -121,6 +139,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
+          'quran-data': ['quran-cloud'],
           'quran-core': ['dexie', 'dexie-react-hooks'],
           'audio': ['howler'],
           'animations': ['framer-motion'],
