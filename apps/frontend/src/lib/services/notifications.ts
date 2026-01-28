@@ -128,10 +128,8 @@ export function showNotification(
           icon: '/icons/icon-192x192.png',
           badge: '/icons/icon-96x96.png',
           tag: options?.tag || 'prayer-notification',
-          renotify: true,
-          vibrate: [200, 100, 200],
           ...options,
-        });
+        } as NotificationOptions);
       });
     } else {
       // Fallback to regular notification
