@@ -2,48 +2,60 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
-    <!-- Primary Meta Tags (fallbacks - overridden by react-helmet-async per page) -->
-    <title>Quota - AI Cost Tracking Proxy | Track Tokens, Control Spending</title>
-    <meta name="title" content="Quota - AI Cost Tracking Proxy | Track Tokens, Control Spending" />
-    <meta name="description" content="Track every AI token and dollar with Quota. The open-source proxy for OpenAI, Anthropic, and more. 5-minute setup, real-time analytics, per-customer billing." />
+    <!-- Primary Meta Tags -->
+    <title>Noor - Your Quran Companion | Read, Listen, Memorize</title>
+    <meta name="title" content="Noor - Your Quran Companion | Read, Listen, Memorize" />
+    <meta name="description" content="A beautiful Quran app for reading, listening, and memorizing. Features offline support, prayer times, Qibla compass, and progress tracking. Available as a PWA." />
+    <meta name="keywords" content="Quran, Islamic, Muslim, Noor, Prayer Times, Qibla, Memorization, Hifz, Arabic, Recitation, Holy Quran" />
+    <meta name="author" content="Noor" />
+    <meta name="robots" content="index, follow" />
 
     <!-- Theme Color -->
-    <meta name="theme-color" content="#050505" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#D97B2A" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Noor" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Noor" />
 
     <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
 
-    <!-- Open Graph / Facebook (fallbacks) -->
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://usequota.dev/" />
-    <meta property="og:title" content="Quota - AI Cost Tracking Proxy | Track Tokens, Control Spending" />
-    <meta property="og:description" content="Track every AI token and dollar with Quota. The open-source proxy for OpenAI, Anthropic, and more." />
-    <meta property="og:image" content="https://usequota.dev/og/og-home.png" />
+    <meta property="og:url" content="https://noorquran.app/" />
+    <meta property="og:title" content="Noor - Your Quran Companion | Read, Listen, Memorize" />
+    <meta property="og:description" content="A beautiful Quran app for reading, listening, and memorizing. Features offline support, prayer times, Qibla compass, and progress tracking." />
+    <meta property="og:image" content="https://noorquran.app/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:site_name" content="Quota" />
+    <meta property="og:image:alt" content="Noor Quran App - Read, Listen, Memorize the Holy Quran" />
+    <meta property="og:site_name" content="Noor" />
     <meta property="og:locale" content="en_US" />
 
-    <!-- Twitter (fallbacks) -->
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://usequota.dev/" />
-    <meta name="twitter:title" content="Quota - AI Cost Tracking Proxy | Track Tokens, Control Spending" />
-    <meta name="twitter:description" content="Track every AI token and dollar with Quota. The open-source proxy for OpenAI, Anthropic, and more." />
-    <meta name="twitter:image" content="https://usequota.dev/og/og-home.png" />
-    <meta name="twitter:site" content="@usequota" />
+    <meta name="twitter:url" content="https://noorquran.app/" />
+    <meta name="twitter:title" content="Noor - Your Quran Companion | Read, Listen, Memorize" />
+    <meta name="twitter:description" content="A beautiful Quran app for reading, listening, and memorizing. Features offline support, prayer times, Qibla compass, and progress tracking." />
+    <meta name="twitter:image" content="https://noorquran.app/og-image.png" />
 
     <!-- Preconnect hints -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://clerk.usequota.dev" />
+    <link rel="dns-prefetch" href="https://cdn.islamic.network" />
 
-    <!-- Fonts -->
+    <!-- Fonts - deferred loading -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body>

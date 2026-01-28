@@ -10,24 +10,18 @@ export function AuthLayout({ children }: AuthLayoutProps) {
     <div className="relative flex min-h-screen flex-col overflow-hidden">
       {/* Background effects */}
       <div className="fixed inset-0 bg-background">
-        {/* Grid pattern */}
-        <div className="absolute inset-0 grid-pattern opacity-30" />
-
-        {/* Radial gradient glow */}
-        <div className="absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2">
-          <div className="h-[600px] w-[600px] rounded-full bg-primary/5 blur-[120px]" />
-        </div>
-        <div className="absolute right-1/4 top-2/3 -translate-y-1/2">
-          <div className="h-[400px] w-[400px] rounded-full bg-violet-500/5 blur-[100px]" />
-        </div>
+        {/* Atmospheric gradient blobs */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/15 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 -left-24 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-24 right-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
       </div>
 
       {/* Header */}
       <header className="relative z-10 border-b border-border/40 bg-background/50 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center px-6">
           <Link to="/" className="flex items-center gap-2">
-            <Logo className="h-6 w-6" />
-            <span className="font-semibold">Template</span>
+            <Logo size="sm" />
+            <span className="font-semibold">Noor</span>
           </Link>
         </div>
       </header>
@@ -41,7 +35,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       <footer className="relative z-10 border-t border-border/40 bg-background/50 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-center px-6">
           <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Template. All rights reserved.
+            &copy; {new Date().getFullYear()} Noor. All rights reserved.
           </p>
         </div>
       </footer>

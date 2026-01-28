@@ -10,6 +10,9 @@ build/
 # Turborepo
 .turbo/
 
+# convex
+_generated/
+
 # Environment files
 .env
 .env.local
@@ -50,3 +53,5 @@ package-lock.json
 
 # Docker
 .docker/
+apps/frontend/dev-dist
+packages/backend/convex/_generated

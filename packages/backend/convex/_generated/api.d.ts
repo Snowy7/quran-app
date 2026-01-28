@@ -9,6 +9,7 @@
  */
 
 import type * as http from "../http.js";
+import type * as quranSync from "../quranSync.js";
 import type * as todos from "../todos.js";
 import type * as users from "../users.js";
 
@@ -20,6 +21,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   http: typeof http;
+  quranSync: typeof quranSync;
   todos: typeof todos;
   users: typeof users;
 }>;
