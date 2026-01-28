@@ -4,6 +4,15 @@ import { toast } from 'sonner';
 import { getAyahAudioUrl } from '@/lib/api/quran-api';
 import { getOfflineSurahWithTranslation } from '@/data/quran-data';
 
+// Helper to format error messages from Howler errors
+function formatError(err: unknown): string {
+  if (typeof err === 'string') return err;
+  if (err && typeof err === 'object' && 'message' in err) {
+    return String((err as { message: unknown }).message);
+  }
+  return 'Unknown error';
+}
+
 interface AudioState {
   // Playback state
   isPlaying: boolean;
@@ -361,7 +370,7 @@ function playAyahInternal(
       }
     },
     onloaderror: (_id, err) => {
-      const errorMsg = `Audio load error: ${typeof err === 'string' ? err : err?.message || 'Unknown error'}`;
+      const errorMsg = `Audio load error: ${formatError(err)}`;
       console.error(errorMsg, err);
       toast.error(errorMsg, { duration: 5000 });
       useAudioStore.setState({
@@ -389,7 +398,7 @@ function playAyahInternal(
       }
     },
     onplayerror: (_id, err) => {
-      const errorMsg = `Audio play error: ${typeof err === 'string' ? err : err?.message || 'Unknown error'}`;
+      const errorMsg = `Audio play error: ${formatError(err)}`;
       console.error(errorMsg, err);
 
       // Unlock audio context and retry
@@ -434,7 +443,7 @@ function retryWithFallback(
     onplay: onPlay,
     onend: onEnd,
     onloaderror: (_id, err) => {
-      const errorMsg = `Audio unavailable: ${typeof err === 'string' ? err : err?.message || 'Could not load audio file'}`;
+      const errorMsg = `Audio unavailable: ${formatError(err)}`;
       console.error('Retry also failed:', errorMsg, err);
       toast.error(errorMsg, { duration: 5000 });
       useAudioStore.setState({
@@ -444,7 +453,7 @@ function retryWithFallback(
       });
     },
     onplayerror: (_id, err) => {
-      const errorMsg = `Playback failed: ${typeof err === 'string' ? err : err?.message || 'Unknown playback error'}`;
+      const errorMsg = `Playback failed: ${formatError(err)}`;
       console.error('Retry playback error:', errorMsg, err);
       toast.error(errorMsg, { duration: 5000 });
       useAudioStore.setState({
