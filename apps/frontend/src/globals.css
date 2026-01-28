@@ -1,10 +1,10 @@
 /* =====================================
-   Noor Quran App - Global Styles
+   Noor Quran App - Clean Minimal Design
    ===================================== */
 
-/* Arabic Fonts - Quran-specific typography */
+/* Arabic Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Scheherazade+New:wght@400;500;600;700&display=swap');
-/* Inter for UI */
+/* UI Font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -13,154 +13,106 @@
 
 @layer base {
   /* =====================================
-     Light Theme (Default)
+     Light Theme - Pure White + Gray + Green
      ===================================== */
   :root {
-    --background: 40 33% 98%;           /* #FDFBF7 - warm cream */
-    --foreground: 220 13% 18%;          /* #1F2937 - dark gray */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 9%;
 
-    --card: 0 0% 100%;                  /* #FFFFFF - pure white */
-    --card-foreground: 220 13% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 18%;
+    --popover-foreground: 0 0% 9%;
 
-    /* Primary - Teal accent */
-    --primary: 174 62% 32%;             /* #0D9488 - teal */
+    /* Primary - Emerald Green */
+    --primary: 152 69% 31%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 40 25% 95%;            /* #F9F7F3 - light cream */
-    --secondary-foreground: 220 13% 18%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
 
-    --muted: 40 20% 94%;
-    --muted-foreground: 220 9% 46%;     /* #6B7280 - muted text */
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    /* Accent - Teal for highlights */
-    --accent: 174 62% 32%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 9%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 15% 89%;               /* #E5E2DB - subtle border */
-    --input: 40 15% 89%;
-    --ring: 174 62% 32%;
+    --border: 0 0% 91%;
+    --input: 0 0% 91%;
+    --ring: 152 69% 31%;
 
     --radius: 0.75rem;
-
-    /* Semantic colors */
-    --success: 160 84% 39%;             /* #10B981 */
-    --warning: 38 92% 50%;              /* #F59E0B */
-    --info: 217 91% 60%;                /* #3B82F6 */
-
-    /* Tajweed colors */
-    --tajweed-ghunna: 122 39% 49%;      /* #4CAF50 */
-    --tajweed-ikhfa: 291 47% 51%;       /* #9C27B0 */
-    --tajweed-idgham: 207 90% 54%;      /* #2196F3 */
-    --tajweed-iqlab: 36 100% 50%;       /* #FF9800 */
-    --tajweed-qalqala: 340 82% 52%;     /* #E91E63 */
-    --tajweed-madd: 187 100% 42%;       /* #00BCD4 */
-
-    /* Chart colors */
-    --chart-1: 174 62% 32%;             /* teal */
-    --chart-2: 160 84% 39%;             /* emerald */
-    --chart-3: 262 83% 58%;             /* violet */
-    --chart-4: 199 89% 48%;             /* sky */
-    --chart-5: 220 9% 46%;              /* muted */
   }
 
   /* =====================================
-     Dark Theme
+     Dark Theme - True Dark + Gray + Green
      ===================================== */
   .dark {
-    --background: 222 47% 11%;          /* #0F172A - deep blue-black */
-    --foreground: 210 40% 96%;          /* #F1F5F9 - light gray */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 95%;
 
-    --card: 217 33% 17%;                /* #1E293B - elevated surface */
-    --card-foreground: 210 40% 96%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 96%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 95%;
 
-    /* Primary - Bright teal */
-    --primary: 168 76% 53%;             /* #2DD4BF - bright teal */
-    --primary-foreground: 222 47% 11%;
+    /* Primary - Lighter Green for dark mode */
+    --primary: 152 69% 45%;
+    --primary-foreground: 0 0% 4%;
 
-    --secondary: 217 33% 22%;           /* #334155 - muted surface */
-    --secondary-foreground: 210 40% 96%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 217 33% 22%;
-    --muted-foreground: 215 20% 65%;    /* #94A3B8 - muted text */
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 55%;
 
-    /* Accent - Bright teal */
-    --accent: 168 76% 53%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 0 0% 95%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 96%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 95%;
 
-    --border: 217 33% 27%;              /* #334155 - subtle border */
-    --input: 217 33% 27%;
-    --ring: 168 76% 53%;
-
-    /* Semantic colors */
-    --success: 160 84% 39%;
-    --warning: 38 92% 50%;
-    --info: 217 91% 60%;
-
-    /* Chart colors */
-    --chart-1: 168 76% 53%;
-    --chart-2: 160 84% 39%;
-    --chart-3: 262 83% 65%;
-    --chart-4: 199 89% 60%;
-    --chart-5: 215 20% 65%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 152 69% 45%;
   }
 
   /* =====================================
-     Sepia Theme
+     Sepia Theme - Warm Paper
      ===================================== */
   .sepia {
-    --background: 43 41% 91%;           /* #F4ECD8 - parchment */
-    --foreground: 30 6% 25%;            /* #44403C - dark brown */
+    --background: 40 33% 96%;
+    --foreground: 30 10% 15%;
 
-    --card: 43 50% 95%;                 /* #FAF6ED - light parchment */
-    --card-foreground: 30 6% 25%;
+    --card: 40 40% 98%;
+    --card-foreground: 30 10% 15%;
 
-    --popover: 43 50% 95%;
-    --popover-foreground: 30 6% 25%;
+    --popover: 40 40% 98%;
+    --popover-foreground: 30 10% 15%;
 
-    /* Primary - Amber */
-    --primary: 28 80% 36%;              /* #B45309 - amber */
-    --primary-foreground: 43 50% 95%;
+    --primary: 152 50% 30%;
+    --primary-foreground: 40 40% 98%;
 
-    --secondary: 43 30% 88%;
-    --secondary-foreground: 30 6% 25%;
+    --secondary: 40 20% 92%;
+    --secondary-foreground: 30 10% 15%;
 
-    --muted: 43 30% 88%;
-    --muted-foreground: 30 6% 47%;      /* #78716C - muted text */
+    --muted: 40 20% 92%;
+    --muted-foreground: 30 10% 40%;
 
-    /* Accent - Amber */
-    --accent: 28 80% 36%;
-    --accent-foreground: 43 50% 95%;
+    --accent: 40 20% 92%;
+    --accent-foreground: 30 10% 15%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 43 50% 95%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 40 40% 98%;
 
-    --border: 43 25% 82%;               /* #D6CFC1 - subtle border */
-    --input: 43 25% 82%;
-    --ring: 28 80% 36%;
-
-    /* Semantic colors */
-    --success: 160 84% 35%;
-    --warning: 38 92% 45%;
-    --info: 217 91% 55%;
-
-    /* Chart colors */
-    --chart-1: 28 80% 36%;
-    --chart-2: 160 84% 35%;
-    --chart-3: 262 83% 50%;
-    --chart-4: 199 89% 45%;
-    --chart-5: 30 6% 47%;
+    --border: 40 15% 85%;
+    --input: 40 15% 85%;
+    --ring: 152 50% 30%;
   }
 
   * {
@@ -170,13 +122,11 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
@@ -186,12 +136,10 @@
 
 @layer components {
   .arabic-text {
-    font-family: 'Amiri Quran', 'Scheherazade New', 'Traditional Arabic', serif;
+    font-family: 'Amiri Quran', 'Scheherazade New', serif;
     direction: rtl;
     text-align: right;
     line-height: 2.2;
-    word-spacing: 0.05em;
-    letter-spacing: 0;
   }
 
   .arabic-uthmani {
@@ -202,202 +150,26 @@
     font-family: 'Scheherazade New', serif;
   }
 
-  .arabic-amiri {
-    font-family: 'Amiri Quran', serif;
-  }
-
-  /* Ayah number styling */
+  /* Ayah number - minimal */
   .ayah-number {
     @apply inline-flex items-center justify-center;
-    @apply text-primary font-medium;
-    @apply w-8 h-8 rounded-full;
-    @apply bg-primary/10;
+    @apply text-xs font-medium text-muted-foreground;
+    @apply min-w-[1.5rem] h-6;
     font-family: 'Inter', sans-serif;
     direction: ltr;
   }
 
-  /* Bismillah styling */
+  /* Bismillah */
   .bismillah {
-    @apply text-center text-2xl sm:text-3xl;
-    @apply py-6 mb-6;
-    @apply border-b border-border;
+    @apply text-center text-2xl py-8 text-foreground/80;
   }
 }
-
-/* =====================================
-   Tajweed Colors
-   ===================================== */
-
-@layer components {
-  .tajweed-ghunna {
-    color: hsl(var(--tajweed-ghunna));
-  }
-
-  .tajweed-ikhfa {
-    color: hsl(var(--tajweed-ikhfa));
-  }
-
-  .tajweed-idgham {
-    color: hsl(var(--tajweed-idgham));
-  }
-
-  .tajweed-iqlab {
-    color: hsl(var(--tajweed-iqlab));
-  }
-
-  .tajweed-qalqala {
-    color: hsl(var(--tajweed-qalqala));
-  }
-
-  .tajweed-madd {
-    color: hsl(var(--tajweed-madd));
-  }
-}
-
-/* =====================================
-   Animations
-   ===================================== */
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fade-down {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slide-in-left {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slide-up {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse-subtle {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-@keyframes highlight {
-  0% {
-    background-color: hsl(var(--primary) / 0.3);
-  }
-  100% {
-    background-color: transparent;
-  }
-}
-
-/* Animation classes */
-.animate-fade-in {
-  animation: fade-in 0.3s ease-out forwards;
-}
-
-.animate-fade-up {
-  animation: fade-up 0.4s ease-out forwards;
-  opacity: 0;
-}
-
-.animate-fade-down {
-  animation: fade-down 0.4s ease-out forwards;
-  opacity: 0;
-}
-
-.animate-scale-in {
-  animation: scale-in 0.3s ease-out forwards;
-}
-
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out forwards;
-}
-
-.animate-slide-in-left {
-  animation: slide-in-left 0.3s ease-out forwards;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.3s ease-out forwards;
-}
-
-.animate-pulse-subtle {
-  animation: pulse-subtle 2s ease-in-out infinite;
-}
-
-.animate-highlight {
-  animation: highlight 1.5s ease-out forwards;
-}
-
-/* Animation delays */
-.delay-75 { animation-delay: 75ms; }
-.delay-100 { animation-delay: 100ms; }
-.delay-150 { animation-delay: 150ms; }
-.delay-200 { animation-delay: 200ms; }
-.delay-300 { animation-delay: 300ms; }
-.delay-500 { animation-delay: 500ms; }
 
 /* =====================================
    Layout Utilities
    ===================================== */
 
 @layer utilities {
-  /* Safe area for mobile devices */
   .safe-area-top {
     padding-top: env(safe-area-inset-top, 0);
   }
@@ -406,30 +178,18 @@
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
 
-  .safe-area-left {
-    padding-left: env(safe-area-inset-left, 0);
-  }
-
-  .safe-area-right {
-    padding-right: env(safe-area-inset-right, 0);
-  }
-
-  /* Bottom navigation spacing */
   .pb-nav {
-    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0));
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0));
   }
 
-  /* Audio player spacing */
   .pb-audio {
-    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0));
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0));
   }
 
-  /* Both bottom nav and audio player */
   .pb-nav-audio {
-    padding-bottom: calc(9rem + env(safe-area-inset-bottom, 0));
+    padding-bottom: calc(10rem + env(safe-area-inset-bottom, 0));
   }
 
-  /* Hide scrollbar */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -437,15 +197,6 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
-  }
-
-  /* RTL support */
-  .rtl {
-    direction: rtl;
-  }
-
-  .ltr {
-    direction: ltr;
   }
 }
 
@@ -457,102 +208,54 @@
   /* Bottom Navigation */
   .bottom-nav {
     @apply fixed bottom-0 left-0 right-0 z-50;
-    @apply bg-background/95 backdrop-blur-lg;
-    @apply border-t border-border;
+    @apply bg-background border-t border-border;
     @apply safe-area-bottom;
   }
 
   /* Audio Player Bar */
   .audio-player-bar {
     @apply fixed left-0 right-0 z-40;
-    @apply bg-card/95 backdrop-blur-lg;
-    @apply border-t border-border;
-    @apply shadow-lg;
-    bottom: calc(4rem + env(safe-area-inset-bottom, 0));
+    @apply bg-card border-t border-border;
+    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0));
   }
 
   /* Page Container */
   .page-container {
-    @apply min-h-screen bg-background;
-    @apply pb-nav;
+    @apply min-h-screen bg-background pb-nav;
   }
 
-  /* Page Container with Audio Player */
-  .page-container-audio {
-    @apply min-h-screen bg-background;
-    @apply pb-nav-audio;
-  }
-
-  /* Surah Card */
-  .surah-card {
-    @apply flex items-center gap-4 p-4;
-    @apply bg-card rounded-xl;
-    @apply border border-border;
-    @apply transition-all duration-200;
-    @apply hover:border-primary/30 hover:shadow-md;
-    @apply active:scale-[0.99];
-  }
-
-  /* Reading Highlight */
+  /* Ayah Highlight */
   .ayah-highlight {
-    @apply bg-primary/10 rounded-lg;
-    @apply transition-colors duration-300;
-  }
-
-  /* Bookmark Badge */
-  .bookmark-badge {
-    @apply inline-flex items-center gap-1;
-    @apply px-2 py-0.5 rounded-full;
-    @apply text-xs font-medium;
-    @apply bg-primary/10 text-primary;
-  }
-
-  /* Progress Ring */
-  .progress-ring {
-    @apply relative inline-flex items-center justify-center;
-  }
-
-  .progress-ring svg {
-    transform: rotate(-90deg);
-  }
-
-  /* Sync Status */
-  .sync-indicator {
-    @apply inline-flex items-center gap-1.5;
-    @apply px-2 py-1 rounded-full;
-    @apply text-xs font-medium;
-  }
-
-  .sync-indicator.synced {
-    @apply bg-green-100 text-green-700;
-  }
-
-  .sync-indicator.syncing {
-    @apply bg-blue-100 text-blue-700;
-  }
-
-  .sync-indicator.offline {
-    @apply bg-gray-100 text-gray-600;
-  }
-
-  .sync-indicator.error {
-    @apply bg-red-100 text-red-700;
+    @apply bg-primary/5;
   }
 }
 
 /* =====================================
-   PWA Install Prompt
+   Animations - Subtle
    ===================================== */
 
-@layer components {
-  .install-prompt {
-    @apply fixed bottom-20 left-4 right-4 z-50;
-    @apply bg-card rounded-xl;
-    @apply border border-border;
-    @apply shadow-xl;
-    @apply p-4;
-    @apply animate-slide-up;
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.15s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.2s ease-out;
 }
 
 /* =====================================
@@ -566,13 +269,8 @@
     display: none !important;
   }
 
-  body {
-    background: white;
-    color: black;
-  }
-
   .arabic-text {
-    font-size: 24pt;
+    font-size: 20pt;
     line-height: 2.5;
   }
 }
