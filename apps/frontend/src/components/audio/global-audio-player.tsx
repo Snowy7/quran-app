@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Play, Pause, X, SkipBack, SkipForward, Loader2, ChevronDown } from 'lucide-react';
+import { Play, Pause, X, SkipBack, SkipForward, Loader2, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@template/ui';
 import { useAudioStore } from '@/lib/stores/audio-store';
 import { getSurahById } from '@/data/surahs';
@@ -16,6 +16,7 @@ export function GlobalAudioPlayer() {
   const totalAyahs = useAudioStore((s) => s.totalAyahs);
   const isPlaying = useAudioStore((s) => s.isPlaying);
   const isLoading = useAudioStore((s) => s.isLoading);
+  const error = useAudioStore((s) => s.error);
 
   // Get actions
   const pause = useAudioStore((s) => s.pause);
@@ -24,6 +25,7 @@ export function GlobalAudioPlayer() {
   const next = useAudioStore((s) => s.next);
   const previous = useAudioStore((s) => s.previous);
   const setMinimized = useAudioStore((s) => s.setMinimized);
+  const play = useAudioStore((s) => s.play);
 
   // Don't render if not visible or no surah
   if (!isVisible || surahId === null) {
@@ -35,7 +37,10 @@ export function GlobalAudioPlayer() {
   const progress = totalAyahs > 0 ? (currentAyahNumber / totalAyahs) * 100 : 0;
 
   const handleTogglePlay = () => {
-    if (isPlaying) {
+    if (error && surahId !== null && ayahIndex !== null) {
+      // Retry on error
+      play(surahId, ayahIndex);
+    } else if (isPlaying) {
       pause();
     } else {
       resume();
@@ -84,6 +89,8 @@ export function GlobalAudioPlayer() {
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
+            ) : error ? (
+              <AlertCircle className="h-4 w-4" />
             ) : isPlaying ? (
               <Pause className="h-4 w-4" />
             ) : (
@@ -148,6 +155,13 @@ export function GlobalAudioPlayer() {
             </p>
           </div>
 
+          {/* Error message */}
+          {error && (
+            <div className="text-center mb-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
           {/* Controls */}
           <div className="flex items-center justify-center gap-4">
             <Button
@@ -162,12 +176,17 @@ export function GlobalAudioPlayer() {
 
             <Button
               size="icon"
-              className="h-14 w-14 rounded-full"
+              className={cn(
+                "h-14 w-14 rounded-full",
+                error && "bg-destructive hover:bg-destructive/90"
+              )}
               onClick={handleTogglePlay}
               disabled={isLoading}
             >
               {isLoading ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
+              ) : error ? (
+                <AlertCircle className="h-6 w-6" />
               ) : isPlaying ? (
                 <Pause className="h-6 w-6" />
               ) : (

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Howl } from 'howler';
+import { Howl, Howler } from 'howler';
 import { getAyahAudioUrl } from '@/lib/api/quran-api';
 import { getOfflineSurahWithTranslation } from '@/data/quran-data';
 
@@ -10,6 +10,7 @@ interface AudioState {
   currentSurahId: number | null;
   currentAyahIndex: number | null;
   totalAyahs: number;
+  error: string | null;
 
   // Settings
   reciterId: string;
@@ -35,13 +36,17 @@ interface AudioActions {
   setPlaybackSpeed: (speed: number) => void;
   setAutoPlayNext: (auto: boolean) => void;
   cleanup: () => void;
+  unlockAudio: () => void;
 }
 
 type AudioStore = AudioState & AudioActions;
 
-// Global Howl instance - persists outside of React
+// Global Howl instances - persists outside of React
 let howlInstance: Howl | null = null;
+let preloadedHowl: Howl | null = null;
+let preloadedAyahIndex: number | null = null;
 let currentAyahs: { numberInSurah: number }[] = [];
+let audioUnlocked = false;
 
 const initialState: AudioState = {
   isPlaying: false,
@@ -49,6 +54,7 @@ const initialState: AudioState = {
   currentSurahId: null,
   currentAyahIndex: null,
   totalAyahs: 0,
+  error: null,
   reciterId: 'Alafasy_128kbps',
   playbackSpeed: 1,
   autoPlayNext: true,
@@ -56,11 +62,90 @@ const initialState: AudioState = {
   isVisible: false,
 };
 
+// Detect mobile device
+function isMobile(): boolean {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Preload next ayah audio for seamless transition
+function preloadNextAyah(
+  surahId: number,
+  currentIndex: number,
+  reciterId: string,
+  playbackSpeed: number
+) {
+  const nextIndex = currentIndex + 1;
+
+  // Don't preload if we're at the end
+  if (nextIndex >= currentAyahs.length) {
+    preloadedHowl = null;
+    preloadedAyahIndex = null;
+    return;
+  }
+
+  // Don't preload if already preloaded
+  if (preloadedAyahIndex === nextIndex && preloadedHowl) {
+    return;
+  }
+
+  // Cleanup previous preload
+  if (preloadedHowl) {
+    preloadedHowl.unload();
+    preloadedHowl = null;
+  }
+
+  const nextAyah = currentAyahs[nextIndex];
+  if (!nextAyah) return;
+
+  const audioUrl = getAyahAudioUrl(reciterId, surahId, nextAyah.numberInSurah);
+
+  preloadedHowl = new Howl({
+    src: [audioUrl],
+    html5: !isMobile(), // Use Web Audio API on mobile for better compatibility
+    preload: true,
+    rate: playbackSpeed,
+    onloaderror: () => {
+      // Silent fail for preload - we'll try again when actually playing
+      preloadedHowl = null;
+      preloadedAyahIndex = null;
+    },
+  });
+
+  preloadedAyahIndex = nextIndex;
+}
+
 export const useAudioStore = create<AudioStore>((set, get) => ({
   ...initialState,
 
+  // Unlock audio context - must be called from user interaction on mobile
+  unlockAudio: () => {
+    if (audioUnlocked) return;
+
+    // Create and play a silent audio to unlock audio context
+    const ctx = Howler.ctx;
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume();
+    }
+
+    // Also play a silent sound to unlock on iOS
+    const silentSound = new Howl({
+      src: ['data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'],
+      volume: 0,
+      html5: false,
+    });
+    silentSound.play();
+    silentSound.unload();
+
+    audioUnlocked = true;
+  },
+
   play: (surahId: number, ayahIndex: number = 0) => {
     const state = get();
+
+    // Unlock audio on first play (user interaction)
+    if (!audioUnlocked) {
+      get().unlockAudio();
+    }
 
     // Load ayahs for this surah
     const offlineData = getOfflineSurahWithTranslation(surahId);
@@ -74,6 +159,7 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
       totalAyahs: currentAyahs.length,
       isVisible: true,
       isMinimized: true,
+      error: null,
     });
 
     // Play the ayah
@@ -89,6 +175,10 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
 
   resume: () => {
     if (howlInstance) {
+      // Unlock audio if needed
+      if (!audioUnlocked) {
+        get().unlockAudio();
+      }
       howlInstance.play();
       set({ isPlaying: true });
     }
@@ -100,11 +190,17 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
       howlInstance.unload();
       howlInstance = null;
     }
+    if (preloadedHowl) {
+      preloadedHowl.unload();
+      preloadedHowl = null;
+      preloadedAyahIndex = null;
+    }
     set({
       isPlaying: false,
       isLoading: false,
       currentAyahIndex: null,
       isVisible: false,
+      error: null,
     });
   },
 
@@ -114,7 +210,7 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
 
     if (currentAyahIndex < totalAyahs - 1) {
       const nextIndex = currentAyahIndex + 1;
-      set({ currentAyahIndex: nextIndex });
+      set({ currentAyahIndex: nextIndex, error: null });
       playAyahInternal(currentSurahId, nextIndex, reciterId, playbackSpeed, autoPlayNext);
     }
   },
@@ -125,7 +221,7 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
 
     if (currentAyahIndex > 0) {
       const prevIndex = currentAyahIndex - 1;
-      set({ currentAyahIndex: prevIndex });
+      set({ currentAyahIndex: prevIndex, error: null });
       playAyahInternal(currentSurahId, prevIndex, reciterId, playbackSpeed, autoPlayNext);
     }
   },
@@ -134,7 +230,7 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
     const { currentSurahId, reciterId, playbackSpeed, autoPlayNext } = get();
     if (currentSurahId === null) return;
 
-    set({ currentAyahIndex: ayahIndex });
+    set({ currentAyahIndex: ayahIndex, error: null });
     playAyahInternal(currentSurahId, ayahIndex, reciterId, playbackSpeed, autoPlayNext);
   },
 
@@ -154,6 +250,9 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
     if (howlInstance) {
       howlInstance.rate(speed);
     }
+    if (preloadedHowl) {
+      preloadedHowl.rate(speed);
+    }
   },
 
   setAutoPlayNext: (auto: boolean) => set({ autoPlayNext: auto }),
@@ -163,6 +262,11 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
       howlInstance.stop();
       howlInstance.unload();
       howlInstance = null;
+    }
+    if (preloadedHowl) {
+      preloadedHowl.unload();
+      preloadedHowl = null;
+      preloadedAyahIndex = null;
     }
     currentAyahs = [];
   },
@@ -185,16 +289,59 @@ function playAyahInternal(
   const ayah = currentAyahs[ayahIndex];
   if (!ayah) return;
 
+  // Check if we have this ayah preloaded
+  const usePreloaded = preloadedHowl && preloadedAyahIndex === ayahIndex;
+
+  if (usePreloaded && preloadedHowl) {
+    // Use preloaded audio for seamless transition
+    howlInstance = preloadedHowl;
+    preloadedHowl = null;
+    preloadedAyahIndex = null;
+
+    // Set up event handlers
+    howlInstance.on('play', () => {
+      useAudioStore.setState({ isPlaying: true, isLoading: false });
+    });
+    howlInstance.on('pause', () => {
+      useAudioStore.setState({ isPlaying: false });
+    });
+    howlInstance.on('end', () => {
+      if (autoPlayNext && ayahIndex < currentAyahs.length - 1) {
+        const nextIndex = ayahIndex + 1;
+        useAudioStore.setState({ currentAyahIndex: nextIndex });
+        playAyahInternal(surahId, nextIndex, reciterId, playbackSpeed, autoPlayNext);
+      } else {
+        useAudioStore.setState({ isPlaying: false });
+      }
+    });
+    howlInstance.on('stop', () => {
+      useAudioStore.setState({ isPlaying: false });
+    });
+
+    howlInstance.play();
+
+    // Preload the next ayah
+    preloadNextAyah(surahId, ayahIndex, reciterId, playbackSpeed);
+    return;
+  }
+
   const audioUrl = getAyahAudioUrl(reciterId, surahId, ayah.numberInSurah);
 
-  useAudioStore.setState({ isLoading: true });
+  useAudioStore.setState({ isLoading: true, error: null });
+
+  // Use Web Audio API on mobile (html5: false) for better compatibility
+  // Use HTML5 audio on desktop for streaming
+  const useMobile = isMobile();
 
   howlInstance = new Howl({
     src: [audioUrl],
-    html5: true,
+    html5: !useMobile, // Web Audio API on mobile, HTML5 on desktop
     rate: playbackSpeed,
+    preload: true,
     onload: () => {
       useAudioStore.setState({ isLoading: false });
+      // Start preloading next ayah once current is loaded
+      preloadNextAyah(surahId, ayahIndex, reciterId, playbackSpeed);
     },
     onplay: () => {
       useAudioStore.setState({ isPlaying: true, isLoading: false });
@@ -212,11 +359,77 @@ function playAyahInternal(
         useAudioStore.setState({ isPlaying: false });
       }
     },
-    onloaderror: () => {
-      useAudioStore.setState({ isPlaying: false, isLoading: false });
+    onloaderror: (_id, err) => {
+      console.error('Audio load error:', err);
+      useAudioStore.setState({
+        isPlaying: false,
+        isLoading: false,
+        error: 'Failed to load audio. Please check your connection.',
+      });
+
+      // Try with different format on error
+      if (!howlInstance?.state() || howlInstance.state() === 'unloaded') {
+        retryWithFallback(audioUrl, playbackSpeed, () => {
+          useAudioStore.setState({ isPlaying: true, isLoading: false, error: null });
+          preloadNextAyah(surahId, ayahIndex, reciterId, playbackSpeed);
+        }, () => {
+          if (autoPlayNext && ayahIndex < currentAyahs.length - 1) {
+            const nextIndex = ayahIndex + 1;
+            useAudioStore.setState({ currentAyahIndex: nextIndex });
+            playAyahInternal(surahId, nextIndex, reciterId, playbackSpeed, autoPlayNext);
+          } else {
+            useAudioStore.setState({ isPlaying: false });
+          }
+        });
+      }
+    },
+    onplayerror: (_id, err) => {
+      console.error('Audio play error:', err);
+      // Unlock audio context and retry
+      const ctx = Howler.ctx;
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume().then(() => {
+          howlInstance?.play();
+        });
+      } else {
+        useAudioStore.setState({
+          isPlaying: false,
+          error: 'Playback failed. Tap to retry.',
+        });
+      }
     },
     onstop: () => {
       useAudioStore.setState({ isPlaying: false });
+    },
+  });
+
+  howlInstance.play();
+}
+
+// Retry with opposite html5 setting
+function retryWithFallback(
+  audioUrl: string,
+  playbackSpeed: number,
+  onPlay: () => void,
+  onEnd: () => void
+) {
+  if (howlInstance) {
+    howlInstance.unload();
+  }
+
+  howlInstance = new Howl({
+    src: [audioUrl],
+    html5: isMobile(), // Flip the html5 setting for retry
+    rate: playbackSpeed,
+    preload: true,
+    onplay: onPlay,
+    onend: onEnd,
+    onloaderror: () => {
+      useAudioStore.setState({
+        isPlaying: false,
+        isLoading: false,
+        error: 'Audio unavailable. Please try again later.',
+      });
     },
   });
 
