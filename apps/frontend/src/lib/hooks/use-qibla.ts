@@ -129,31 +129,33 @@ export function useQibla() {
     }
   }, []);
 
+  // Helper to add orientation listener and set timeout
+  const addOrientationListener = useCallback((eventName: string) => {
+    const handler = handleOrientation;
+    orientationListenerRef.current = handler;
+    window.addEventListener(eventName as any, handler, true);
+    setState(prev => ({ ...prev, permissionStatus: 'granted' }));
+
+    // Set timeout for compass detection
+    compassTimeoutRef.current = setTimeout(() => {
+      if (!compassReceivedRef.current && !isUnmountedRef.current) {
+        setState(prev => ({
+          ...prev,
+          compassChecked: true,
+          permissionStatus: 'unavailable',
+        }));
+      }
+    }, COMPASS_TIMEOUT);
+  }, [handleOrientation]);
+
   // Request device orientation permission (required for iOS 13+)
   const requestCompassPermission = useCallback(async () => {
-    const win = window as Window & typeof globalThis;
-    const hasAbsoluteOrientation = 'ondeviceorientationabsolute' in win;
+    // Check for absolute orientation support (more reliable on Android)
+    const hasAbsoluteOrientation = 'ondeviceorientationabsolute' in window;
 
     // Try to use the absolute orientation event first (more reliable on Android)
     if (hasAbsoluteOrientation) {
-      const handler = (event: DeviceOrientationEvent) => {
-        handleOrientation(event);
-      };
-      orientationListenerRef.current = handler;
-      win.addEventListener('deviceorientationabsolute' as keyof WindowEventMap, handler as EventListener, true);
-      setState(prev => ({ ...prev, permissionStatus: 'granted' }));
-
-      // Set timeout for compass detection
-      compassTimeoutRef.current = setTimeout(() => {
-        if (!compassReceivedRef.current && !isUnmountedRef.current) {
-          setState(prev => ({
-            ...prev,
-            compassChecked: true,
-            permissionStatus: 'unavailable',
-          }));
-        }
-      }, COMPASS_TIMEOUT);
-
+      addOrientationListener('deviceorientationabsolute');
       return true;
     }
 
@@ -162,22 +164,7 @@ export function useQibla() {
       try {
         const permission = await (DeviceOrientationEvent as any).requestPermission();
         if (permission === 'granted') {
-          const handler = handleOrientation;
-          orientationListenerRef.current = handler;
-          win.addEventListener('deviceorientation', handler, true);
-          setState(prev => ({ ...prev, permissionStatus: 'granted' }));
-
-          // Set timeout for compass detection
-          compassTimeoutRef.current = setTimeout(() => {
-            if (!compassReceivedRef.current && !isUnmountedRef.current) {
-              setState(prev => ({
-                ...prev,
-                compassChecked: true,
-                permissionStatus: 'unavailable',
-              }));
-            }
-          }, COMPASS_TIMEOUT);
-
+          addOrientationListener('deviceorientation');
           return true;
         } else {
           setState(prev => ({
@@ -197,32 +184,10 @@ export function useQibla() {
       }
     }
 
-    // No permission needed, just add listener
-    const handler = handleOrientation;
-    orientationListenerRef.current = handler;
-
-    // Try absolute first, fall back to regular
-    if (hasAbsoluteOrientation) {
-      win.addEventListener('deviceorientationabsolute' as keyof WindowEventMap, handler as EventListener, true);
-    } else {
-      win.addEventListener('deviceorientation', handler, true);
-    }
-
-    setState(prev => ({ ...prev, permissionStatus: 'granted' }));
-
-    // Set timeout for compass detection
-    compassTimeoutRef.current = setTimeout(() => {
-      if (!compassReceivedRef.current && !isUnmountedRef.current) {
-        setState(prev => ({
-          ...prev,
-          compassChecked: true,
-          permissionStatus: 'unavailable',
-        }));
-      }
-    }, COMPASS_TIMEOUT);
-
+    // No permission needed, just add listener (standard deviceorientation)
+    addOrientationListener('deviceorientation');
     return true;
-  }, [handleOrientation]);
+  }, [addOrientationListener]);
 
   // Get user location and calculate Qibla direction
   const initializeQibla = useCallback(async () => {
