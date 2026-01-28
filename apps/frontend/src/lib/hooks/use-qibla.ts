@@ -131,13 +131,16 @@ export function useQibla() {
 
   // Request device orientation permission (required for iOS 13+)
   const requestCompassPermission = useCallback(async () => {
+    const win = window as Window & typeof globalThis;
+    const hasAbsoluteOrientation = 'ondeviceorientationabsolute' in win;
+
     // Try to use the absolute orientation event first (more reliable on Android)
-    if ('ondeviceorientationabsolute' in window) {
+    if (hasAbsoluteOrientation) {
       const handler = (event: DeviceOrientationEvent) => {
         handleOrientation(event);
       };
       orientationListenerRef.current = handler;
-      window.addEventListener('deviceorientationabsolute' as any, handler, true);
+      win.addEventListener('deviceorientationabsolute' as keyof WindowEventMap, handler as EventListener, true);
       setState(prev => ({ ...prev, permissionStatus: 'granted' }));
 
       // Set timeout for compass detection
@@ -161,7 +164,7 @@ export function useQibla() {
         if (permission === 'granted') {
           const handler = handleOrientation;
           orientationListenerRef.current = handler;
-          window.addEventListener('deviceorientation', handler, true);
+          win.addEventListener('deviceorientation', handler, true);
           setState(prev => ({ ...prev, permissionStatus: 'granted' }));
 
           // Set timeout for compass detection
@@ -192,33 +195,33 @@ export function useQibla() {
         }));
         return false;
       }
-    } else {
-      // No permission needed, just add listener
-      const handler = handleOrientation;
-      orientationListenerRef.current = handler;
-
-      // Try absolute first, fall back to regular
-      if ('ondeviceorientationabsolute' in window) {
-        window.addEventListener('deviceorientationabsolute' as any, handler, true);
-      } else {
-        window.addEventListener('deviceorientation', handler, true);
-      }
-
-      setState(prev => ({ ...prev, permissionStatus: 'granted' }));
-
-      // Set timeout for compass detection
-      compassTimeoutRef.current = setTimeout(() => {
-        if (!compassReceivedRef.current && !isUnmountedRef.current) {
-          setState(prev => ({
-            ...prev,
-            compassChecked: true,
-            permissionStatus: 'unavailable',
-          }));
-        }
-      }, COMPASS_TIMEOUT);
-
-      return true;
     }
+
+    // No permission needed, just add listener
+    const handler = handleOrientation;
+    orientationListenerRef.current = handler;
+
+    // Try absolute first, fall back to regular
+    if (hasAbsoluteOrientation) {
+      win.addEventListener('deviceorientationabsolute' as keyof WindowEventMap, handler as EventListener, true);
+    } else {
+      win.addEventListener('deviceorientation', handler, true);
+    }
+
+    setState(prev => ({ ...prev, permissionStatus: 'granted' }));
+
+    // Set timeout for compass detection
+    compassTimeoutRef.current = setTimeout(() => {
+      if (!compassReceivedRef.current && !isUnmountedRef.current) {
+        setState(prev => ({
+          ...prev,
+          compassChecked: true,
+          permissionStatus: 'unavailable',
+        }));
+      }
+    }, COMPASS_TIMEOUT);
+
+    return true;
   }, [handleOrientation]);
 
   // Get user location and calculate Qibla direction
