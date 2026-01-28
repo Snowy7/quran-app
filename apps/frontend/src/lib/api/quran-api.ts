@@ -206,10 +206,26 @@ export const AVAILABLE_TRANSLATIONS: TranslatorOption[] = [
 // Audio URL Helper
 // =====================================
 
+// Reciter mapping to Quran.com audio IDs
+const RECITER_AUDIO_IDS: Record<string, number> = {
+  'Alafasy_128kbps': 7, // Mishary Alafasy
+  'Abdul_Basit_Murattal_192kbps': 1, // Abdul Basit
+  'Husary_128kbps': 5, // Al-Husary
+  'Minshawy_Murattal_128kbps': 9, // Al-Minshawi
+  'Saood_ash-Shuraym_128kbps': 4, // As-Shuraym
+};
+
 export function getAyahAudioUrl(reciterId: string, surahId: number, ayahNumber: number): string {
+  // Use Quran.com CDN which has proper CORS headers
+  const audioId = RECITER_AUDIO_IDS[reciterId] || 7;
+  return `https://verses.quran.com/${audioId}/${surahId}/${ayahNumber}.mp3`;
+}
+
+// Alternative: Get full surah audio URL
+export function getSurahAudioUrl(reciterId: string, surahId: number): string {
+  const audioId = RECITER_AUDIO_IDS[reciterId] || 7;
   const paddedSurah = surahId.toString().padStart(3, '0');
-  const paddedAyah = ayahNumber.toString().padStart(3, '0');
-  return `https://everyayah.com/data/${reciterId}/${paddedSurah}${paddedAyah}.mp3`;
+  return `https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/${paddedSurah}.mp3`;
 }
 
 // =====================================
