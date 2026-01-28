@@ -7,6 +7,7 @@ import { Button, Switch, Slider, Label } from '@template/ui';
 import { useOfflineSettings, useConvexSync } from '@/lib/hooks';
 import { useTheme } from 'next-themes';
 import { db } from '@/lib/db';
+import { InstallAppButton } from '@/components/pwa';
 import type { ThemeMode } from '@/types/quran';
 
 export default function SettingsPage() {
@@ -220,6 +221,12 @@ export default function SettingsPage() {
             </div>
           </section>
         )}
+
+        {/* Install App */}
+        <section>
+          <h2 className="text-sm font-medium text-muted-foreground mb-4">App</h2>
+          <InstallAppButton />
+        </section>
 
         {/* Data */}
         <section>

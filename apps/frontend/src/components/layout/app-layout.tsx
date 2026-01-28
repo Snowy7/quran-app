@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { BottomNav } from './bottom-nav';
 import { Sidebar, useSidebar } from './sidebar';
 import { GlobalAudioPlayer } from '@/components/audio';
+import { InstallPrompt } from '@/components/pwa';
 import { initializeDatabase } from '@/lib/db';
 import { initializeNetworkListener, initializePWAInstallListener } from '@/lib/stores/ui-store';
 import { useAudioStore } from '@/lib/stores/audio-store';
@@ -54,6 +55,7 @@ export function AppLayout() {
         <Outlet />
         <GlobalAudioPlayer />
         <BottomNav />
+        <InstallPrompt />
         <Toaster
           position="bottom-center"
           toastOptions={{
