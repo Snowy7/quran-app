@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, BookMarked, Play, Pause, ChevronLeft, ChevronRight, Settings2 } from 'lucide-react';
-import { Button, Skeleton } from '@template/ui';
-import { fetchSurahAyahs, fetchTranslation, getAyahAudioUrl } from '@/lib/api/quran-api';
+import { Button } from '@template/ui';
+import { getAyahAudioUrl } from '@/lib/api/quran-api';
 import { useOfflineSettings, useOfflineReadingProgress, useIsBookmarked, useOfflineBookmarks } from '@/lib/hooks';
 import { getSurahById, BISMILLAH, SURAH_WITHOUT_BISMILLAH } from '@/data/surahs';
+import { getOfflineSurahWithTranslation } from '@/data/quran-data';
 import type { Ayah, Translation } from '@/types/quran';
 import { cn } from '@/lib/utils';
 import { Howl } from 'howler';
@@ -18,44 +19,44 @@ export default function SurahReaderPage() {
   const { settings } = useOfflineSettings();
   const { updatePosition, recordAyahRead } = useOfflineReadingProgress();
 
-  const [ayahs, setAyahs] = useState<Ayah[]>([]);
-  const [translations, setTranslations] = useState<Translation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Load data from bundled offline source (instant, no network)
+  const { ayahs, translations } = useMemo(() => {
+    const offlineData = getOfflineSurahWithTranslation(surahId);
+    if (!offlineData) {
+      return { ayahs: [], translations: [] };
+    }
+
+    // Convert to our Ayah type
+    const ayahList: Ayah[] = offlineData.surah.verses.map((verse, index) => ({
+      id: index + 1,
+      surahId,
+      numberInSurah: verse.id,
+      text: verse.text,
+      textSimple: verse.text,
+      juz: 1, // We don't have juz info in this data
+      hizb: 1,
+      page: 1,
+      sajdah: false,
+    }));
+
+    // Convert to our Translation type
+    const translationList: Translation[] = settings.showTranslation
+      ? offlineData.surah.verses.map((verse) => ({
+          ayahId: verse.id,
+          text: offlineData.translations[verse.id] || '',
+          languageCode: 'en',
+          translatorName: 'Sahih International',
+          translatorId: 'en.sahih',
+        }))
+      : [];
+
+    return { ayahs: ayahList, translations: translationList };
+  }, [surahId, settings.showTranslation]);
 
   // Audio state
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentAyahIndex, setCurrentAyahIndex] = useState<number | null>(null);
   const howlRef = useRef<Howl | null>(null);
-
-  // Load surah data
-  useEffect(() => {
-    async function loadData() {
-      if (!surah) return;
-
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const [ayahData, translationData] = await Promise.all([
-          fetchSurahAyahs(surahId),
-          settings.showTranslation
-            ? fetchTranslation(surahId, settings.primaryTranslation)
-            : Promise.resolve([]),
-        ]);
-
-        setAyahs(ayahData);
-        setTranslations(translationData);
-      } catch (err) {
-        console.error('Failed to load surah:', err);
-        setError('Failed to load surah. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadData();
-  }, [surahId, surah, settings.showTranslation, settings.primaryTranslation]);
 
   // Clean up audio on unmount
   useEffect(() => {
@@ -160,30 +161,8 @@ export default function SurahReaderPage() {
         </div>
       )}
 
-      {/* Loading */}
-      {isLoading && (
-        <div className="p-4 space-y-6">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="space-y-3">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Error */}
-      {error && (
-        <div className="p-4 text-center">
-          <p className="text-muted-foreground mb-4">{error}</p>
-          <Button variant="outline" onClick={() => window.location.reload()}>
-            Retry
-          </Button>
-        </div>
-      )}
-
-      {/* Ayahs */}
-      {!isLoading && !error && (
+      {/* Ayahs - loaded instantly from bundled data */}
+      {ayahs.length > 0 && (
         <div className="divide-y divide-border">
           {ayahs.map((ayah, index) => (
             <AyahRow
@@ -201,7 +180,7 @@ export default function SurahReaderPage() {
       )}
 
       {/* Navigation */}
-      {!isLoading && !error && (
+      {ayahs.length > 0 && (
         <div className="flex items-center justify-between p-4 border-t border-border">
           <Button
             variant="ghost"

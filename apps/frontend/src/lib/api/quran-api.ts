@@ -206,26 +206,54 @@ export const AVAILABLE_TRANSLATIONS: TranslatorOption[] = [
 // Audio URL Helper
 // =====================================
 
-// Reciter mapping to Quran.com audio IDs
-const RECITER_AUDIO_IDS: Record<string, number> = {
-  'Alafasy_128kbps': 7, // Mishary Alafasy
-  'Abdul_Basit_Murattal_192kbps': 1, // Abdul Basit
-  'Husary_128kbps': 5, // Al-Husary
-  'Minshawy_Murattal_128kbps': 9, // Al-Minshawi
-  'Saood_ash-Shuraym_128kbps': 4, // As-Shuraym
+// Number of ayahs per surah (for calculating global ayah number)
+const AYAHS_PER_SURAH = [
+  7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99, 128, 111,
+  110, 98, 135, 112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30, 73, 54, 45,
+  83, 182, 88, 75, 85, 54, 53, 89, 59, 37, 35, 38, 29, 18, 45, 60, 49, 62, 55,
+  78, 96, 29, 22, 24, 13, 14, 11, 11, 18, 12, 12, 30, 52, 52, 44, 28, 28, 20,
+  56, 40, 31, 50, 40, 46, 42, 29, 19, 36, 25, 22, 17, 19, 26, 30, 20, 15, 21,
+  11, 8, 8, 19, 5, 8, 8, 11, 11, 8, 3, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6
+];
+
+// Calculate global ayah number (1-6236) from surah and ayah number
+function getGlobalAyahNumber(surahId: number, ayahNumber: number): number {
+  let globalNumber = 0;
+  for (let i = 0; i < surahId - 1; i++) {
+    globalNumber += AYAHS_PER_SURAH[i];
+  }
+  return globalNumber + ayahNumber;
+}
+
+// Reciter mapping to Islamic Network CDN identifiers
+const RECITER_IDENTIFIERS: Record<string, string> = {
+  'Alafasy_128kbps': 'ar.alafasy',
+  'Abdul_Basit_Murattal_192kbps': 'ar.abdulbasitmurattal',
+  'Husary_128kbps': 'ar.husary',
+  'Minshawy_Murattal_128kbps': 'ar.minshawi',
+  'Saood_ash-Shuraym_128kbps': 'ar.shatri', // Using similar reciter
 };
 
 export function getAyahAudioUrl(reciterId: string, surahId: number, ayahNumber: number): string {
-  // Use Quran.com CDN which has proper CORS headers
-  const audioId = RECITER_AUDIO_IDS[reciterId] || 7;
-  return `https://verses.quran.com/${audioId}/${surahId}/${ayahNumber}.mp3`;
+  // Use Islamic Network CDN which has proper CORS headers
+  const reciterIdentifier = RECITER_IDENTIFIERS[reciterId] || 'ar.alafasy';
+  const globalAyah = getGlobalAyahNumber(surahId, ayahNumber);
+  return `https://cdn.islamic.network/quran/audio/128/${reciterIdentifier}/${globalAyah}.mp3`;
 }
 
-// Alternative: Get full surah audio URL
+// Alternative: Get full surah audio URL from QuranicAudio
 export function getSurahAudioUrl(reciterId: string, surahId: number): string {
-  const audioId = RECITER_AUDIO_IDS[reciterId] || 7;
   const paddedSurah = surahId.toString().padStart(3, '0');
-  return `https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/${paddedSurah}.mp3`;
+  // QuranicAudio has full surah recordings
+  const reciterMap: Record<string, string> = {
+    'Alafasy_128kbps': 'mishaari_raashid_al_3afaasee',
+    'Abdul_Basit_Murattal_192kbps': 'abdulbaset_mujawwad',
+    'Husary_128kbps': 'mahmoud_khalil_al-husary',
+    'Minshawy_Murattal_128kbps': 'muhammad_siddeeq_al-minshaawee',
+    'Saood_ash-Shuraym_128kbps': 'sa3ood_al-shuraym',
+  };
+  const reciterPath = reciterMap[reciterId] || 'mishaari_raashid_al_3afaasee';
+  return `https://download.quranicaudio.com/quran/${reciterPath}/${paddedSurah}.mp3`;
 }
 
 // =====================================
