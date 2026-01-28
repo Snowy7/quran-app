@@ -1,5 +1,5 @@
-import * as React from "react";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import * as React from 'react';
+import { ThemeProvider as NextThemesProvider } from 'next-themes';
 
 export function ThemeProvider({
   children,
@@ -8,8 +8,9 @@ export function ThemeProvider({
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="dark"
-      enableSystem={false}
+      defaultTheme="system"
+      enableSystem
+      themes={['light', 'dark', 'sepia']}
       disableTransitionOnChange
       {...props}
     >

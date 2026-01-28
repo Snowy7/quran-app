@@ -1,104 +1,166 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+/* =====================================
+   Noor Quran App - Global Styles
+   ===================================== */
+
+/* Arabic Fonts - Quran-specific typography */
+@import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Scheherazade+New:wght@400;500;600;700&display=swap');
+/* Inter for UI */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* =====================================
+     Light Theme (Default)
+     ===================================== */
   :root {
-    /* Premium dark palette - warm charcoal, not pure black */
-    --background: 240 6% 7%;           /* #101012 - warm charcoal */
-    --foreground: 0 0% 98%;            /* #fafafa - crisp white */
+    --background: 40 33% 98%;           /* #FDFBF7 - warm cream */
+    --foreground: 220 13% 18%;          /* #1F2937 - dark gray */
 
-    --card: 240 5% 10%;                /* #18181b - elevated surface */
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 100%;                  /* #FFFFFF - pure white */
+    --card-foreground: 220 13% 18%;
 
-    --popover: 240 5% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 13% 18%;
 
-    /* Primary - Warm amber/gold accent */
-    --primary: 38 92% 50%;             /* #f59e0b - amber */
-    --primary-foreground: 240 6% 7%;
+    /* Primary - Teal accent */
+    --primary: 174 62% 32%;             /* #0D9488 - teal */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 4% 16%;           /* #27272a - muted surface */
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 40 25% 95%;            /* #F9F7F3 - light cream */
+    --secondary-foreground: 220 13% 18%;
 
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 58%;    /* #8b8b94 - muted text */
+    --muted: 40 20% 94%;
+    --muted-foreground: 220 9% 46%;     /* #6B7280 - muted text */
 
-    /* Accent - warm amber for highlights */
-    --accent: 43 96% 56%;              /* #f0b429 - warm amber */
-    --accent-foreground: 0 0% 98%;
+    /* Accent - Teal for highlights */
+    --accent: 174 62% 32%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 240 4% 20%;              /* #303033 - subtle border */
-    --input: 240 4% 20%;
-    --ring: 38 92% 50%;
+    --border: 40 15% 89%;               /* #E5E2DB - subtle border */
+    --input: 40 15% 89%;
+    --ring: 174 62% 32%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem;
+
+    /* Semantic colors */
+    --success: 160 84% 39%;             /* #10B981 */
+    --warning: 38 92% 50%;              /* #F59E0B */
+    --info: 217 91% 60%;                /* #3B82F6 */
+
+    /* Tajweed colors */
+    --tajweed-ghunna: 122 39% 49%;      /* #4CAF50 */
+    --tajweed-ikhfa: 291 47% 51%;       /* #9C27B0 */
+    --tajweed-idgham: 207 90% 54%;      /* #2196F3 */
+    --tajweed-iqlab: 36 100% 50%;       /* #FF9800 */
+    --tajweed-qalqala: 340 82% 52%;     /* #E91E63 */
+    --tajweed-madd: 187 100% 42%;       /* #00BCD4 */
 
     /* Chart colors */
-    --chart-1: 38 92% 50%;             /* amber */
-    --chart-2: 160 84% 39%;            /* emerald */
-    --chart-3: 262 83% 58%;            /* violet */
-    --chart-4: 199 89% 48%;            /* sky */
-    --chart-5: 240 5% 58%;             /* muted */
+    --chart-1: 174 62% 32%;             /* teal */
+    --chart-2: 160 84% 39%;             /* emerald */
+    --chart-3: 262 83% 58%;             /* violet */
+    --chart-4: 199 89% 48%;             /* sky */
+    --chart-5: 220 9% 46%;              /* muted */
   }
 
+  /* =====================================
+     Dark Theme
+     ===================================== */
   .dark {
-    --background: 240 6% 7%;
-    --foreground: 0 0% 98%;
-    --card: 240 5% 10%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 5% 10%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 38 92% 50%;
-    --primary-foreground: 240 6% 7%;
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 58%;
-    --accent: 43 96% 56%;
-    --accent-foreground: 0 0% 98%;
+    --background: 222 47% 11%;          /* #0F172A - deep blue-black */
+    --foreground: 210 40% 96%;          /* #F1F5F9 - light gray */
+
+    --card: 217 33% 17%;                /* #1E293B - elevated surface */
+    --card-foreground: 210 40% 96%;
+
+    --popover: 217 33% 17%;
+    --popover-foreground: 210 40% 96%;
+
+    /* Primary - Bright teal */
+    --primary: 168 76% 53%;             /* #2DD4BF - bright teal */
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 217 33% 22%;           /* #334155 - muted surface */
+    --secondary-foreground: 210 40% 96%;
+
+    --muted: 217 33% 22%;
+    --muted-foreground: 215 20% 65%;    /* #94A3B8 - muted text */
+
+    /* Accent - Bright teal */
+    --accent: 168 76% 53%;
+    --accent-foreground: 222 47% 11%;
+
     --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 4% 20%;
-    --input: 240 4% 20%;
-    --ring: 38 92% 50%;
-    --chart-1: 38 92% 50%;
+    --destructive-foreground: 210 40% 96%;
+
+    --border: 217 33% 27%;              /* #334155 - subtle border */
+    --input: 217 33% 27%;
+    --ring: 168 76% 53%;
+
+    /* Semantic colors */
+    --success: 160 84% 39%;
+    --warning: 38 92% 50%;
+    --info: 217 91% 60%;
+
+    /* Chart colors */
+    --chart-1: 168 76% 53%;
     --chart-2: 160 84% 39%;
-    --chart-3: 262 83% 58%;
-    --chart-4: 199 89% 48%;
-    --chart-5: 240 5% 58%;
+    --chart-3: 262 83% 65%;
+    --chart-4: 199 89% 60%;
+    --chart-5: 215 20% 65%;
   }
 
-  .light {
-    --background: 0 0% 100%;
-    --foreground: 240 6% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 6% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 6% 10%;
-    --primary: 38 92% 45%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 6% 10%;
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 43 96% 50%;
-    --accent-foreground: 0 0% 100%;
+  /* =====================================
+     Sepia Theme
+     ===================================== */
+  .sepia {
+    --background: 43 41% 91%;           /* #F4ECD8 - parchment */
+    --foreground: 30 6% 25%;            /* #44403C - dark brown */
+
+    --card: 43 50% 95%;                 /* #FAF6ED - light parchment */
+    --card-foreground: 30 6% 25%;
+
+    --popover: 43 50% 95%;
+    --popover-foreground: 30 6% 25%;
+
+    /* Primary - Amber */
+    --primary: 28 80% 36%;              /* #B45309 - amber */
+    --primary-foreground: 43 50% 95%;
+
+    --secondary: 43 30% 88%;
+    --secondary-foreground: 30 6% 25%;
+
+    --muted: 43 30% 88%;
+    --muted-foreground: 30 6% 47%;      /* #78716C - muted text */
+
+    /* Accent - Amber */
+    --accent: 28 80% 36%;
+    --accent-foreground: 43 50% 95%;
+
     --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 38 92% 45%;
-    --chart-1: 38 92% 45%;
-    --chart-2: 160 84% 39%;
-    --chart-3: 262 83% 55%;
-    --chart-4: 199 89% 48%;
-    --chart-5: 240 4% 46%;
+    --destructive-foreground: 43 50% 95%;
+
+    --border: 43 25% 82%;               /* #D6CFC1 - subtle border */
+    --input: 43 25% 82%;
+    --ring: 28 80% 36%;
+
+    /* Semantic colors */
+    --success: 160 84% 35%;
+    --warning: 38 92% 45%;
+    --info: 217 91% 55%;
+
+    /* Chart colors */
+    --chart-1: 28 80% 36%;
+    --chart-2: 160 84% 35%;
+    --chart-3: 262 83% 50%;
+    --chart-4: 199 89% 45%;
+    --chart-5: 30 6% 47%;
   }
 
   * {
@@ -116,13 +178,86 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
 
-  code, pre {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+/* =====================================
+   Arabic Typography
+   ===================================== */
+
+@layer components {
+  .arabic-text {
+    font-family: 'Amiri Quran', 'Scheherazade New', 'Traditional Arabic', serif;
+    direction: rtl;
+    text-align: right;
+    line-height: 2.2;
+    word-spacing: 0.05em;
+    letter-spacing: 0;
+  }
+
+  .arabic-uthmani {
+    font-family: 'Amiri Quran', serif;
+  }
+
+  .arabic-scheherazade {
+    font-family: 'Scheherazade New', serif;
+  }
+
+  .arabic-amiri {
+    font-family: 'Amiri Quran', serif;
+  }
+
+  /* Ayah number styling */
+  .ayah-number {
+    @apply inline-flex items-center justify-center;
+    @apply text-primary font-medium;
+    @apply w-8 h-8 rounded-full;
+    @apply bg-primary/10;
+    font-family: 'Inter', sans-serif;
+    direction: ltr;
+  }
+
+  /* Bismillah styling */
+  .bismillah {
+    @apply text-center text-2xl sm:text-3xl;
+    @apply py-6 mb-6;
+    @apply border-b border-border;
   }
 }
 
-/* Animations */
+/* =====================================
+   Tajweed Colors
+   ===================================== */
+
+@layer components {
+  .tajweed-ghunna {
+    color: hsl(var(--tajweed-ghunna));
+  }
+
+  .tajweed-ikhfa {
+    color: hsl(var(--tajweed-ikhfa));
+  }
+
+  .tajweed-idgham {
+    color: hsl(var(--tajweed-idgham));
+  }
+
+  .tajweed-iqlab {
+    color: hsl(var(--tajweed-iqlab));
+  }
+
+  .tajweed-qalqala {
+    color: hsl(var(--tajweed-qalqala));
+  }
+
+  .tajweed-madd {
+    color: hsl(var(--tajweed-madd));
+  }
+}
+
+/* =====================================
+   Animations
+   ===================================== */
+
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -172,121 +307,272 @@
   }
 }
 
-@keyframes float {
-  0%, 100% {
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
     transform: translateY(0);
   }
-  50% {
-    transform: translateY(-10px);
-  }
 }
 
-@keyframes pulse-glow {
+@keyframes pulse-subtle {
   0%, 100% {
-    opacity: 0.4;
+    opacity: 1;
   }
   50% {
-    opacity: 0.8;
+    opacity: 0.7;
   }
 }
 
-@keyframes shimmer {
+@keyframes highlight {
   0% {
-    background-position: -200% 0;
+    background-color: hsl(var(--primary) / 0.3);
   }
   100% {
-    background-position: 200% 0;
-  }
-}
-
-@keyframes gradient-shift {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
+    background-color: transparent;
   }
 }
 
 /* Animation classes */
 .animate-fade-in {
-  animation: fade-in 0.5s ease-out forwards;
+  animation: fade-in 0.3s ease-out forwards;
 }
 
 .animate-fade-up {
-  animation: fade-up 0.6s ease-out forwards;
+  animation: fade-up 0.4s ease-out forwards;
   opacity: 0;
 }
 
 .animate-fade-down {
-  animation: fade-down 0.6s ease-out forwards;
+  animation: fade-down 0.4s ease-out forwards;
   opacity: 0;
 }
 
 .animate-scale-in {
-  animation: scale-in 0.4s ease-out forwards;
+  animation: scale-in 0.3s ease-out forwards;
 }
 
 .animate-slide-in-right {
-  animation: slide-in-right 0.5s ease-out forwards;
+  animation: slide-in-right 0.3s ease-out forwards;
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s ease-out forwards;
 }
 
-.animate-glow-pulse {
-  animation: pulse-glow 2s ease-in-out infinite;
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out forwards;
 }
 
-.animate-shimmer {
-  animation: shimmer 2s ease-in-out infinite;
-  background-size: 200% 100%;
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
 }
 
-.animate-gradient {
-  animation: gradient-shift 3s ease infinite;
-  background-size: 200% 200%;
+.animate-highlight {
+  animation: highlight 1.5s ease-out forwards;
 }
 
 /* Animation delays */
-.delay-1 { animation-delay: 100ms; }
-.delay-2 { animation-delay: 200ms; }
-.delay-3 { animation-delay: 300ms; }
-.delay-4 { animation-delay: 400ms; }
-.delay-5 { animation-delay: 500ms; }
+.delay-75 { animation-delay: 75ms; }
+.delay-100 { animation-delay: 100ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-500 { animation-delay: 500ms; }
 
-/* Grid pattern */
-.grid-pattern {
-  background-image:
-    linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px);
-  background-size: 40px 40px;
+/* =====================================
+   Layout Utilities
+   ===================================== */
+
+@layer utilities {
+  /* Safe area for mobile devices */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left, 0);
+  }
+
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right, 0);
+  }
+
+  /* Bottom navigation spacing */
+  .pb-nav {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0));
+  }
+
+  /* Audio player spacing */
+  .pb-audio {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0));
+  }
+
+  /* Both bottom nav and audio player */
+  .pb-nav-audio {
+    padding-bottom: calc(9rem + env(safe-area-inset-bottom, 0));
+  }
+
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* RTL support */
+  .rtl {
+    direction: rtl;
+  }
+
+  .ltr {
+    direction: ltr;
+  }
 }
 
-/* Text gradients */
-.text-gradient {
-  background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--muted-foreground)) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* =====================================
+   Component Styles
+   ===================================== */
+
+@layer components {
+  /* Bottom Navigation */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50;
+    @apply bg-background/95 backdrop-blur-lg;
+    @apply border-t border-border;
+    @apply safe-area-bottom;
+  }
+
+  /* Audio Player Bar */
+  .audio-player-bar {
+    @apply fixed left-0 right-0 z-40;
+    @apply bg-card/95 backdrop-blur-lg;
+    @apply border-t border-border;
+    @apply shadow-lg;
+    bottom: calc(4rem + env(safe-area-inset-bottom, 0));
+  }
+
+  /* Page Container */
+  .page-container {
+    @apply min-h-screen bg-background;
+    @apply pb-nav;
+  }
+
+  /* Page Container with Audio Player */
+  .page-container-audio {
+    @apply min-h-screen bg-background;
+    @apply pb-nav-audio;
+  }
+
+  /* Surah Card */
+  .surah-card {
+    @apply flex items-center gap-4 p-4;
+    @apply bg-card rounded-xl;
+    @apply border border-border;
+    @apply transition-all duration-200;
+    @apply hover:border-primary/30 hover:shadow-md;
+    @apply active:scale-[0.99];
+  }
+
+  /* Reading Highlight */
+  .ayah-highlight {
+    @apply bg-primary/10 rounded-lg;
+    @apply transition-colors duration-300;
+  }
+
+  /* Bookmark Badge */
+  .bookmark-badge {
+    @apply inline-flex items-center gap-1;
+    @apply px-2 py-0.5 rounded-full;
+    @apply text-xs font-medium;
+    @apply bg-primary/10 text-primary;
+  }
+
+  /* Progress Ring */
+  .progress-ring {
+    @apply relative inline-flex items-center justify-center;
+  }
+
+  .progress-ring svg {
+    transform: rotate(-90deg);
+  }
+
+  /* Sync Status */
+  .sync-indicator {
+    @apply inline-flex items-center gap-1.5;
+    @apply px-2 py-1 rounded-full;
+    @apply text-xs font-medium;
+  }
+
+  .sync-indicator.synced {
+    @apply bg-green-100 text-green-700;
+  }
+
+  .sync-indicator.syncing {
+    @apply bg-blue-100 text-blue-700;
+  }
+
+  .sync-indicator.offline {
+    @apply bg-gray-100 text-gray-600;
+  }
+
+  .sync-indicator.error {
+    @apply bg-red-100 text-red-700;
+  }
 }
 
-.text-gradient-amber {
-  background: linear-gradient(135deg, hsl(38 92% 55%) 0%, hsl(38 92% 45%) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* =====================================
+   PWA Install Prompt
+   ===================================== */
+
+@layer components {
+  .install-prompt {
+    @apply fixed bottom-20 left-4 right-4 z-50;
+    @apply bg-card rounded-xl;
+    @apply border border-border;
+    @apply shadow-xl;
+    @apply p-4;
+    @apply animate-slide-up;
+  }
 }
 
-.text-gradient-violet {
-  background: linear-gradient(135deg, hsl(262 83% 65%) 0%, hsl(262 83% 50%) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+/* =====================================
+   Print Styles
+   ===================================== */
 
-/* Safe area for mobile devices */
-.safe-area-pb {
-  padding-bottom: env(safe-area-inset-bottom, 0);
+@media print {
+  .bottom-nav,
+  .audio-player-bar,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+
+  .arabic-text {
+    font-size: 24pt;
+    line-height: 2.5;
+  }
 }
