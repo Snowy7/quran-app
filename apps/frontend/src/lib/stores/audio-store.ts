@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Howl, Howler } from 'howler';
+import { toast } from 'sonner';
 import { getAyahAudioUrl } from '@/lib/api/quran-api';
 import { getOfflineSurahWithTranslation } from '@/data/quran-data';
 
@@ -360,16 +361,20 @@ function playAyahInternal(
       }
     },
     onloaderror: (_id, err) => {
-      console.error('Audio load error:', err);
+      const errorMsg = `Audio load error: ${typeof err === 'string' ? err : err?.message || 'Unknown error'}`;
+      console.error(errorMsg, err);
+      toast.error(errorMsg, { duration: 5000 });
       useAudioStore.setState({
         isPlaying: false,
         isLoading: false,
-        error: 'Failed to load audio. Please check your connection.',
+        error: errorMsg,
       });
 
       // Try with different format on error
       if (!howlInstance?.state() || howlInstance.state() === 'unloaded') {
+        toast.info('Retrying with different audio mode...');
         retryWithFallback(audioUrl, playbackSpeed, () => {
+          toast.success('Audio loaded successfully');
           useAudioStore.setState({ isPlaying: true, isLoading: false, error: null });
           preloadNextAyah(surahId, ayahIndex, reciterId, playbackSpeed);
         }, () => {
@@ -384,17 +389,21 @@ function playAyahInternal(
       }
     },
     onplayerror: (_id, err) => {
-      console.error('Audio play error:', err);
+      const errorMsg = `Audio play error: ${typeof err === 'string' ? err : err?.message || 'Unknown error'}`;
+      console.error(errorMsg, err);
+
       // Unlock audio context and retry
       const ctx = Howler.ctx;
       if (ctx && ctx.state === 'suspended') {
+        toast.info('Unlocking audio... tap again if needed');
         ctx.resume().then(() => {
           howlInstance?.play();
         });
       } else {
+        toast.error(errorMsg, { duration: 5000 });
         useAudioStore.setState({
           isPlaying: false,
-          error: 'Playback failed. Tap to retry.',
+          error: errorMsg,
         });
       }
     },
@@ -424,11 +433,23 @@ function retryWithFallback(
     preload: true,
     onplay: onPlay,
     onend: onEnd,
-    onloaderror: () => {
+    onloaderror: (_id, err) => {
+      const errorMsg = `Audio unavailable: ${typeof err === 'string' ? err : err?.message || 'Could not load audio file'}`;
+      console.error('Retry also failed:', errorMsg, err);
+      toast.error(errorMsg, { duration: 5000 });
       useAudioStore.setState({
         isPlaying: false,
         isLoading: false,
-        error: 'Audio unavailable. Please try again later.',
+        error: errorMsg,
+      });
+    },
+    onplayerror: (_id, err) => {
+      const errorMsg = `Playback failed: ${typeof err === 'string' ? err : err?.message || 'Unknown playback error'}`;
+      console.error('Retry playback error:', errorMsg, err);
+      toast.error(errorMsg, { duration: 5000 });
+      useAudioStore.setState({
+        isPlaying: false,
+        error: errorMsg,
       });
     },
   });
