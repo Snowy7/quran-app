@@ -11,6 +11,9 @@ import BookmarksPage from './pages/bookmarks';
 import MemorizePage from './pages/memorize';
 import SettingsPage from './pages/settings';
 import SearchPage from './pages/search';
+import PrayerTimesPage from './pages/prayer-times';
+import QiblaPage from './pages/qibla';
+import OnboardingPage from './pages/onboarding';
 import NotFoundPage from './pages/not-found';
 
 // Auth pages (optional)
@@ -35,8 +38,13 @@ export const router = createBrowserRouter([
           { path: '/memorize', element: <MemorizePage /> },
           { path: '/settings', element: <SettingsPage /> },
           { path: '/search', element: <SearchPage /> },
+          { path: '/prayer-times', element: <PrayerTimesPage /> },
+          { path: '/qibla', element: <QiblaPage /> },
         ],
       },
+
+      // Onboarding (outside main layout)
+      { path: '/onboarding', element: <OnboardingPage /> },
 
       // Auth routes (optional, for cloud sync)
       { path: '/sign-in/*', element: <SignInPage /> },

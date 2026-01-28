@@ -14,6 +14,8 @@ import type {
   CachedSurahData,
   CachedTranslation,
   Reciter,
+  PrayerLog,
+  CachedPrayerTimes,
 } from '@/types/quran';
 
 // =====================================
@@ -40,6 +42,10 @@ export class NoorDatabase extends Dexie {
   memorization!: Table<SurahMemorization, number>;
   settings!: Table<UserSettings, string>;
 
+  // Prayer Tracking
+  prayerLogs!: Table<PrayerLog, string>;
+  cachedPrayerTimes!: Table<CachedPrayerTimes, string>;
+
   // Sync
   syncQueue!: Table<SyncQueueItem, string>;
 
@@ -65,6 +71,35 @@ export class NoorDatabase extends Dexie {
       readingHistory: 'id, updatedAt',
       memorization: 'surahId, status, nextRevisionAt',
       settings: 'id',
+
+      // Sync
+      syncQueue: 'id, entity, status, timestamp',
+    });
+
+    // Version 2: Add prayer tracking
+    this.version(2).stores({
+      // Quran Data - indexed for fast lookups
+      surahs: 'id, revelationType',
+      ayahs: 'id, surahId, [surahId+numberInSurah], juz, page',
+      translations: '[ayahId+translatorId], ayahId, translatorId',
+      juzs: 'id',
+      cachedSurahData: 'surahId',
+      cachedTranslations: '[translatorId+surahId]',
+
+      // Audio
+      reciters: 'id',
+      downloadedAudio: 'id, reciterId, surahId, [reciterId+surahId]',
+
+      // User Data
+      bookmarks: 'clientId, [surahId+ayahNumber], createdAt, isDeleted, isDirty',
+      readingProgress: 'id',
+      readingHistory: 'id, updatedAt',
+      memorization: 'surahId, status, nextRevisionAt',
+      settings: 'id',
+
+      // Prayer Tracking
+      prayerLogs: 'id, updatedAt',
+      cachedPrayerTimes: 'id',
 
       // Sync
       syncQueue: 'id, entity, status, timestamp',

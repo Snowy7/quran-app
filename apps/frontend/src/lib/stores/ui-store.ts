@@ -89,8 +89,17 @@ export const useUIStore = create<UIState>((set) => ({
 // Network Status Hook
 // =====================================
 
+let networkListenerInitialized = false;
+let networkCleanup: (() => void) | null = null;
+
 export function initializeNetworkListener() {
   if (typeof window === 'undefined') return;
+
+  // Prevent duplicate initialization
+  if (networkListenerInitialized) {
+    return networkCleanup;
+  }
+  networkListenerInitialized = true;
 
   const handleOnline = () => useUIStore.getState().setOnline(true);
   const handleOffline = () => useUIStore.getState().setOnline(false);
@@ -98,18 +107,31 @@ export function initializeNetworkListener() {
   window.addEventListener('online', handleOnline);
   window.addEventListener('offline', handleOffline);
 
-  return () => {
+  networkCleanup = () => {
     window.removeEventListener('online', handleOnline);
     window.removeEventListener('offline', handleOffline);
+    networkListenerInitialized = false;
+    networkCleanup = null;
   };
+
+  return networkCleanup;
 }
 
 // =====================================
 // PWA Install Prompt Hook
 // =====================================
 
+let pwaListenerInitialized = false;
+let pwaCleanup: (() => void) | null = null;
+
 export function initializePWAInstallListener() {
   if (typeof window === 'undefined') return;
+
+  // Prevent duplicate initialization
+  if (pwaListenerInitialized) {
+    return pwaCleanup;
+  }
+  pwaListenerInitialized = true;
 
   const handleBeforeInstallPrompt = (e: Event) => {
     e.preventDefault();
@@ -119,9 +141,13 @@ export function initializePWAInstallListener() {
 
   window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-  return () => {
+  pwaCleanup = () => {
     window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    pwaListenerInitialized = false;
+    pwaCleanup = null;
   };
+
+  return pwaCleanup;
 }
 
 export async function triggerPWAInstall() {

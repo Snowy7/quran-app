@@ -155,7 +155,7 @@ export interface SurahMemorization {
   isDirty: boolean;
 }
 
-export type ThemeMode = 'light' | 'dark' | 'sepia' | 'system';
+export type ThemeMode = 'light' | 'dark' | 'system';
 export type ArabicFontFamily = 'amiri' | 'scheherazade' | 'uthmani';
 export type ReadingMode = 'scroll' | 'page';
 
@@ -193,6 +193,45 @@ export interface UserSettings {
   lastSyncedAt: number;
   version: number;
   isDirty: boolean;
+}
+
+// =====================================
+// Prayer Tracking Types
+// =====================================
+
+export type PrayerName = 'Fajr' | 'Dhuhr' | 'Asr' | 'Maghrib' | 'Isha';
+
+export interface PrayerLog {
+  id: string;                      // Date string "YYYY-MM-DD"
+  prayers: {
+    Fajr: { completed: boolean; completedAt?: number };
+    Dhuhr: { completed: boolean; completedAt?: number };
+    Asr: { completed: boolean; completedAt?: number };
+    Maghrib: { completed: boolean; completedAt?: number };
+    Isha: { completed: boolean; completedAt?: number };
+  };
+  updatedAt: number;
+  version: number;
+  isDirty: boolean;
+}
+
+export interface CachedPrayerTimes {
+  id: string;                      // Date string "YYYY-MM-DD"
+  times: {
+    Fajr: string;
+    Sunrise: string;
+    Dhuhr: string;
+    Asr: string;
+    Maghrib: string;
+    Isha: string;
+  };
+  location: {
+    lat: number;
+    lng: number;
+    city?: string;
+    country?: string;
+  };
+  fetchedAt: number;
 }
 
 // =====================================

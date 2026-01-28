@@ -1,7 +1,7 @@
 import { useAuth, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { Link } from 'react-router-dom';
 import {
-  Moon, Sun, Palette, ChevronRight, LogIn, LogOut, Trash2, HardDrive, ArrowLeft, Cloud, RefreshCw
+  Moon, Sun, ChevronRight, LogIn, LogOut, Trash2, HardDrive, ArrowLeft, Cloud, RefreshCw
 } from 'lucide-react';
 import { Button, Switch, Slider, Label } from '@template/ui';
 import { useOfflineSettings, useConvexSync } from '@/lib/hooks';
@@ -36,11 +36,10 @@ export default function SettingsPage() {
         {/* Theme */}
         <section>
           <h2 className="text-sm font-medium text-muted-foreground mb-4">Theme</h2>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {[
               { id: 'light', icon: Sun, label: 'Light' },
               { id: 'dark', icon: Moon, label: 'Dark' },
-              { id: 'sepia', icon: Palette, label: 'Sepia' },
             ].map(({ id, icon: Icon, label }) => (
               <Button
                 key={id}

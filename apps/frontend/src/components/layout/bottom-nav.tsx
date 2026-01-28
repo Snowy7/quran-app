@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Book, BookMarked, GraduationCap, Settings } from 'lucide-react';
+import { Home, Book, Compass, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -11,9 +11,8 @@ interface NavItem {
 const navItems: NavItem[] = [
   { to: '/', icon: Home, label: 'Home' },
   { to: '/quran', icon: Book, label: 'Quran' },
-  { to: '/bookmarks', icon: BookMarked, label: 'Bookmarks' },
+  { to: '/qibla', icon: Compass, label: 'Qibla' },
   { to: '/memorize', icon: GraduationCap, label: 'Hifz' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export function BottomNav() {

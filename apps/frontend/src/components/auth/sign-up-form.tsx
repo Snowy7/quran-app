@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button, Input, Label } from "@template/ui";
 import { OAuthButtons } from "./oauth-buttons";
 import { AuthDivider } from "./auth-divider";
-import { Loader2, ArrowLeft, Zap, Mail } from "lucide-react";
+import { Loader2, ArrowLeft, BookOpen, Mail } from "lucide-react";
 
 export function SignUpForm() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -54,7 +54,7 @@ export function SignUpForm() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        navigate("/app");
+        navigate("/");
       }
     } catch (err: any) {
       setError(err.errors?.[0]?.message || "Invalid code");
@@ -66,11 +66,11 @@ export function SignUpForm() {
   if (step === "verify") {
     return (
       <div className="w-full max-w-md">
-        <div className="glass rounded-2xl border border-border/50 p-8 shadow-xl glow-amber-sm animate-fade-up">
+        <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-8 shadow-xl">
           {/* Header */}
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
-              <Mail className="h-6 w-6 text-emerald-500" />
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+              <Mail className="h-6 w-6 text-primary" />
             </div>
             <h1 className="text-2xl font-semibold tracking-tight">Check your email</h1>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -127,32 +127,30 @@ export function SignUpForm() {
 
   return (
     <div className="w-full max-w-md">
-      {/* Glass card */}
-      <div className="glass rounded-2xl border border-border/50 p-8 shadow-xl glow-amber-sm animate-fade-up">
+      {/* Card */}
+      <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-8 shadow-xl">
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-            <Zap className="h-6 w-6 text-primary" />
+            <BookOpen className="h-6 w-6 text-primary" />
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">
             Create an account
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Get started in minutes
+            Start your Quran journey today
           </p>
         </div>
 
         {/* OAuth buttons */}
-        <div className="animate-fade-up delay-1">
+        <div>
           <OAuthButtons mode="signUp" disabled={isLoading} />
         </div>
 
-        <div className="animate-fade-up delay-2">
-          <AuthDivider />
-        </div>
+        <AuthDivider />
 
         {/* Email form */}
-        <form onSubmit={handleSignUp} className="space-y-4 animate-fade-up delay-3">
+        <form onSubmit={handleSignUp} className="space-y-4">
           {error && (
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {error}
@@ -230,7 +228,7 @@ export function SignUpForm() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground animate-fade-up delay-4">
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
           <Link
             to="/sign-in"

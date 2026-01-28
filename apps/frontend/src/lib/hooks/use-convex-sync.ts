@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { useConvex } from 'convex/react';
 import { FunctionReference } from 'convex/server';
@@ -339,23 +339,42 @@ export function useConvexSync() {
     pullFromCloud,
   ]);
 
+  // Track if auto-sync has been initialized to prevent duplicate intervals
+  const syncInitializedRef = useRef(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Auto-sync on sign in and periodically
   useEffect(() => {
     if (isSignedIn && clerkId) {
-      // Initial sync
-      syncAll();
+      // Only initialize once per session
+      if (!syncInitializedRef.current) {
+        syncInitializedRef.current = true;
+        // Initial sync
+        syncAll();
+      }
+
+      // Clear any existing interval before setting a new one
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
 
       // Sync every 5 minutes
-      const interval = setInterval(syncAll, 5 * 60 * 1000);
+      intervalRef.current = setInterval(syncAll, 5 * 60 * 1000);
 
       // Sync when coming online
       const handleOnline = () => syncAll();
       window.addEventListener('online', handleOnline);
 
       return () => {
-        clearInterval(interval);
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
         window.removeEventListener('online', handleOnline);
       };
+    } else {
+      // Reset initialization flag when signed out
+      syncInitializedRef.current = false;
     }
   }, [isSignedIn, clerkId, syncAll]);
 

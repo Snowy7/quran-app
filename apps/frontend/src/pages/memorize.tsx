@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle, BookOpen, AlertCircle, ChevronRight, ArrowLeft } from 'lucide-react';
-import { Button, Progress } from '@template/ui';
+import { CheckCircle, BookOpen, AlertCircle, ChevronRight, ArrowLeft, Check, MoreVertical } from 'lucide-react';
+import { Button, Progress, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@template/ui';
 import { useOfflineMemorization } from '@/lib/hooks';
 import { SURAHS } from '@/data/surahs';
 import type { MemorizationStatus } from '@/types/quran';
@@ -18,11 +18,29 @@ const tabs: { id: FilterTab; label: string }[] = [
 
 export default function MemorizePage() {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
-  const { memorizations, stats } = useOfflineMemorization();
+  const { memorizations, stats, markAyahMemorized, updateMemorizationStatus } = useOfflineMemorization();
+  const [bulkMarkDialog, setBulkMarkDialog] = useState<{ isOpen: boolean; surah: typeof SURAHS[0] | null }>({
+    isOpen: false,
+    surah: null,
+  });
 
   const getMemorizationForSurah = (surahId: number) => {
     return memorizations.find((m) => m.surahId === surahId);
   };
+
+  // Mark entire surah as memorized (for importing existing progress)
+  const markSurahAsMemorized = useCallback(async (surah: typeof SURAHS[0]) => {
+    // Mark all ayahs as memorized
+    for (let i = 1; i <= surah.numberOfAyahs; i++) {
+      await markAyahMemorized(surah.id, i);
+    }
+    setBulkMarkDialog({ isOpen: false, surah: null });
+  }, [markAyahMemorized]);
+
+  // Reset surah memorization
+  const resetSurahMemorization = useCallback(async (surahId: number) => {
+    await updateMemorizationStatus(surahId, 'not_started');
+  }, [updateMemorizationStatus]);
 
   const filteredSurahs = SURAHS.filter((surah) => {
     if (activeTab === 'all') return true;
@@ -130,25 +148,50 @@ export default function MemorizePage() {
           const Icon = config.icon;
 
           return (
-            <Link
-              key={surah.id}
-              to={`/quran/${surah.id}`}
-              className="flex items-center gap-4 px-4 py-3 hover:bg-secondary/50 transition-colors"
-            >
-              <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                <Icon className={cn('w-5 h-5', config.color)} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="font-medium truncate">{surah.englishName}</p>
-                  <span className="text-xs text-muted-foreground ml-2">
-                    {memorizedCount}/{surah.numberOfAyahs}
-                  </span>
+            <div key={surah.id} className="flex items-center hover:bg-secondary/50 transition-colors">
+              <Link
+                to={`/quran/${surah.id}`}
+                className="flex items-center gap-4 px-4 py-3 flex-1 min-w-0"
+              >
+                <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                  <Icon className={cn('w-5 h-5', config.color)} />
                 </div>
-                <Progress value={percentage} className="h-1" />
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-            </Link>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="font-medium truncate">{surah.englishName}</p>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      {memorizedCount}/{surah.numberOfAyahs}
+                    </span>
+                  </div>
+                  <Progress value={percentage} className="h-1" />
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+              </Link>
+              {/* Quick actions dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 mr-2 shrink-0">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {status !== 'memorized' && (
+                    <DropdownMenuItem onClick={() => setBulkMarkDialog({ isOpen: true, surah })}>
+                      <Check className="w-4 h-4 mr-2" />
+                      Mark as memorized
+                    </DropdownMenuItem>
+                  )}
+                  {status !== 'not_started' && (
+                    <DropdownMenuItem
+                      onClick={() => resetSurahMemorization(surah.id)}
+                      className="text-destructive"
+                    >
+                      Reset progress
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           );
         })}
       </div>
@@ -158,6 +201,28 @@ export default function MemorizePage() {
           <p className="text-muted-foreground">No surahs in this category</p>
         </div>
       )}
+
+      {/* Bulk mark as memorized dialog */}
+      <Dialog open={bulkMarkDialog.isOpen} onOpenChange={(open) => !open && setBulkMarkDialog({ isOpen: false, surah: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark as Memorized</DialogTitle>
+            <DialogDescription>
+              This will mark all {bulkMarkDialog.surah?.numberOfAyahs} ayahs of{' '}
+              <strong>{bulkMarkDialog.surah?.englishName}</strong> as memorized.
+              Use this if you've already memorized this surah before using the app.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setBulkMarkDialog({ isOpen: false, surah: null })}>
+              Cancel
+            </Button>
+            <Button onClick={() => bulkMarkDialog.surah && markSurahAsMemorized(bulkMarkDialog.surah)}>
+              Mark as Memorized
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
