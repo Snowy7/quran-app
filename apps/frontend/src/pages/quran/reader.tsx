@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, BookMarked, Play, Pause, ChevronLeft, ChevronRight, Settings2, BookOpen, Layers, CheckCircle2 } from 'lucide-react';
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@template/ui';
+import { useParams, Link } from 'react-router-dom';
+import { BookMarked, Play, Pause, BookOpen, Layers, CheckCircle2, Settings2, ArrowLeft } from 'lucide-react';
+import { Button } from '@template/ui';
 import { toast } from 'sonner';
 import { useOfflineSettings, useOfflineReadingProgress, useIsBookmarked, useOfflineBookmarks, useOfflineMemorization, useSurahMemorization } from '@/lib/hooks';
 import { useAudioStore } from '@/lib/stores/audio-store';
-import { getSurahById, SURAHS, BISMILLAH, SURAH_WITHOUT_BISMILLAH } from '@/data/surahs';
+import { getSurahById, BISMILLAH, SURAH_WITHOUT_BISMILLAH } from '@/data/surahs';
 import { getOfflineSurahWithTranslation } from '@/data/quran-data';
 import { ReadingSettingsSheet } from '@/components/reader/reading-settings-sheet';
 import { MushafView } from '@/components/reader/mushaf-view';
@@ -17,7 +17,6 @@ type ReadingMode = 'ayah' | 'mushaf';
 export default function SurahReaderPage() {
   const { surahId: surahIdParam } = useParams<{ surahId: string }>();
   const surahId = parseInt(surahIdParam || '1', 10);
-  const navigate = useNavigate();
 
   const surah = getSurahById(surahId);
   const { settings, updateSettings } = useOfflineSettings();
@@ -81,16 +80,18 @@ export default function SurahReaderPage() {
   // Settings sheet state
   const [showSettings, setShowSettings] = useState(false);
 
+  // Listen for settings open event from bottom bar
+  useEffect(() => {
+    const handleOpenSettings = () => setShowSettings(true);
+    window.addEventListener('open-reader-settings', handleOpenSettings);
+    return () => window.removeEventListener('open-reader-settings', handleOpenSettings);
+  }, []);
+
   // Handle reading mode change
   const handleReadingModeChange = useCallback((mode: ReadingMode) => {
     setReadingMode(mode);
     updateSettings({ readingMode: mode === 'mushaf' ? 'page' : 'scroll' });
   }, [updateSettings]);
-
-  // Handle surah change
-  const handleSurahChange = useCallback((newSurahId: string) => {
-    navigate(`/quran/${newSurahId}`);
-  }, [navigate]);
 
   // Play audio for an ayah
   const handlePlayAyah = useCallback((index: number) => {
@@ -145,87 +146,62 @@ export default function SurahReaderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="flex items-center justify-between px-4 h-14">
-          <div className="flex items-center gap-2">
-            <Link to="/quran" className="p-2 -ml-2 rounded-lg hover:bg-secondary transition-colors">
+    <div className="min-h-screen bg-background pb-20">
+      {/* Minimal top bar */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border safe-area-top">
+        <div className="flex items-center justify-between px-2 h-12">
+          {/* Left: Back + Surah info */}
+          <div className="flex items-center gap-1">
+            <Link
+              to="/quran"
+              className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-secondary transition-colors"
+            >
               <ArrowLeft className="w-5 h-5" />
             </Link>
+            <div className="flex items-center gap-2">
+              <span className="arabic-text text-lg font-medium">{surah.name}</span>
+              <span className="text-muted-foreground text-xs">{surah.numberOfAyahs} ayahs</span>
+            </div>
           </div>
 
-          {/* Surah Selector - Compact */}
-          <Select value={surahId.toString()} onValueChange={handleSurahChange}>
-            <SelectTrigger className="w-auto gap-1 border-0 bg-transparent hover:bg-secondary h-9 px-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">
-                  {surah.id}
-                </span>
-                <span className="font-medium text-sm">{surah.englishName}</span>
-              </div>
-            </SelectTrigger>
-            <SelectContent className="max-h-80">
-              {SURAHS.map((s) => (
-                <SelectItem key={s.id} value={s.id.toString()}>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs bg-secondary px-1.5 py-0.5 rounded w-7 text-center">
-                      {s.id}
-                    </span>
-                    <span>{s.englishName}</span>
-                    <span className="text-xs text-muted-foreground">{s.name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-3">
+            {/* Mode Toggle - pill style */}
+            <div className="flex items-center bg-secondary/80 rounded-full p-1">
+              <button
+                onClick={() => handleReadingModeChange('ayah')}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all',
+                  readingMode === 'ayah'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                Verse
+              </button>
+              <button
+                onClick={() => handleReadingModeChange('mushaf')}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all',
+                  readingMode === 'mushaf'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                Mushaf
+              </button>
+            </div>
 
-          <div className="flex items-center gap-1">
+            {/* Settings button */}
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9"
+              className="h-8 w-8 rounded-full"
               onClick={() => setShowSettings(true)}
             >
-              <Settings2 className="w-5 h-5" />
+              <Settings2 className="w-4 h-4" />
             </Button>
-          </div>
-        </div>
-
-        {/* Compact Info + Mode Toggle */}
-        <div className="flex items-center justify-between px-4 py-2 border-t border-border/50 bg-secondary/30">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{surah.englishNameTranslation}</span>
-            <span>•</span>
-            <span>{surah.numberOfAyahs} Ayahs</span>
-          </div>
-
-          {/* Compact Mode Toggle */}
-          <div className="flex items-center bg-background rounded-lg p-0.5 border border-border">
-            <button
-              onClick={() => handleReadingModeChange('ayah')}
-              className={cn(
-                'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors',
-                readingMode === 'ayah'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              Verse
-            </button>
-            <button
-              onClick={() => handleReadingModeChange('mushaf')}
-              className={cn(
-                'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors',
-                readingMode === 'mushaf'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              Mushaf
-            </button>
           </div>
         </div>
       </div>
@@ -284,35 +260,6 @@ export default function SurahReaderPage() {
         )
       )}
 
-      {/* Navigation */}
-      {ayahs.length > 0 && (
-        <div className="flex items-center justify-between p-4 border-t border-border">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              surahId > 1 && navigate(`/quran/${surahId - 1}`);
-            }}
-            disabled={surahId <= 1}
-            className="gap-1"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              surahId < 114 && navigate(`/quran/${surahId + 1}`);
-            }}
-            disabled={surahId >= 114}
-            className="gap-1"
-          >
-            Next
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-      )}
 
       {/* Reading Settings Sheet */}
       <ReadingSettingsSheet

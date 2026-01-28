@@ -34,6 +34,8 @@ export const router = createBrowserRouter([
           { path: '/', element: <HomePage /> },
           { path: '/quran', element: <QuranIndexPage /> },
           { path: '/quran/:surahId', element: <SurahReaderPage /> },
+          { path: '/quran/juz/:juzId', element: <SurahReaderPage /> },
+          { path: '/quran/page/:pageId', element: <SurahReaderPage /> },
           { path: '/bookmarks', element: <BookmarksPage /> },
           { path: '/memorize', element: <MemorizePage /> },
           { path: '/settings', element: <SettingsPage /> },

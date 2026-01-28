@@ -1,12 +1,13 @@
 import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle, BookOpen, AlertCircle, ChevronRight, ArrowLeft, Check, MoreVertical } from 'lucide-react';
+import { CheckCircle, BookOpen, AlertCircle, ChevronRight, Check, MoreVertical } from 'lucide-react';
 import { Button, Progress, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@template/ui';
 import { toast } from 'sonner';
 import { useOfflineMemorization } from '@/lib/hooks';
 import { SURAHS } from '@/data/surahs';
 import type { MemorizationStatus } from '@/types/quran';
 import { cn } from '@/lib/utils';
+import { AppHeader } from '@/components/layout/app-header';
 
 type FilterTab = 'all' | MemorizationStatus;
 
@@ -62,15 +63,7 @@ export default function MemorizePage() {
 
   return (
     <div className="page-container">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border">
-        <div className="flex items-center gap-3 px-4 h-14">
-          <Link to="/" className="p-2 -ml-2 rounded-lg hover:bg-secondary">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <h1 className="font-semibold">Memorization</h1>
-        </div>
-      </div>
+      <AppHeader title="Memorization" />
 
       {/* Progress Overview */}
       <div className="px-4 py-6 border-b border-border">

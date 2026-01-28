@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, RefreshCw, Check, ChevronLeft, ChevronRight, Calendar, AlertCircle, Clock } from 'lucide-react';
+import { MapPin, RefreshCw, Check, ChevronLeft, ChevronRight, Calendar, AlertCircle, Clock } from 'lucide-react';
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@template/ui';
 import { usePrayerTimes, usePrayerTracking } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import type { PrayerName, PrayerLog } from '@/types/quran';
+import { AppHeader } from '@/components/layout/app-header';
 
 // Prayer icons as inline SVGs
 const PrayerIcons = {
@@ -221,15 +221,9 @@ export default function PrayerTimesPage() {
 
   return (
     <div className="page-container">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border">
-        <div className="flex items-center justify-between px-4 h-14">
-          <div className="flex items-center gap-3">
-            <Link to="/" className="p-2 -ml-2 rounded-lg hover:bg-secondary">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <h1 className="font-semibold">Prayer Times</h1>
-          </div>
+      <AppHeader
+        title="Prayer Times"
+        rightContent={
           <div className="flex items-center gap-1">
             <Button
               variant={viewMode === 'today' ? 'default' : 'ghost'}
@@ -248,8 +242,9 @@ export default function PrayerTimesPage() {
               <Calendar className="w-4 h-4" />
             </Button>
           </div>
-        </div>
-      </div>
+        }
+        showSearch={false}
+      />
 
       {viewMode === 'today' ? (
         <>

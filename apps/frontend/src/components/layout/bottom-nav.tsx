@@ -1,18 +1,31 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Book, Compass, GraduationCap } from 'lucide-react';
+import { Home, Compass, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Custom Quran icon component that switches between outline and filled
+function QuranIcon({ active, className }: { active?: boolean; className?: string }) {
+  return (
+    <img
+      src={active ? '/images/quran_filled.png' : '/images/quran.png'}
+      alt="Quran"
+      className={cn(
+        'w-6 h-6 object-contain',
+        className
+      )}
+    />
+  );
+}
 
 interface NavItem {
   to: string;
-  icon: React.ElementType;
-  label: string;
+  icon: React.ElementType | 'quran';
 }
 
 const navItems: NavItem[] = [
-  { to: '/', icon: Home, label: 'Home' },
-  { to: '/quran', icon: Book, label: 'Quran' },
-  { to: '/qibla', icon: Compass, label: 'Qibla' },
-  { to: '/memorize', icon: GraduationCap, label: 'Hifz' },
+  { to: '/', icon: Home },
+  { to: '/quran', icon: 'quran' },
+  { to: '/qibla', icon: Compass },
+  { to: '/memorize', icon: GraduationCap },
 ];
 
 export function BottomNav() {
@@ -24,44 +37,40 @@ export function BottomNav() {
   }
 
   return (
-    <nav className="bottom-nav">
-      <div className="flex items-center justify-around h-16 px-2">
-        {navItems.map(({ to, icon: Icon, label }) => {
-          const isActive = location.pathname === to ||
-            (to !== '/' && location.pathname.startsWith(to));
+    <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-6 pointer-events-none safe-area-bottom">
+      <nav className="pointer-events-auto bg-card/95 backdrop-blur-xl border border-border/50 rounded-full shadow-xl shadow-black/15 px-2 py-2">
+        <div className="flex items-center gap-1">
+          {navItems.map(({ to, icon: Icon }) => {
+            const isActive = location.pathname === to ||
+              (to !== '/' && location.pathname.startsWith(to));
 
-          return (
-            <NavLink
-              key={to}
-              to={to}
-              className={cn(
-                'flex flex-col items-center justify-center',
-                'w-16 h-14 rounded-xl',
-                'transition-all duration-200',
-                'touch-manipulation',
-                isActive
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <Icon
+            return (
+              <NavLink
+                key={to}
+                to={to}
                 className={cn(
-                  'w-5 h-5 mb-1',
-                  'transition-transform duration-200',
-                  isActive && 'scale-110'
+                  'flex items-center justify-center',
+                  'w-12 h-12 rounded-full',
+                  'transition-all duration-200 ease-out',
+                  'touch-manipulation active:scale-90',
+                  isActive
+                    ? 'bg-primary text-primary-foreground shadow-md'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                 )}
-                strokeWidth={isActive ? 2.5 : 2}
-              />
-              <span className={cn(
-                'text-[10px] font-medium',
-                isActive && 'font-semibold'
-              )}>
-                {label}
-              </span>
-            </NavLink>
-          );
-        })}
-      </div>
-    </nav>
+              >
+                {Icon === 'quran' ? (
+                  <QuranIcon active={isActive} />
+                ) : (
+                  <Icon
+                    className="w-5 h-5"
+                    strokeWidth={isActive ? 2.5 : 2}
+                  />
+                )}
+              </NavLink>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
   );
 }

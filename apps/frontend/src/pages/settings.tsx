@@ -1,37 +1,50 @@
 import { useAuth, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { Link } from 'react-router-dom';
 import {
-  Moon, Sun, ChevronRight, LogIn, LogOut, Trash2, HardDrive, ArrowLeft, Cloud, RefreshCw
+  Moon, Sun, ChevronRight, LogIn, LogOut, Trash2, HardDrive, Cloud, RefreshCw, Bell, BellOff
 } from 'lucide-react';
 import { Button, Switch, Slider, Label } from '@template/ui';
-import { useOfflineSettings, useConvexSync } from '@/lib/hooks';
+import { useOfflineSettings, useConvexSync, usePrayerTimes, usePrayerNotifications } from '@/lib/hooks';
 import { useTheme } from 'next-themes';
 import { db } from '@/lib/db';
 import { InstallAppButton } from '@/components/pwa';
 import type { ThemeMode } from '@/types/quran';
+import { AppHeader } from '@/components/layout/app-header';
 
 export default function SettingsPage() {
   const { settings, updateSettings } = useOfflineSettings();
   const { theme, setTheme } = useTheme();
   const { signOut } = useAuth();
   const { status: syncStatus, lastSyncedAt, syncAll, isSignedIn } = useConvexSync();
+  const { times: prayerTimes } = usePrayerTimes();
+  const {
+    isSupported: notificationsSupported,
+    isPermitted: notificationsPermitted,
+    settings: notificationSettings,
+    updateSettings: updateNotificationSettings,
+    requestPermission: requestNotificationPermission,
+    testNotification,
+  } = usePrayerNotifications(prayerTimes);
 
   const handleThemeChange = (newTheme: ThemeMode) => {
     setTheme(newTheme);
     updateSettings({ theme: newTheme });
   };
 
+  const handleEnableNotifications = async () => {
+    if (!notificationsPermitted) {
+      const granted = await requestNotificationPermission();
+      if (granted) {
+        await updateNotificationSettings({ enabled: true });
+      }
+    } else {
+      await updateNotificationSettings({ enabled: !notificationSettings.enabled });
+    }
+  };
+
   return (
     <div className="page-container">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border">
-        <div className="flex items-center gap-3 px-4 h-14">
-          <Link to="/" className="p-2 -ml-2 rounded-lg hover:bg-secondary">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <h1 className="font-semibold">Settings</h1>
-        </div>
-      </div>
+      <AppHeader title="Settings" showSearch={false} />
 
       <div className="px-4 py-6 space-y-8">
         {/* Theme */}
@@ -145,6 +158,80 @@ export default function SettingsPage() {
             />
           </div>
         </section>
+
+        {/* Notifications */}
+        {notificationsSupported && (
+          <section>
+            <h2 className="text-sm font-medium text-muted-foreground mb-4">Prayer Notifications</h2>
+            <div className="space-y-4">
+              {/* Enable notifications */}
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    {notificationSettings.enabled && notificationsPermitted ? (
+                      <Bell className="w-5 h-5 text-primary" />
+                    ) : (
+                      <BellOff className="w-5 h-5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div>
+                    <Label>Enable Notifications</Label>
+                    <p className="text-xs text-muted-foreground">
+                      {!notificationsPermitted
+                        ? 'Permission required'
+                        : notificationSettings.enabled
+                          ? 'Notifications are active'
+                          : 'Notifications are off'}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={notificationSettings.enabled && notificationsPermitted}
+                  onCheckedChange={handleEnableNotifications}
+                />
+              </div>
+
+              {notificationSettings.enabled && notificationsPermitted && (
+                <>
+                  {/* At prayer time */}
+                  <div className="flex items-center justify-between py-2 pl-4 border-l-2 border-border">
+                    <div>
+                      <Label>At prayer time</Label>
+                      <p className="text-xs text-muted-foreground">Notify when prayer time begins</p>
+                    </div>
+                    <Switch
+                      checked={notificationSettings.atPrayerTime}
+                      onCheckedChange={(checked) => updateNotificationSettings({ atPrayerTime: checked })}
+                    />
+                  </div>
+
+                  {/* Reminder after */}
+                  <div className="flex items-center justify-between py-2 pl-4 border-l-2 border-border">
+                    <div>
+                      <Label>Reminder after {notificationSettings.reminderMinutes} min</Label>
+                      <p className="text-xs text-muted-foreground">Remind if you haven't prayed</p>
+                    </div>
+                    <Switch
+                      checked={notificationSettings.reminderAfter}
+                      onCheckedChange={(checked) => updateNotificationSettings({ reminderAfter: checked })}
+                    />
+                  </div>
+
+                  {/* Test notification */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={testNotification}
+                    className="w-full"
+                  >
+                    <Bell className="w-4 h-4 mr-2" />
+                    Send Test Notification
+                  </Button>
+                </>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Account */}
         <section>

@@ -65,7 +65,7 @@ export default function SearchPage() {
 
   return (
     <div className="page-container">
-      <AppHeader title="Search" showBack showSearch={false} />
+      <AppHeader title="Search" showSearch={false} />
 
       <main className="px-4 py-4 space-y-4">
         {/* Search Input */}

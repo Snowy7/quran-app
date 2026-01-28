@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { BookMarked, Trash2, ChevronRight, ArrowLeft } from 'lucide-react';
+import { BookMarked, Trash2, ChevronRight } from 'lucide-react';
 import { Button } from '@template/ui';
 import { useOfflineBookmarks } from '@/lib/hooks';
 import { getSurahById } from '@/data/surahs';
+import { AppHeader } from '@/components/layout/app-header';
 
 export default function BookmarksPage() {
   const { bookmarks, removeBookmark, isLoading } = useOfflineBookmarks();
@@ -11,20 +12,16 @@ export default function BookmarksPage() {
 
   return (
     <div className="page-container">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border">
-        <div className="flex items-center gap-3 px-4 h-14">
-          <Link to="/" className="p-2 -ml-2 rounded-lg hover:bg-secondary">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <h1 className="font-semibold">Bookmarks</h1>
-          {sortedBookmarks.length > 0 && (
-            <span className="text-sm text-muted-foreground ml-auto">
+      <AppHeader
+        title="Bookmarks"
+        rightContent={
+          sortedBookmarks.length > 0 ? (
+            <span className="text-sm text-muted-foreground mr-2">
               {sortedBookmarks.length}
             </span>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
       {isLoading ? (
         <div className="p-4 space-y-3">

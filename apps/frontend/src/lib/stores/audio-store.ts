@@ -40,7 +40,9 @@ type AudioStore = AudioState & AudioActions;
 let audioElement: HTMLAudioElement | null = null;
 let preloadedAudio: HTMLAudioElement | null = null;
 let preloadedAyahIndex: number | null = null;
+let preloadedReady = false; // Flag to track if preload completed successfully
 let currentAyahs: { numberInSurah: number }[] = [];
+let isLoadingAudio = false; // Flag to ignore errors during load phase
 
 const initialState: AudioState = {
   isPlaying: false,
@@ -144,11 +146,12 @@ function preloadNextAyah(
   if (nextIndex >= currentAyahs.length) {
     preloadedAudio = null;
     preloadedAyahIndex = null;
+    preloadedReady = false;
     return;
   }
 
-  // Don't preload if already preloaded
-  if (preloadedAyahIndex === nextIndex && preloadedAudio) {
+  // Don't preload if already preloaded for this index
+  if (preloadedAyahIndex === nextIndex && preloadedAudio && preloadedReady) {
     return;
   }
 
@@ -157,6 +160,7 @@ function preloadNextAyah(
     preloadedAudio.src = '';
     preloadedAudio = null;
   }
+  preloadedReady = false;
 
   const nextAyah = currentAyahs[nextIndex];
   if (!nextAyah) return;
@@ -170,9 +174,18 @@ function preloadNextAyah(
     type: 'preload',
     surah_id: surahId,
     ayah_index: nextIndex,
+  }).then((success) => {
+    if (success) {
+      preloadedReady = true;
+    } else {
+      preloadedAudio = null;
+      preloadedAyahIndex = null;
+      preloadedReady = false;
+    }
   }).catch(() => {
     preloadedAudio = null;
     preloadedAyahIndex = null;
+    preloadedReady = false;
   });
 }
 
@@ -227,6 +240,7 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
       preloadedAudio.src = '';
       preloadedAudio = null;
       preloadedAyahIndex = null;
+      preloadedReady = false;
     }
     set({
       isPlaying: false,
@@ -297,6 +311,7 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
       preloadedAudio.src = '';
       preloadedAudio = null;
       preloadedAyahIndex = null;
+      preloadedReady = false;
     }
     currentAyahs = [];
   },
@@ -320,11 +335,12 @@ async function playAyahInternal(
 
   useAudioStore.setState({ isLoading: true, error: null });
 
-  // Check if we have this ayah preloaded
-  if (preloadedAudio && preloadedAyahIndex === ayahIndex) {
+  // Check if we have this ayah preloaded and ready
+  if (preloadedAudio && preloadedAyahIndex === ayahIndex && preloadedReady) {
     audioElement = preloadedAudio;
     preloadedAudio = null;
     preloadedAyahIndex = null;
+    preloadedReady = false;
   } else {
     audioElement = createAudioElement();
   }
@@ -358,15 +374,38 @@ async function playAyahInternal(
     }
   };
 
+  // Preload more aggressively when 40% complete
+  let hasTriggeredMidPreload = false;
+  audioElement.ontimeupdate = () => {
+    if (!hasTriggeredMidPreload && audioElement && audioElement.duration > 0) {
+      const percentComplete = (audioElement.currentTime / audioElement.duration) * 100;
+      if (percentComplete >= 40) {
+        hasTriggeredMidPreload = true;
+        // Ensure next ayah is preloaded
+        preloadNextAyah(surahId, ayahIndex, reciterId);
+      }
+    }
+  };
+
   audioElement.onerror = () => {
+    // Ignore errors during loading phase (handled by loadAudioWithFallback)
+    if (isLoadingAudio) {
+      return;
+    }
+
+    // Ignore errors with no meaningful error info
     const error = audioElement?.error;
-    const errorMsg = error ? `Audio error: ${error.message || error.code}` : 'Audio failed to load';
-    console.error('Audio error:', error);
+    if (!error || (!error.message && error.code === undefined)) {
+      return;
+    }
+
+    const errorMsg = error.message || `Audio error code: ${error.code}`;
+    console.error('Audio error:', error.code, error.message);
 
     track('audio_error', {
       ...context,
-      error_code: error?.code,
-      error_message: error?.message,
+      error_code: error.code,
+      error_message: error.message,
       url: audioElement?.src,
     });
 
@@ -382,7 +421,9 @@ async function playAyahInternal(
   audioElement.playbackRate = playbackSpeed;
 
   // Try to load audio with fallback URLs
+  isLoadingAudio = true;
   const loaded = await loadAudioWithFallback(audioElement, urls, context);
+  isLoadingAudio = false;
 
   if (!loaded) {
     const errorMsg = 'Could not load audio. Please check your connection.';
@@ -395,11 +436,12 @@ async function playAyahInternal(
     return;
   }
 
+  // Start preloading next ayah immediately after loading (before play)
+  preloadNextAyah(surahId, ayahIndex, reciterId);
+
   // Play the audio
   try {
     await audioElement.play();
-    // Start preloading next ayah
-    preloadNextAyah(surahId, ayahIndex, reciterId);
   } catch (err) {
     console.error('Play failed:', err);
     track('audio_play_failed', { ...context, error: String(err) });

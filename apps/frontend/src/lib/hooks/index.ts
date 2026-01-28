@@ -6,3 +6,4 @@ export * from './use-convex-sync';
 export * from './use-prayer-times';
 export * from './use-prayer-tracking';
 export * from './use-qibla';
+export * from './use-prayer-notifications';

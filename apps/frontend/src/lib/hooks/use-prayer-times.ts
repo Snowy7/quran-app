@@ -10,6 +10,15 @@ interface PrayerTimes {
   Isha: string;
 }
 
+interface HijriDate {
+  day: string;
+  month: string;
+  monthAr: string;
+  year: string;
+  designation: string;
+  fullDate: string;
+}
+
 interface PrayerTimesState {
   times: PrayerTimes | null;
   nextPrayer: keyof PrayerTimes | null;
@@ -17,6 +26,8 @@ interface PrayerTimesState {
   loading: boolean;
   error: string | null;
   location: { city: string; country: string } | null;
+  hijriDate: HijriDate | null;
+  gregorianDate: string | null;
 }
 
 const PRAYER_ORDER: (keyof PrayerTimes)[] = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
@@ -26,6 +37,8 @@ interface CachedPrayerData {
   times: PrayerTimes;
   date: string;
   location: { city: string; country: string; lat: number; lng: number };
+  hijriDate: HijriDate | null;
+  gregorianDate: string | null;
   fetchedAt: number;
 }
 
@@ -37,14 +50,11 @@ function parseTime(timeStr: string): Date {
 }
 
 function formatCountdown(ms: number): string {
-  if (ms <= 0) return '0:00';
+  if (ms <= 0) return '0:00:00';
   const hours = Math.floor(ms / 3600000);
   const minutes = Math.floor((ms % 3600000) / 60000);
   const seconds = Math.floor((ms % 60000) / 1000);
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
 function getNextPrayer(times: PrayerTimes): { prayer: keyof PrayerTimes; timeUntil: number } | null {
@@ -64,6 +74,16 @@ function getNextPrayer(times: PrayerTimes): { prayer: keyof PrayerTimes; timeUnt
 }
 
 function getTodayDateString(): string {
+  // Returns DD-MM-YYYY format as required by Aladhan API
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const year = now.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
+function getTodayCacheKey(): string {
+  // Returns YYYY-MM-DD for cache key
   return new Date().toISOString().split('T')[0];
 }
 
@@ -75,6 +95,8 @@ export function usePrayerTimes() {
     loading: true,
     error: null,
     location: null,
+    hijriDate: null,
+    gregorianDate: null,
   });
 
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -82,6 +104,7 @@ export function usePrayerTimes() {
   const fetchPrayerTimes = useCallback(async (lat: number, lng: number) => {
     try {
       const today = getTodayDateString();
+      const cacheKey = getTodayCacheKey();
       const method = 2; // ISNA method
 
       const response = await fetch(
@@ -104,16 +127,41 @@ export function usePrayerTimes() {
         Isha: timings.Isha,
       };
 
-      // Get location name via reverse geocoding
+      // Extract Hijri date from API response
+      const hijriData = data.data.date?.hijri;
+      const gregorianData = data.data.date?.gregorian;
+
+      const hijriDate: HijriDate | null = hijriData ? {
+        day: hijriData.day,
+        month: hijriData.month?.en || '',
+        monthAr: hijriData.month?.ar || '',
+        year: hijriData.year,
+        designation: hijriData.designation?.abbreviated || 'AH',
+        fullDate: `${hijriData.day} ${hijriData.month?.en || ''} ${hijriData.year}`,
+      } : null;
+
+      const gregorianDate = gregorianData
+        ? `${gregorianData.day} ${gregorianData.month?.en || ''} ${gregorianData.year}`
+        : null;
+
+      // Get location name via reverse geocoding using OpenStreetMap Nominatim
       let location = { city: 'Unknown', country: '' };
       try {
         const geoResponse = await fetch(
-          `https://api.aladhan.com/v1/qibla/${lat}/${lng}`
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10`,
+          {
+            headers: {
+              'Accept-Language': 'en',
+            },
+          }
         );
         if (geoResponse.ok) {
           const geoData = await geoResponse.json();
-          // Use the coordinates in the response or fallback
-          location = { city: 'Your Location', country: '' };
+          const address = geoData.address || {};
+          // Try to get city name from various fields
+          const city = address.city || address.town || address.village || address.municipality || address.county || address.state || 'Unknown';
+          const country = address.country || '';
+          location = { city, country };
         }
       } catch {
         // Ignore geocoding errors
@@ -122,13 +170,15 @@ export function usePrayerTimes() {
       // Cache the data
       const cacheData: CachedPrayerData = {
         times,
-        date: today,
+        date: cacheKey,
         location: { ...location, lat, lng },
+        hijriDate,
+        gregorianDate,
         fetchedAt: Date.now(),
       };
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
 
-      return { times, location };
+      return { times, location, hijriDate, gregorianDate };
     } catch (error) {
       throw error;
     }
@@ -140,7 +190,7 @@ export function usePrayerTimes() {
       if (!cached) return null;
 
       const data = JSON.parse(cached) as CachedPrayerData;
-      const today = getTodayDateString();
+      const today = getTodayCacheKey();
 
       // Only use cache if it's from today
       if (data.date === today) {
@@ -182,6 +232,8 @@ export function usePrayerTimes() {
           loading: false,
           error: null,
           location: { city: cached.location.city, country: cached.location.country },
+          hijriDate: cached.hijriDate || null,
+          gregorianDate: cached.gregorianDate || null,
         });
       }
 
@@ -193,7 +245,7 @@ export function usePrayerTimes() {
 
             try {
               const { latitude, longitude } = position.coords;
-              const { times, location } = await fetchPrayerTimes(latitude, longitude);
+              const { times, location, hijriDate, gregorianDate } = await fetchPrayerTimes(latitude, longitude);
 
               if (!mounted) return;
 
@@ -205,6 +257,8 @@ export function usePrayerTimes() {
                 loading: false,
                 error: null,
                 location,
+                hijriDate,
+                gregorianDate,
               });
             } catch (error) {
               if (!mounted) return;
@@ -268,7 +322,7 @@ export function usePrayerTimes() {
         async (position) => {
           try {
             const { latitude, longitude } = position.coords;
-            const { times, location } = await fetchPrayerTimes(latitude, longitude);
+            const { times, location, hijriDate, gregorianDate } = await fetchPrayerTimes(latitude, longitude);
 
             const nextInfo = getNextPrayer(times);
             setState({
@@ -278,6 +332,8 @@ export function usePrayerTimes() {
               loading: false,
               error: null,
               location,
+              hijriDate,
+              gregorianDate,
             });
           } catch {
             setState(prev => ({

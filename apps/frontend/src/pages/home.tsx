@@ -1,81 +1,97 @@
-import { Menu } from 'lucide-react';
+import { useEffect } from 'react';
+import { Menu, Search } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@template/ui';
-import { useOfflineReadingProgress, useReadingHistory, useOfflineSettings } from '@/lib/hooks';
+import { useOfflineReadingProgress, usePrayerTimes, usePrayerNotifications } from '@/lib/hooks';
 import { Logo } from '@/components/brand/logo';
-import { HeroCard, PrayerTimesWidget, QuickActions, HifzWidget, DailyStats } from '@/components/home';
+import { PrayerHero, QuickActions, PrayerTimesCards, HifzWidget, DailyStats } from '@/components/home';
 import { useSidebarContext } from '@/components/layout/app-layout';
+import { useOfflineSettings, useReadingHistory } from '@/lib/hooks';
 
 export default function HomePage() {
   const { progress } = useOfflineReadingProgress();
   const { history } = useReadingHistory();
   const { settings } = useOfflineSettings();
   const sidebar = useSidebarContext();
+  const { times: prayerTimes } = usePrayerTimes();
+
+  // Initialize prayer notifications (this will schedule them automatically)
+  const { scheduleNotifications, isPermitted, settings: notificationSettings } = usePrayerNotifications(prayerTimes);
+
+  // Re-schedule notifications when prayer times update
+  useEffect(() => {
+    if (prayerTimes && isPermitted && notificationSettings.enabled) {
+      scheduleNotifications(prayerTimes);
+    }
+  }, [prayerTimes, isPermitted, notificationSettings.enabled, scheduleNotifications]);
 
   const todayAyahs = history?.totalAyahs || 0;
   const dailyGoal = settings.dailyAyahGoal || 10;
 
   return (
-    <div className="page-container relative">
-      {/* Atmospheric gradient background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
-        <div className="absolute top-48 -left-24 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-24 right-0 w-64 h-64 bg-primary/15 rounded-full blur-3xl" />
-      </div>
-
-      <div className="relative px-5 pt-8 pb-6">
-        {/* Header with gradient overlay */}
-        <div className="flex items-center justify-between mb-6">
+    <div className="page-container min-h-screen">
+      {/* Header - fixed at top, transparent */}
+      <div className="fixed top-0 left-0 right-0 z-50 safe-area-top">
+        <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 -ml-1"
+              className="h-9 w-9 -ml-1 text-amber-900 hover:bg-amber-900/10 dark:text-amber-100 dark:hover:bg-amber-100/10"
               onClick={sidebar.open}
             >
               <Menu className="w-5 h-5" />
             </Button>
-            <Logo size="sm" />
-            <div>
-              <p className="text-xs text-muted-foreground">Assalamu Alaikum</p>
-              <h1 className="text-xl font-semibold">Noor</h1>
+            <div className="flex items-center gap-2">
+              <Logo size="sm" />
+              <span className="font-semibold text-lg text-amber-900 dark:text-amber-100">Noor</span>
             </div>
           </div>
+          <Link to="/search">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-amber-900 hover:bg-amber-900/10 dark:text-amber-100 dark:hover:bg-amber-100/10"
+            >
+              <Search className="w-5 h-5" />
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Main content - add padding for fixed header */}
+      <div className="px-5 pb-6">
+        {/* Prayer Hero - Main focal point */}
+        <div className="animate-fade-in">
+          <PrayerHero />
         </div>
 
-        {/* Hero Card - Continue Reading */}
-        <div className="mb-6">
-          <HeroCard
-            lastSurahId={progress.lastSurahId}
-            lastAyahNumber={progress.lastAyahNumber}
-          />
-        </div>
+        {/* Quick Access */}
+        <section className="mt-4 animate-slide-up" style={{ animationDelay: '50ms', animationFillMode: 'both' }}>
+          <h2 className="text-sm font-medium text-muted-foreground mb-4">Quick Access</h2>
+          <QuickActions />
+        </section>
 
-        {/* Prayer Times Widget */}
-        <div className="mb-6">
-          <PrayerTimesWidget />
-        </div>
+        {/* Prayer Times Cards */}
+        <section className="mt-6 animate-slide-up" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
+          <h2 className="text-sm font-medium text-muted-foreground mb-3">Prayer Times</h2>
+          <PrayerTimesCards />
+        </section>
 
         {/* Daily Stats */}
-        <div className="mb-6">
+        <section className="mt-6 animate-slide-up" style={{ animationDelay: '150ms', animationFillMode: 'both' }}>
           <h2 className="text-sm font-medium text-muted-foreground mb-3">Today's Progress</h2>
           <DailyStats
             streak={progress.currentStreak}
             todayAyahs={todayAyahs}
             dailyGoal={dailyGoal}
           />
-        </div>
+        </section>
 
-        {/* Hifz Progress Widget */}
-        <div className="mb-6">
+        {/* Hifz Progress */}
+        <section className="mt-6 animate-slide-up" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
           <HifzWidget />
-        </div>
-
-        {/* Quick Actions Grid */}
-        <div className="mb-6">
-          <h2 className="text-sm font-medium text-muted-foreground mb-3">Quick Access</h2>
-          <QuickActions />
-        </div>
+        </section>
       </div>
     </div>
   );

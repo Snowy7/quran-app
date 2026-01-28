@@ -120,12 +120,15 @@ export function ReadingSettingsSheet({ isOpen, onClose }: ReadingSettingsSheetPr
       <div
         ref={sheetRef}
         className={cn(
-          'fixed inset-x-0 bottom-0 z-50 bg-background rounded-t-2xl shadow-xl',
+          'fixed bottom-0 left-1/2 -translate-x-1/2 z-50',
+          'w-full max-w-lg mx-auto',
+          'bg-background rounded-t-3xl shadow-2xl',
           'max-h-[85vh] flex flex-col',
-          !isDragging && 'transition-transform duration-200'
+          !isDragging && 'transition-all duration-300 ease-out',
+          'animate-in slide-in-from-bottom duration-300'
         )}
         style={{
-          transform: `translateY(${dragOffset}px)`,
+          transform: `translateX(-50%) translateY(${dragOffset}px)`,
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
