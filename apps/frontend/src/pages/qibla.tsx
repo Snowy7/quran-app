@@ -207,13 +207,30 @@ export default function QiblaPage() {
 
             {/* Compass status */}
             {!hasCompass && permissionStatus !== 'prompt' && (
-              <p className="mt-4 text-xs text-muted-foreground text-center max-w-xs">
-                {permissionStatus === 'unsupported'
-                  ? 'Compass not supported on this device. The direction shown is from North.'
-                  : permissionStatus === 'denied'
-                    ? 'Compass permission denied. The direction shown is from North.'
-                    : 'Waiting for compass data...'}
-              </p>
+              <div className="mt-4 p-3 rounded-lg bg-secondary/50 text-center max-w-xs">
+                <p className="text-sm text-muted-foreground">
+                  {permissionStatus === 'unsupported' || permissionStatus === 'unavailable'
+                    ? 'Live compass not available on this device.'
+                    : permissionStatus === 'denied'
+                      ? 'Compass permission denied.'
+                      : 'Checking compass...'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Face {Math.round(qiblaDirection || 0)}° from North to face Qibla
+                </p>
+              </div>
+            )}
+
+            {/* Instructions when compass works */}
+            {hasCompass && (
+              <div className="mt-4 p-3 rounded-lg bg-primary/10 text-center max-w-xs">
+                <p className="text-sm text-primary font-medium">
+                  Compass active
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Rotate your device until the arrow points up
+                </p>
+              </div>
             )}
           </>
         )}
