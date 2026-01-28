@@ -216,7 +216,7 @@
   .audio-player-bar {
     @apply fixed left-0 right-0 z-40;
     @apply bg-card border-t border-border;
-    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0));
+    bottom: 0;
   }
 
   /* Page Container */
