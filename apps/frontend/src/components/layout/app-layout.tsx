@@ -1,13 +1,16 @@
-import { useEffect, createContext, useContext } from 'react';
-import { Outlet } from 'react-router-dom';
-import { Toaster } from 'sonner';
-import { BottomNav } from './bottom-nav';
-import { Sidebar, useSidebar } from './sidebar';
-import { GlobalAudioPlayer } from '@/components/audio';
-import { InstallPrompt } from '@/components/pwa';
-import { initializeDatabase } from '@/lib/db';
-import { initializeNetworkListener, initializePWAInstallListener } from '@/lib/stores/ui-store';
-import { useAudioStore } from '@/lib/stores/audio-store';
+import { useEffect, createContext, useContext } from "react";
+import { Outlet } from "react-router-dom";
+import { Toaster } from "sonner";
+import { BottomNav } from "./bottom-nav";
+import { Sidebar, useSidebar } from "./sidebar";
+import { GlobalAudioPlayer } from "@/components/audio";
+import { InstallPrompt, ReloadPrompt } from "@/components/pwa";
+import { initializeDatabase } from "@/lib/db";
+import {
+  initializeNetworkListener,
+  initializePWAInstallListener,
+} from "@/lib/stores/ui-store";
+import { useAudioStore } from "@/lib/stores/audio-store";
 
 // Sidebar context for global access
 interface SidebarContextType {
@@ -22,7 +25,7 @@ const SidebarContext = createContext<SidebarContextType | null>(null);
 export function useSidebarContext() {
   const context = useContext(SidebarContext);
   if (!context) {
-    throw new Error('useSidebarContext must be used within AppLayout');
+    throw new Error("useSidebarContext must be used within AppLayout");
   }
   return context;
 }
@@ -56,14 +59,15 @@ export function AppLayout() {
         <GlobalAudioPlayer />
         <BottomNav />
         <InstallPrompt />
+        <ReloadPrompt />
         <Toaster
           position="bottom-center"
           toastOptions={{
-            className: 'mb-20',
+            className: "mb-20",
             style: {
-              background: 'hsl(var(--card))',
-              color: 'hsl(var(--card-foreground))',
-              border: '1px solid hsl(var(--border))',
+              background: "hsl(var(--card))",
+              color: "hsl(var(--card-foreground))",
+              border: "1px solid hsl(var(--border))",
             },
           }}
         />
