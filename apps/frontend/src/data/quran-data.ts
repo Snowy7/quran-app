@@ -35,8 +35,34 @@ interface ChapterMeta {
   versesCount: number;
 }
 
-// Cast imported data
-const quranArabic = quranArabicData as Record<string, VerseEntry[]>;
+// ─── Text normalization ─────────────────────────────────────────────
+// Uthmani text uses open tanwin marks (U+08F0, U+08F1, U+08F2) followed
+// by a space + silent alef/letter. Replace the space with a zero-width
+// joiner (U+200D) so the letters connect visually while preserving the
+// tanwin mark positioning.
+const TANWIN_SPACE_RE = /([\u08F0\u08F1\u08F2])\s/g;
+
+function normalizeArabicText(text: string): string {
+  return text.replace(TANWIN_SPACE_RE, (_match, tanwin) => tanwin + "\u200D");
+}
+
+function normalizeVerses(
+  data: Record<string, VerseEntry[]>,
+): Record<string, VerseEntry[]> {
+  const result: Record<string, VerseEntry[]> = {};
+  for (const [key, verses] of Object.entries(data)) {
+    result[key] = verses.map((v) => ({
+      ...v,
+      text: normalizeArabicText(v.text),
+    }));
+  }
+  return result;
+}
+
+// Cast and normalize imported data
+const quranArabic = normalizeVerses(
+  quranArabicData as Record<string, VerseEntry[]>,
+);
 const quranEnglish = quranEnglishData as Record<string, VerseEntry[]>;
 const quranPages = quranPagesData as Record<string, PageVerse[]>;
 const quranMeta = quranMetaData as {
