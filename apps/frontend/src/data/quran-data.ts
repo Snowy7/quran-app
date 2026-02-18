@@ -35,34 +35,22 @@ interface ChapterMeta {
   versesCount: number;
 }
 
-// ─── Text normalization ─────────────────────────────────────────────
-// Uthmani text uses open tanwin marks (U+08F0, U+08F1, U+08F2) followed
-// by a space + silent alef/letter. Replace the space with a zero-width
-// joiner (U+200D) so the letters connect visually while preserving the
-// tanwin mark positioning.
-const TANWIN_SPACE_RE = /([\u08F0\u08F1\u08F2])\s/g;
+// ─── Arabic text normalization ──────────────────────────────────────
+// In Uthmani script, tanween diacritics (ً ٌ ٍ ࣰ ࣱ ࣲ) followed by a
+// regular space and a standalone alef (ا) or alef maqsura (ى) create
+// an awkwardly wide gap. Remove the space so the alef connects directly.
+// The negative lookahead ensures we only target standalone alef — not
+// cases like "عَذَابٌ أَلِيمٌ" where the alef starts a new word with
+// its own diacritics or letters after it.
+const TANWEEN_SPACE_ALEF =
+  /([\u064B\u064C\u064D\u08F0\u08F1\u08F2]) ([\u0627\u0649])(?![\u0620-\u065F\u0670\u0671\u08F0-\u08F2])/g;
 
 function normalizeArabicText(text: string): string {
-  return text.replace(TANWIN_SPACE_RE, (_match, tanwin) => tanwin + "\u200D");
+  return text.replace(TANWEEN_SPACE_ALEF, (_, tanween, alef) => tanween + alef);
 }
 
-function normalizeVerses(
-  data: Record<string, VerseEntry[]>,
-): Record<string, VerseEntry[]> {
-  const result: Record<string, VerseEntry[]> = {};
-  for (const [key, verses] of Object.entries(data)) {
-    result[key] = verses.map((v) => ({
-      ...v,
-      text: normalizeArabicText(v.text),
-    }));
-  }
-  return result;
-}
-
-// Cast and normalize imported data
-const quranArabic = normalizeVerses(
-  quranArabicData as Record<string, VerseEntry[]>,
-);
+// Cast imported data
+const quranArabic = quranArabicData as Record<string, VerseEntry[]>;
 const quranEnglish = quranEnglishData as Record<string, VerseEntry[]>;
 const quranPages = quranPagesData as Record<string, PageVerse[]>;
 const quranMeta = quranMetaData as {
@@ -77,7 +65,8 @@ const quranMeta = quranMetaData as {
 
 /** Get Arabic text for a surah (1-indexed) */
 export function getArabicSurah(surahId: number): VerseEntry[] {
-  return quranArabic[String(surahId)] || [];
+  const surah = quranArabic[String(surahId)] || [];
+  return surah.map((v) => ({ ...v, text: normalizeArabicText(v.text) }));
 }
 
 /** Get Arabic text for a specific verse */
@@ -88,7 +77,7 @@ export function getArabicVerse(
   const surah = quranArabic[String(surahId)];
   if (!surah) return undefined;
   const verse = surah.find((v) => v.verse === verseNumber);
-  return verse?.text;
+  return verse ? normalizeArabicText(verse.text) : undefined;
 }
 
 // =====================================
