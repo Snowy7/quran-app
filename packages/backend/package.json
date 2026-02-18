@@ -16,9 +16,11 @@
     "codegen": "convex codegen"
   },
   "dependencies": {
-    "convex": "^1.17.0"
+    "convex": "^1.17.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@types/web-push": "^3.6.4",
     "typescript": "^5.7.0"
   }
 }

@@ -8,7 +8,10 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
 import type * as http from "../http.js";
+import type * as pushNotifications from "../pushNotifications.js";
+import type * as pushQueries from "../pushQueries.js";
 import type * as quranSync from "../quranSync.js";
 import type * as todos from "../todos.js";
 import type * as users from "../users.js";
@@ -20,7 +23,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
   http: typeof http;
+  pushNotifications: typeof pushNotifications;
+  pushQueries: typeof pushQueries;
   quranSync: typeof quranSync;
   todos: typeof todos;
   users: typeof users;

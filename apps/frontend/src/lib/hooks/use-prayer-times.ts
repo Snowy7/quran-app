@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { db } from '@/lib/db';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { db } from "@/lib/db";
 
 interface PrayerTimes {
   Fajr: string;
@@ -13,6 +13,7 @@ interface PrayerTimes {
 interface HijriDate {
   day: string;
   month: string;
+  monthNumber: number;
   monthAr: string;
   year: string;
   designation: string;
@@ -30,8 +31,15 @@ interface PrayerTimesState {
   gregorianDate: string | null;
 }
 
-const PRAYER_ORDER: (keyof PrayerTimes)[] = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-const CACHE_KEY = 'prayer_times_cache';
+const PRAYER_ORDER: (keyof PrayerTimes)[] = [
+  "Fajr",
+  "Sunrise",
+  "Dhuhr",
+  "Asr",
+  "Maghrib",
+  "Isha",
+];
+const CACHE_KEY = "prayer_times_cache";
 
 interface CachedPrayerData {
   times: PrayerTimes;
@@ -43,21 +51,23 @@ interface CachedPrayerData {
 }
 
 function parseTime(timeStr: string): Date {
-  const [hours, minutes] = timeStr.split(':').map(Number);
+  const [hours, minutes] = timeStr.split(":").map(Number);
   const now = new Date();
   now.setHours(hours, minutes, 0, 0);
   return now;
 }
 
 function formatCountdown(ms: number): string {
-  if (ms <= 0) return '0:00:00';
+  if (ms <= 0) return "0:00:00";
   const hours = Math.floor(ms / 3600000);
   const minutes = Math.floor((ms % 3600000) / 60000);
   const seconds = Math.floor((ms % 60000) / 1000);
-  return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 }
 
-function getNextPrayer(times: PrayerTimes): { prayer: keyof PrayerTimes; timeUntil: number } | null {
+function getNextPrayer(
+  times: PrayerTimes,
+): { prayer: keyof PrayerTimes; timeUntil: number } | null {
   const now = new Date();
 
   for (const prayer of PRAYER_ORDER) {
@@ -70,28 +80,28 @@ function getNextPrayer(times: PrayerTimes): { prayer: keyof PrayerTimes; timeUnt
   // All prayers passed, next is Fajr tomorrow
   const tomorrowFajr = parseTime(times.Fajr);
   tomorrowFajr.setDate(tomorrowFajr.getDate() + 1);
-  return { prayer: 'Fajr', timeUntil: tomorrowFajr.getTime() - now.getTime() };
+  return { prayer: "Fajr", timeUntil: tomorrowFajr.getTime() - now.getTime() };
 }
 
 function getTodayDateString(): string {
   // Returns DD-MM-YYYY format as required by Aladhan API
   const now = new Date();
-  const day = String(now.getDate()).padStart(2, '0');
-  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
   const year = now.getFullYear();
   return `${day}-${month}-${year}`;
 }
 
 function getTodayCacheKey(): string {
   // Returns YYYY-MM-DD for cache key
-  return new Date().toISOString().split('T')[0];
+  return new Date().toISOString().split("T")[0];
 }
 
 export function usePrayerTimes() {
   const [state, setState] = useState<PrayerTimesState>({
     times: null,
     nextPrayer: null,
-    countdown: '',
+    countdown: "",
     loading: true,
     error: null,
     location: null,
@@ -99,7 +109,9 @@ export function usePrayerTimes() {
     gregorianDate: null,
   });
 
-  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
 
   const fetchPrayerTimes = useCallback(async (lat: number, lng: number) => {
     try {
@@ -108,11 +120,11 @@ export function usePrayerTimes() {
       const method = 2; // ISNA method
 
       const response = await fetch(
-        `https://api.aladhan.com/v1/timings/${today}?latitude=${lat}&longitude=${lng}&method=${method}`
+        `https://api.aladhan.com/v1/timings/${today}?latitude=${lat}&longitude=${lng}&method=${method}`,
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch prayer times');
+        throw new Error("Failed to fetch prayer times");
       }
 
       const data = await response.json();
@@ -131,36 +143,46 @@ export function usePrayerTimes() {
       const hijriData = data.data.date?.hijri;
       const gregorianData = data.data.date?.gregorian;
 
-      const hijriDate: HijriDate | null = hijriData ? {
-        day: hijriData.day,
-        month: hijriData.month?.en || '',
-        monthAr: hijriData.month?.ar || '',
-        year: hijriData.year,
-        designation: hijriData.designation?.abbreviated || 'AH',
-        fullDate: `${hijriData.day} ${hijriData.month?.en || ''} ${hijriData.year}`,
-      } : null;
+      const hijriDate: HijriDate | null = hijriData
+        ? {
+            day: hijriData.day,
+            month: hijriData.month?.en || "",
+            monthNumber: hijriData.month?.number || 0,
+            monthAr: hijriData.month?.ar || "",
+            year: hijriData.year,
+            designation: hijriData.designation?.abbreviated || "AH",
+            fullDate: `${hijriData.day} ${hijriData.month?.en || ""} ${hijriData.year}`,
+          }
+        : null;
 
       const gregorianDate = gregorianData
-        ? `${gregorianData.day} ${gregorianData.month?.en || ''} ${gregorianData.year}`
+        ? `${gregorianData.day} ${gregorianData.month?.en || ""} ${gregorianData.year}`
         : null;
 
       // Get location name via reverse geocoding using OpenStreetMap Nominatim
-      let location = { city: 'Unknown', country: '' };
+      let location = { city: "Unknown", country: "" };
       try {
         const geoResponse = await fetch(
           `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10`,
           {
             headers: {
-              'Accept-Language': 'en',
+              "Accept-Language": "en",
             },
-          }
+          },
         );
         if (geoResponse.ok) {
           const geoData = await geoResponse.json();
           const address = geoData.address || {};
           // Try to get city name from various fields
-          const city = address.city || address.town || address.village || address.municipality || address.county || address.state || 'Unknown';
-          const country = address.country || '';
+          const city =
+            address.city ||
+            address.town ||
+            address.village ||
+            address.municipality ||
+            address.county ||
+            address.state ||
+            "Unknown";
+          const country = address.country || "";
           location = { city, country };
         }
       } catch {
@@ -203,7 +225,7 @@ export function usePrayerTimes() {
   }, []);
 
   const updateCountdown = useCallback(() => {
-    setState(prev => {
+    setState((prev) => {
       if (!prev.times) return prev;
 
       const nextInfo = getNextPrayer(prev.times);
@@ -228,24 +250,28 @@ export function usePrayerTimes() {
         setState({
           times: cached.times,
           nextPrayer: nextInfo?.prayer || null,
-          countdown: nextInfo ? formatCountdown(nextInfo.timeUntil) : '',
+          countdown: nextInfo ? formatCountdown(nextInfo.timeUntil) : "",
           loading: false,
           error: null,
-          location: { city: cached.location.city, country: cached.location.country },
+          location: {
+            city: cached.location.city,
+            country: cached.location.country,
+          },
           hijriDate: cached.hijriDate || null,
           gregorianDate: cached.gregorianDate || null,
         });
       }
 
       // Try to get current location
-      if ('geolocation' in navigator) {
+      if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             if (!mounted) return;
 
             try {
               const { latitude, longitude } = position.coords;
-              const { times, location, hijriDate, gregorianDate } = await fetchPrayerTimes(latitude, longitude);
+              const { times, location, hijriDate, gregorianDate } =
+                await fetchPrayerTimes(latitude, longitude);
 
               if (!mounted) return;
 
@@ -253,7 +279,7 @@ export function usePrayerTimes() {
               setState({
                 times,
                 nextPrayer: nextInfo?.prayer || null,
-                countdown: nextInfo ? formatCountdown(nextInfo.timeUntil) : '',
+                countdown: nextInfo ? formatCountdown(nextInfo.timeUntil) : "",
                 loading: false,
                 error: null,
                 location,
@@ -263,10 +289,10 @@ export function usePrayerTimes() {
             } catch (error) {
               if (!mounted) return;
               if (!cached) {
-                setState(prev => ({
+                setState((prev) => ({
                   ...prev,
                   loading: false,
-                  error: 'Failed to fetch prayer times',
+                  error: "Failed to fetch prayer times",
                 }));
               }
             }
@@ -274,21 +300,24 @@ export function usePrayerTimes() {
           (error) => {
             if (!mounted) return;
             if (!cached) {
-              setState(prev => ({
+              setState((prev) => ({
                 ...prev,
                 loading: false,
-                error: error.code === 1 ? 'Location permission denied' : 'Could not get location',
+                error:
+                  error.code === 1
+                    ? "Location permission denied"
+                    : "Could not get location",
               }));
             }
           },
-          { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
         );
       } else {
         if (!cached) {
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             loading: false,
-            error: 'Geolocation not supported',
+            error: "Geolocation not supported",
           }));
         }
       }
@@ -315,20 +344,21 @@ export function usePrayerTimes() {
   }, [state.times, updateCountdown]);
 
   const refresh = useCallback(async () => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
-    if ('geolocation' in navigator) {
+    if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
             const { latitude, longitude } = position.coords;
-            const { times, location, hijriDate, gregorianDate } = await fetchPrayerTimes(latitude, longitude);
+            const { times, location, hijriDate, gregorianDate } =
+              await fetchPrayerTimes(latitude, longitude);
 
             const nextInfo = getNextPrayer(times);
             setState({
               times,
               nextPrayer: nextInfo?.prayer || null,
-              countdown: nextInfo ? formatCountdown(nextInfo.timeUntil) : '',
+              countdown: nextInfo ? formatCountdown(nextInfo.timeUntil) : "",
               loading: false,
               error: null,
               location,
@@ -336,20 +366,23 @@ export function usePrayerTimes() {
               gregorianDate,
             });
           } catch {
-            setState(prev => ({
+            setState((prev) => ({
               ...prev,
               loading: false,
-              error: 'Failed to fetch prayer times',
+              error: "Failed to fetch prayer times",
             }));
           }
         },
         (error) => {
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             loading: false,
-            error: error.code === 1 ? 'Location permission denied' : 'Could not get location',
+            error:
+              error.code === 1
+                ? "Location permission denied"
+                : "Could not get location",
           }));
-        }
+        },
       );
     }
   }, [fetchPrayerTimes]);

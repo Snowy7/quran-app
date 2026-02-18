@@ -1,15 +1,34 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Play, Pause, X, SkipBack, SkipForward, Loader2, ChevronDown, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@template/ui';
-import { useAudioStore } from '@/lib/stores/audio-store';
-import { getSurahById, SURAHS } from '@/data/surahs';
-import { cn } from '@/lib/utils';
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Play,
+  Pause,
+  X,
+  SkipBack,
+  SkipForward,
+  Loader2,
+  ChevronDown,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import {
+  Button,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@template/ui";
+import { useAudioStore } from "@/lib/stores/audio-store";
+import { useUIStore } from "@/lib/stores/ui-store";
+import { getSurahById, SURAHS } from "@/data/surahs";
+import { cn } from "@/lib/utils";
 
 // Get saved position from localStorage
 function getSavedPosition(): { x: number; y: number } | null {
   try {
-    const saved = localStorage.getItem('audio-player-position');
+    const saved = localStorage.getItem("audio-player-position");
     if (saved) {
       return JSON.parse(saved);
     }
@@ -22,7 +41,7 @@ function getSavedPosition(): { x: number; y: number } | null {
 // Save position to localStorage
 function savePosition(x: number, y: number) {
   try {
-    localStorage.setItem('audio-player-position', JSON.stringify({ x, y }));
+    localStorage.setItem("audio-player-position", JSON.stringify({ x, y }));
   } catch (e) {
     // Ignore errors
   }
@@ -79,30 +98,36 @@ function DraggableBubble({
   }, []);
 
   // Handle touch/mouse start
-  const handleDragStart = useCallback((clientX: number, clientY: number) => {
-    setIsDragging(true);
-    setHasMoved(false);
-    setDragStart({
-      x: clientX - position.x,
-      y: clientY - position.y,
-    });
-  }, [position]);
+  const handleDragStart = useCallback(
+    (clientX: number, clientY: number) => {
+      setIsDragging(true);
+      setHasMoved(false);
+      setDragStart({
+        x: clientX - position.x,
+        y: clientY - position.y,
+      });
+    },
+    [position],
+  );
 
   // Handle touch/mouse move
-  const handleDragMove = useCallback((clientX: number, clientY: number) => {
-    if (!isDragging) return;
+  const handleDragMove = useCallback(
+    (clientX: number, clientY: number) => {
+      if (!isDragging) return;
 
-    const newX = clientX - dragStart.x;
-    const newY = clientY - dragStart.y;
-    const constrained = constrainPosition(newX, newY);
+      const newX = clientX - dragStart.x;
+      const newY = clientY - dragStart.y;
+      const constrained = constrainPosition(newX, newY);
 
-    // Check if moved significantly
-    if (Math.abs(newX - position.x) > 5 || Math.abs(newY - position.y) > 5) {
-      setHasMoved(true);
-    }
+      // Check if moved significantly
+      if (Math.abs(newX - position.x) > 5 || Math.abs(newY - position.y) > 5) {
+        setHasMoved(true);
+      }
 
-    setPosition(constrained);
-  }, [isDragging, dragStart, constrainPosition, position]);
+      setPosition(constrained);
+    },
+    [isDragging, dragStart, constrainPosition, position],
+  );
 
   // Handle touch/mouse end
   const handleDragEnd = useCallback(() => {
@@ -119,7 +144,10 @@ function DraggableBubble({
         const padding = 10;
 
         // Snap to left or right edge
-        const snapX = centerX < screenCenterX ? padding : window.innerWidth - rect.width - padding;
+        const snapX =
+          centerX < screenCenterX
+            ? padding
+            : window.innerWidth - rect.width - padding;
         const snapped = constrainPosition(snapX, position.y);
         setPosition(snapped);
         savePosition(snapped.x, snapped.y);
@@ -140,12 +168,12 @@ function DraggableBubble({
       handleDragEnd();
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging, handleDragMove, handleDragEnd]);
 
@@ -155,8 +183,8 @@ function DraggableBubble({
       setPosition((prev) => constrainPosition(prev.x, prev.y));
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [constrainPosition]);
 
   return (
@@ -166,15 +194,17 @@ function DraggableBubble({
       style={{
         left: position.x,
         top: position.y,
-        transition: isDragging ? 'none' : 'left 0.3s ease-out, top 0.3s ease-out',
+        transition: isDragging
+          ? "none"
+          : "left 0.3s ease-out, top 0.3s ease-out",
       }}
     >
       <div
         className={cn(
-          'flex items-center gap-1 bg-primary text-primary-foreground',
-          'rounded-full shadow-lg shadow-primary/25 pl-3 pr-1 py-1',
-          isDragging ? 'scale-105 cursor-grabbing' : 'cursor-grab',
-          'transition-transform duration-200'
+          "flex items-center gap-1 bg-primary text-primary-foreground",
+          "rounded-full shadow-lg shadow-primary/25 pl-3 pr-1 py-1",
+          isDragging ? "scale-105 cursor-grabbing" : "cursor-grab",
+          "transition-transform duration-200",
         )}
         onMouseDown={(e) => {
           e.preventDefault();
@@ -247,7 +277,9 @@ export function GlobalAudioPlayer() {
   const location = useLocation();
 
   // Check if we're on the reader page
-  const isOnReaderPage = location.pathname.startsWith('/quran/') && location.pathname.split('/').length > 2;
+  const isOnReaderPage =
+    location.pathname.startsWith("/quran/") &&
+    location.pathname.split("/").length > 2;
 
   // Get state directly from store
   const isVisible = useAudioStore((s) => s.isVisible);
@@ -268,9 +300,17 @@ export function GlobalAudioPlayer() {
   const setMinimized = useAudioStore((s) => s.setMinimized);
   const play = useAudioStore((s) => s.play);
 
+  const readingScrollProgress = useUIStore((s) => s.readingScrollProgress);
+
   const surah = surahId ? getSurahById(surahId) : null;
   const currentAyahNumber = ayahIndex !== null ? ayahIndex + 1 : 0;
-  const progress = totalAyahs > 0 ? (currentAyahNumber / totalAyahs) * 100 : 0;
+  const audioProgress =
+    totalAyahs > 0 ? (currentAyahNumber / totalAyahs) * 100 : 0;
+  // Reading scroll progress (always available while scrolling on reader page)
+  const scrollProgress = readingScrollProgress
+    ? (readingScrollProgress.currentAyah / readingScrollProgress.totalAyahs) *
+      100
+    : 0;
 
   const handleTogglePlay = () => {
     if (error && surahId !== null && ayahIndex !== null) {
@@ -295,8 +335,8 @@ export function GlobalAudioPlayer() {
   // On reader page: show integrated bottom bar with navigation + player
   if (isOnReaderPage) {
     // Extract surah ID from URL for navigation
-    const pathParts = location.pathname.split('/');
-    const currentPageSurahId = parseInt(pathParts[2] || '1', 10);
+    const pathParts = location.pathname.split("/");
+    const currentPageSurahId = parseInt(pathParts[2] || "1", 10);
     const currentPageSurah = getSurahById(currentPageSurahId);
     const isPlayingThisSurah = isVisible && surahId === currentPageSurahId;
 
@@ -306,15 +346,21 @@ export function GlobalAudioPlayer() {
 
     return (
       <div className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
-        {/* Progress bar */}
-        {isPlayingThisSurah && (
-          <div className="h-0.5 bg-secondary">
+        {/* Reading scroll progress bar — always visible while reading */}
+        <div className="h-0.5 bg-secondary relative overflow-hidden">
+          {/* Scroll progress (background layer) */}
+          <div
+            className="h-full bg-primary/30 transition-all duration-300 ease-out absolute inset-y-0 left-0"
+            style={{ width: `${scrollProgress}%` }}
+          />
+          {/* Audio progress (foreground layer, brighter) */}
+          {isPlayingThisSurah && (
             <div
-              className="h-full bg-primary transition-all duration-300 ease-out"
-              style={{ width: `${progress}%` }}
+              className="h-full bg-primary transition-all duration-300 ease-out relative"
+              style={{ width: `${audioProgress}%` }}
             />
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="bg-background border-t border-border">
           <div className="flex items-center justify-between h-14 px-3">
@@ -323,22 +369,32 @@ export function GlobalAudioPlayer() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => currentPageSurahId > 1 && navigate(`/quran/${currentPageSurahId - 1}`)}
+                onClick={() =>
+                  currentPageSurahId > 1 &&
+                  navigate(`/quran/${currentPageSurahId - 1}`)
+                }
                 disabled={currentPageSurahId <= 1}
                 className="h-8 w-8"
               >
                 <ChevronLeft className="w-5 h-5" />
               </Button>
 
-              <Select value={currentPageSurahId.toString()} onValueChange={handleSurahChange}>
+              <Select
+                value={currentPageSurahId.toString()}
+                onValueChange={handleSurahChange}
+              >
                 <SelectTrigger className="h-8 w-[130px] border-0 bg-secondary/60 hover:bg-secondary text-xs font-medium px-2">
-                  <span className="truncate">{currentPageSurah?.englishName}</span>
+                  <span className="truncate">
+                    {currentPageSurah?.englishName}
+                  </span>
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
                   {SURAHS.map((s) => (
                     <SelectItem key={s.id} value={s.id.toString()}>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground w-5">{s.id}</span>
+                        <span className="text-xs text-muted-foreground w-5">
+                          {s.id}
+                        </span>
                         <span className="text-sm">{s.englishName}</span>
                       </div>
                     </SelectItem>
@@ -349,7 +405,10 @@ export function GlobalAudioPlayer() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => currentPageSurahId < 114 && navigate(`/quran/${currentPageSurahId + 1}`)}
+                onClick={() =>
+                  currentPageSurahId < 114 &&
+                  navigate(`/quran/${currentPageSurahId + 1}`)
+                }
                 disabled={currentPageSurahId >= 114}
                 className="h-8 w-8"
               >
@@ -381,7 +440,9 @@ export function GlobalAudioPlayer() {
 
               {/* Play/Pause */}
               <Button
-                variant={isPlaying && isPlayingThisSurah ? "default" : "outline"}
+                variant={
+                  isPlaying && isPlayingThisSurah ? "default" : "outline"
+                }
                 size="icon"
                 className="h-10 w-10 rounded-full"
                 onClick={() => {
@@ -432,7 +493,7 @@ export function GlobalAudioPlayer() {
   if (isMinimized) {
     return (
       <DraggableBubble
-        surahName={surah?.englishName || 'Playing'}
+        surahName={surah?.englishName || "Playing"}
         currentAyah={currentAyahNumber}
         totalAyahs={totalAyahs}
         isPlaying={isPlaying}
@@ -453,7 +514,7 @@ export function GlobalAudioPlayer() {
         <div className="h-1 bg-secondary">
           <div
             className="h-full bg-primary transition-all duration-300"
-            style={{ width: `${progress}%` }}
+            style={{ width: `${audioProgress}%` }}
           />
         </div>
 
@@ -511,7 +572,7 @@ export function GlobalAudioPlayer() {
               size="icon"
               className={cn(
                 "h-14 w-14 rounded-full",
-                error && "bg-destructive hover:bg-destructive/90"
+                error && "bg-destructive hover:bg-destructive/90",
               )}
               onClick={handleTogglePlay}
               disabled={isLoading}
