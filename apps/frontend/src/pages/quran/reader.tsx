@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   BookMarked,
   Play,
@@ -10,6 +10,7 @@ import {
   Settings2,
   ArrowLeft,
   ChevronDown,
+  ChevronsDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -48,10 +49,12 @@ export default function SurahReaderPage() {
     pageId: string;
   }>();
 
+  const navigate = useNavigate();
   const surahId = parseInt(surahIdParam || "1", 10);
   const pageId = pageIdParam ? parseInt(pageIdParam, 10) : undefined;
 
   const surah = getSurahById(surahId);
+  const nextSurah = surahId < 114 ? getSurahById(surahId + 1) : null;
   const { settings, updateSettings } = useOfflineSettings();
   const { progress, updatePosition, recordAyahRead } =
     useOfflineReadingProgress();
@@ -97,6 +100,99 @@ export default function SurahReaderPage() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // ── Next surah on overscroll ──
+  const [overscrollProgress, setOverscrollProgress] = useState(0);
+  const overscrollTriggered = useRef(false);
+  const bottomSentinelRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top when surah changes (e.g. navigating to next surah)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [surahId]);
+
+  useEffect(() => {
+    if (!nextSurah) return;
+    overscrollTriggered.current = false;
+    setOverscrollProgress(0);
+  }, [surahId, nextSurah]);
+
+  useEffect(() => {
+    if (!nextSurah || readingMode === "mushaf") return;
+
+    let accumulatedScroll = 0;
+    let isAtBottom = false;
+    const THRESHOLD = 150; // px of overscroll before navigating
+
+    const checkBottom = () => {
+      const scrollBottom = window.scrollY + window.innerHeight;
+      const docHeight = document.documentElement.scrollHeight;
+      isAtBottom = scrollBottom >= docHeight - 2;
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      checkBottom();
+      if (!isAtBottom || e.deltaY <= 0 || overscrollTriggered.current) {
+        if (e.deltaY < 0) {
+          accumulatedScroll = 0;
+          setOverscrollProgress(0);
+        }
+        return;
+      }
+      accumulatedScroll += e.deltaY;
+      const progress = Math.min(accumulatedScroll / THRESHOLD, 1);
+      setOverscrollProgress(progress);
+      if (progress >= 1) {
+        overscrollTriggered.current = true;
+        navigate(`/quran/${surahId + 1}`);
+      }
+    };
+
+    let touchStartY = 0;
+    let touchAccumulated = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+      touchAccumulated = accumulatedScroll;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      checkBottom();
+      const deltaY = touchStartY - e.touches[0].clientY;
+      if (!isAtBottom || deltaY <= 0 || overscrollTriggered.current) {
+        if (deltaY < 0) {
+          accumulatedScroll = 0;
+          setOverscrollProgress(0);
+        }
+        return;
+      }
+      accumulatedScroll = touchAccumulated + deltaY;
+      const progress = Math.min(accumulatedScroll / THRESHOLD, 1);
+      setOverscrollProgress(progress);
+      if (progress >= 1) {
+        overscrollTriggered.current = true;
+        navigate(`/quran/${surahId + 1}`);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (!overscrollTriggered.current) {
+        accumulatedScroll = 0;
+        setOverscrollProgress(0);
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [nextSurah, surahId, readingMode, navigate]);
 
   // Load data from bundled offline source
   const { ayahs, translations } = useMemo(() => {
@@ -484,15 +580,54 @@ export default function SurahReaderPage() {
             })}
           </div>
 
-          {/* End of surah */}
+          {/* End of surah + next surah indicator */}
           <div
-            className="mx-auto text-center py-10"
+            className="mx-auto text-center pt-10 pb-16"
             style={{ maxWidth: `${settings.readingWidth}%` }}
           >
             <div className="mushaf-ornament-line mx-auto max-w-[160px] mb-3" />
             <p className="text-[11px] text-muted-foreground/40">
               End of {surah?.englishName || "Surah"}
             </p>
+
+            {nextSurah && (
+              <div ref={bottomSentinelRef} className="mt-8">
+                {/* Overscroll progress indicator */}
+                <div
+                  className="flex flex-col items-center gap-2 transition-opacity duration-200"
+                  style={{ opacity: overscrollProgress > 0 ? 1 : 0.5 }}
+                >
+                  <ChevronsDown
+                    className="w-5 h-5 text-muted-foreground/40 transition-transform duration-200"
+                    style={{
+                      transform: `translateY(${overscrollProgress * -4}px) scale(${1 + overscrollProgress * 0.2})`,
+                      opacity: 0.4 + overscrollProgress * 0.6,
+                    }}
+                  />
+                  <p className="text-[11px] text-muted-foreground/50">
+                    {overscrollProgress >= 1
+                      ? "Loading..."
+                      : "Keep scrolling for next surah"}
+                  </p>
+                  <p className="text-[13px] font-medium text-foreground/60 mt-0.5">
+                    <span className="arabic-text text-sm mr-1.5">
+                      {nextSurah.name}
+                    </span>
+                    {nextSurah.englishName}
+                  </p>
+
+                  {/* Progress bar */}
+                  {overscrollProgress > 0 && (
+                    <div className="w-20 h-1 rounded-full bg-border/50 overflow-hidden mt-1">
+                      <div
+                        className="h-full rounded-full bg-[hsl(var(--mushaf-active))] transition-all duration-100"
+                        style={{ width: `${overscrollProgress * 100}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
