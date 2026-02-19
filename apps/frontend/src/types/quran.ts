@@ -4,26 +4,26 @@
 
 export interface Surah {
   id: number;
-  name: string;                    // Arabic: الفاتحة
-  englishName: string;             // Al-Fatihah
-  englishNameTranslation: string;  // The Opening
+  name: string; // Arabic: الفاتحة
+  englishName: string; // Al-Fatihah
+  englishNameTranslation: string; // The Opening
   numberOfAyahs: number;
-  revelationType: 'Meccan' | 'Medinan';
+  revelationType: "Meccan" | "Medinan";
   startJuz: number;
   endJuz: number;
 }
 
 export interface Ayah {
-  id: number;                      // Unique ID (1-6236)
+  id: number; // Unique ID (1-6236)
   surahId: number;
   numberInSurah: number;
-  text: string;                    // Arabic text (Uthmani)
-  textSimple: string;              // Simplified Arabic
+  text: string; // Arabic text (Uthmani)
+  textSimple: string; // Simplified Arabic
   juz: number;
   hizb: number;
-  page: number;                    // Madani mushaf page
+  page: number; // Madani mushaf page
   sajdah: boolean;
-  sajdahType?: 'recommended' | 'obligatory';
+  sajdahType?: "recommended" | "obligatory";
 }
 
 export interface Translation {
@@ -35,7 +35,7 @@ export interface Translation {
 }
 
 export interface Juz {
-  id: number;                      // 1-30
+  id: number; // 1-30
   startSurah: number;
   startAyah: number;
   endSurah: number;
@@ -50,12 +50,12 @@ export interface Reciter {
   id: string;
   name: string;
   englishName: string;
-  style: string;                   // 'Murattal', 'Mujawwad'
+  style: string; // 'Murattal', 'Mujawwad'
   audioBaseUrl: string;
 }
 
 export interface DownloadedAudio {
-  id: string;                      // `${reciterId}_${surahId}`
+  id: string; // `${reciterId}_${surahId}`
   reciterId: string;
   surahId: number;
   blob: Blob;
@@ -68,10 +68,10 @@ export interface PlaybackState {
   currentSurah: number | null;
   currentAyah: number | null;
   reciterId: string;
-  playbackRate: number;            // 0.5 - 2.0
-  repeatMode: 'none' | 'ayah' | 'surah' | 'range';
+  playbackRate: number; // 0.5 - 2.0
+  repeatMode: "none" | "ayah" | "surah" | "range";
   repeatCount: number;
-  volume: number;                  // 0 - 1
+  volume: number; // 0 - 1
 }
 
 export interface DownloadProgress {
@@ -79,7 +79,7 @@ export interface DownloadProgress {
   reciterId: string;
   totalAyahs: number;
   downloadedAyahs: number;
-  status: 'pending' | 'downloading' | 'completed' | 'failed';
+  status: "pending" | "downloading" | "completed" | "failed";
   error?: string;
 }
 
@@ -88,18 +88,18 @@ export interface DownloadProgress {
 // =====================================
 
 export interface Bookmark {
-  clientId: string;                // UUID generated locally
+  clientId: string; // UUID generated locally
   surahId: number;
   ayahNumber: number;
   label?: string;
   color?: string;
   createdAt: number;
   updatedAt: number;
-  isDeleted: boolean;              // Soft delete for sync
-  convexId?: string;               // Convex _id once synced
+  isDeleted: boolean; // Soft delete for sync
+  convexId?: string; // Convex _id once synced
   version: number;
   isDirty: boolean;
-  pendingOperation?: 'create' | 'update' | 'delete';
+  pendingOperation?: "create" | "update" | "delete";
 }
 
 export interface ReadingPosition {
@@ -110,7 +110,7 @@ export interface ReadingPosition {
 }
 
 export interface ReadingProgress {
-  id: string;                      // 'current' for single record
+  id: string; // 'current' for single record
   lastSurahId: number;
   lastAyahNumber: number;
   lastScrollPosition?: number;
@@ -125,7 +125,7 @@ export interface ReadingProgress {
 }
 
 export interface ReadingHistory {
-  id: string;                      // Date string "YYYY-MM-DD"
+  id: string; // Date string "YYYY-MM-DD"
   ayahsRead: Array<{
     surahId: number;
     ayahNumber: number;
@@ -138,7 +138,11 @@ export interface ReadingHistory {
   isDirty: boolean;
 }
 
-export type MemorizationStatus = 'not_started' | 'learning' | 'memorized' | 'needs_revision';
+export type MemorizationStatus =
+  | "not_started"
+  | "learning"
+  | "memorized"
+  | "needs_revision";
 
 export interface SurahMemorization {
   surahId: number;
@@ -155,17 +159,35 @@ export interface SurahMemorization {
   isDirty: boolean;
 }
 
-export type ThemeMode = 'light' | 'dark' | 'system';
-export type ArabicFontFamily = 'amiri' | 'scheherazade' | 'uthmani';
-export type ReadingMode = 'scroll' | 'page';
+export type ThemeMode = "light" | "dark" | "system";
+export type ArabicFontFamily =
+  | "amiri"
+  | "scheherazade"
+  | "uthmani"
+  | "noto-naskh"
+  | "lateef"
+  | "noto-nastaliq"
+  | "aref-ruqaa"
+  | "reem-kufi"
+  | "marhey"
+  | "alkalami"
+  | "cairo"
+  | "tajawal";
+export type TextColorMode = "default" | "soft";
+export type ReadingMode = "scroll" | "page";
 
 export interface UserSettings {
-  id: string;                      // 'current' for single record
+  id: string; // 'current' for single record
   // Display
   theme: ThemeMode;
-  arabicFontSize: number;          // 18-48
+  arabicFontSize: number; // 18-48
   arabicFontFamily: ArabicFontFamily;
-  translationFontSize: number;     // 14-24
+  textColorMode: TextColorMode; // 'default' | 'soft' (light grey)
+  readingWidth: number; // 50-100 percentage of available width
+  lineHeight: number; // 1.6-3.4 line height multiplier
+  wordSpacing: number; // 0-20 in px
+  letterSpacing: number; // 0-10 in px
+  translationFontSize: number; // 14-24
   showTranslation: boolean;
   showTajweed: boolean;
   readingMode: ReadingMode;
@@ -181,7 +203,7 @@ export interface UserSettings {
 
   // Notifications
   dailyReminderEnabled: boolean;
-  dailyReminderTime: string;       // "HH:mm" format
+  dailyReminderTime: string; // "HH:mm" format
   revisionRemindersEnabled: boolean;
   streakRemindersEnabled: boolean;
 
@@ -199,10 +221,10 @@ export interface UserSettings {
 // Prayer Tracking Types
 // =====================================
 
-export type PrayerName = 'Fajr' | 'Dhuhr' | 'Asr' | 'Maghrib' | 'Isha';
+export type PrayerName = "Fajr" | "Dhuhr" | "Asr" | "Maghrib" | "Isha";
 
 export interface PrayerLog {
-  id: string;                      // Date string "YYYY-MM-DD"
+  id: string; // Date string "YYYY-MM-DD"
   prayers: {
     Fajr: { completed: boolean; completedAt?: number };
     Dhuhr: { completed: boolean; completedAt?: number };
@@ -216,7 +238,7 @@ export interface PrayerLog {
 }
 
 export interface CachedPrayerTimes {
-  id: string;                      // Date string "YYYY-MM-DD"
+  id: string; // Date string "YYYY-MM-DD"
   times: {
     Fajr: string;
     Sunrise: string;
@@ -238,11 +260,16 @@ export interface CachedPrayerTimes {
 // Sync Types
 // =====================================
 
-export type SyncOperation = 'create' | 'update' | 'delete';
-export type SyncEntity = 'settings' | 'readingProgress' | 'bookmark' | 'memorization' | 'readingHistory';
+export type SyncOperation = "create" | "update" | "delete";
+export type SyncEntity =
+  | "settings"
+  | "readingProgress"
+  | "bookmark"
+  | "memorization"
+  | "readingHistory";
 
 export interface SyncQueueItem {
-  id: string;                      // UUID
+  id: string; // UUID
   entity: SyncEntity;
   entityId: string;
   operation: SyncOperation;
@@ -250,7 +277,7 @@ export interface SyncQueueItem {
   timestamp: number;
   retryCount: number;
   lastError?: string;
-  status: 'pending' | 'syncing' | 'failed';
+  status: "pending" | "syncing" | "failed";
 }
 
 // =====================================

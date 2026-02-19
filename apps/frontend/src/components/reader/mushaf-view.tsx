@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import { Bookmark, BookMarked } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getFontStyle } from "@/components/reader/reading-settings-sheet";
 import {
   getPageGroupedBySurah,
   getVersePageNumber,
@@ -16,6 +17,11 @@ interface MushafViewProps {
   startPage?: number;
   arabicFontSize: number;
   arabicFontFamily: string;
+  textColorMode?: string;
+  readingWidth?: number;
+  lineHeight?: number;
+  wordSpacing?: number;
+  letterSpacing?: number;
   currentPlayingAyah: number | null;
   playingSurahId: number | null;
   onAyahVisible: (surahId: number, ayahNumber: number) => void;
@@ -174,6 +180,10 @@ function MushafPage({
   pageNumber,
   arabicFontSize,
   arabicFontFamily,
+  textColorMode,
+  lineHeight: lineHeightOverride,
+  wordSpacing: wordSpacingOverride,
+  letterSpacing: letterSpacingOverride,
   currentPlayingAyah,
   playingSurahId,
   onAyahVisible,
@@ -183,6 +193,10 @@ function MushafPage({
   pageNumber: number;
   arabicFontSize: number;
   arabicFontFamily: string;
+  textColorMode?: string;
+  lineHeight?: number;
+  wordSpacing?: number;
+  letterSpacing?: number;
   currentPlayingAyah: number | null;
   playingSurahId: number | null;
   onAyahVisible: (surahId: number, ayahNumber: number) => void;
@@ -241,7 +255,8 @@ function MushafPage({
     else verseRefs.current.delete(key);
   }, []);
 
-  const lineHeight = Math.max(2.2, 2.6 - (arabicFontSize - 24) * 0.015);
+  const lineHeightDefault = Math.max(2.2, 2.6 - (arabicFontSize - 24) * 0.015);
+  const lineHeight = lineHeightOverride ?? lineHeightDefault;
 
   return (
     <div ref={pageRef} data-page={pageNumber}>
@@ -266,15 +281,22 @@ function MushafPage({
             {/* Continuous Arabic text */}
             <div
               className={cn(
-                "arabic-text text-justify text-[hsl(var(--mushaf-text))]",
-                arabicFontFamily === "scheherazade" && "arabic-scheherazade",
-                arabicFontFamily === "uthmani" && "arabic-uthmani",
-                arabicFontFamily === "amiri" && "arabic-amiri",
+                "arabic-text text-justify",
+                textColorMode === "soft"
+                  ? "text-[hsl(var(--mushaf-text-soft))]"
+                  : "text-[hsl(var(--mushaf-text))]",
               )}
               style={{
                 fontSize: `${arabicFontSize}px`,
                 lineHeight,
-                wordSpacing: "0.12em",
+                wordSpacing:
+                  wordSpacingOverride != null
+                    ? `${wordSpacingOverride}px`
+                    : "0.12em",
+                letterSpacing: letterSpacingOverride
+                  ? `${letterSpacingOverride}px`
+                  : undefined,
+                ...getFontStyle(arabicFontFamily as any),
               }}
             >
               {group.verses.map((v) => {
@@ -335,6 +357,11 @@ export function MushafView({
   startPage,
   arabicFontSize,
   arabicFontFamily,
+  textColorMode,
+  readingWidth,
+  lineHeight: lineHeightProp,
+  wordSpacing: wordSpacingProp,
+  letterSpacing: letterSpacingProp,
   currentPlayingAyah,
   playingSurahId,
   onAyahVisible,
@@ -392,13 +419,20 @@ export function MushafView({
   );
 
   return (
-    <div className="mushaf-container px-1 sm:px-3 md:px-4 py-2 sm:py-3 pb-24">
+    <div
+      className="mushaf-container px-1 sm:px-3 md:px-4 py-2 sm:py-3 pb-24"
+      style={readingWidth ? { maxWidth: `${readingWidth}%` } : undefined}
+    >
       {visiblePages.map((pageNum) => (
         <MushafPage
           key={pageNum}
           pageNumber={pageNum}
           arabicFontSize={arabicFontSize}
           arabicFontFamily={arabicFontFamily}
+          textColorMode={textColorMode}
+          lineHeight={lineHeightProp}
+          wordSpacing={wordSpacingProp}
+          letterSpacing={letterSpacingProp}
           currentPlayingAyah={currentPlayingAyah}
           playingSurahId={playingSurahId}
           onAyahVisible={onAyahVisible}

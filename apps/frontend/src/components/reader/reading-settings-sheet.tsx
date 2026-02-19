@@ -7,6 +7,8 @@ import {
   SkipForward,
   Eye,
   ALargeSmall,
+  Palette,
+  MoveHorizontal,
 } from "lucide-react";
 import {
   Button,
@@ -21,18 +23,53 @@ import {
 } from "@template/ui";
 import { useOfflineSettings } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
-import type { ArabicFontFamily } from "@/types/quran";
+import type { ArabicFontFamily, TextColorMode } from "@/types/quran";
 
 interface ReadingSettingsSheetProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const fontFamilies: { id: ArabicFontFamily; name: string; sample: string }[] = [
-  { id: "uthmani", name: "Uthmani", sample: "Amiri Quran" },
-  { id: "scheherazade", name: "Scheherazade", sample: "Scheherazade New" },
-  { id: "amiri", name: "Amiri", sample: "Amiri" },
+const fontFamilies: { id: ArabicFontFamily; name: string }[] = [
+  { id: "uthmani", name: "Uthmani" },
+  { id: "scheherazade", name: "Scheherazade" },
+  { id: "amiri", name: "Amiri" },
+  { id: "noto-naskh", name: "Noto Naskh" },
+  { id: "lateef", name: "Lateef" },
+  { id: "noto-nastaliq", name: "Nastaliq" },
+  { id: "aref-ruqaa", name: "Aref Ruqaa" },
+  { id: "reem-kufi", name: "Reem Kufi" },
+  { id: "marhey", name: "Marhey" },
+  { id: "alkalami", name: "Alkalami" },
+  { id: "cairo", name: "Cairo" },
+  { id: "tajawal", name: "Tajawal" },
 ];
+
+/** Maps font family id to the actual CSS font-family value */
+export const FONT_FAMILY_MAP: Record<ArabicFontFamily, string> = {
+  uthmani: '"Amiri Quran", serif',
+  scheherazade: '"Scheherazade New", serif',
+  amiri: '"Amiri", serif',
+  "noto-naskh": '"Noto Naskh Arabic", serif',
+  lateef: '"Lateef", serif',
+  "noto-nastaliq": '"Noto Nastaliq Urdu", serif',
+  "aref-ruqaa": '"Aref Ruqaa", serif',
+  "reem-kufi": '"Reem Kufi", sans-serif',
+  marhey: '"Marhey", sans-serif',
+  alkalami: '"Alkalami", serif',
+  cairo: '"Cairo", sans-serif',
+  tajawal: '"Tajawal", sans-serif',
+};
+
+/** Returns the CSS class for a given font family id (kept for backward compat) */
+export function getFontClass(id: ArabicFontFamily): string {
+  return `arabic-${id}`;
+}
+
+/** Returns inline style object for a given font family */
+export function getFontStyle(id: ArabicFontFamily): React.CSSProperties {
+  return { fontFamily: FONT_FAMILY_MAP[id] };
+}
 
 export function ReadingSettingsSheet({
   isOpen,
@@ -128,15 +165,15 @@ export function ReadingSettingsSheet({
       <div
         ref={sheetRef}
         className={cn(
-          "fixed bottom-0 left-1/2 z-50",
+          "fixed bottom-0 left-0 right-0 z-50 mx-auto",
           "w-full max-w-lg",
           "bg-background rounded-t-2xl shadow-2xl shadow-black/20",
           "max-h-[80vh] flex flex-col",
-          !isDragging && "transition-all duration-300 ease-out",
+          !isDragging && "transition-transform duration-300 ease-out",
           "animate-in slide-in-from-bottom duration-300",
         )}
         style={{
-          transform: `translateX(-50%) translateY(${dragOffset}px)`,
+          transform: `translateY(${dragOffset}px)`,
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -188,14 +225,11 @@ export function ReadingSettingsSheet({
             {/* Live preview */}
             <div className="mt-3 p-3 rounded-xl bg-secondary/30 border border-border/30">
               <p
-                className={cn(
-                  "arabic-text text-center",
-                  settings.arabicFontFamily === "scheherazade" &&
-                    "arabic-scheherazade",
-                  settings.arabicFontFamily === "uthmani" && "arabic-uthmani",
-                  settings.arabicFontFamily === "amiri" && "arabic-amiri",
-                )}
-                style={{ fontSize: settings.arabicFontSize }}
+                className="arabic-text text-center"
+                style={{
+                  fontSize: settings.arabicFontSize,
+                  ...getFontStyle(settings.arabicFontFamily),
+                }}
               >
                 بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
               </p>
@@ -207,13 +241,13 @@ export function ReadingSettingsSheet({
             icon={<Type className="w-4 h-4" />}
             label="Arabic Font"
           >
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2 max-h-[200px] overflow-y-auto overscroll-contain pr-1">
               {fontFamilies.map(({ id, name }) => (
                 <button
                   key={id}
                   onClick={() => updateSettings({ arabicFontFamily: id })}
                   className={cn(
-                    "px-3 py-2.5 rounded-xl text-center transition-all duration-200",
+                    "px-2 py-2 rounded-xl text-center transition-all duration-200",
                     "border",
                     settings.arabicFontFamily === id
                       ? "bg-[hsl(var(--mushaf-active))]/10 border-[hsl(var(--mushaf-active))]/30 text-[hsl(var(--mushaf-active))]"
@@ -221,18 +255,177 @@ export function ReadingSettingsSheet({
                   )}
                 >
                   <span
-                    className={cn(
-                      "arabic-text block text-base leading-tight mb-0.5",
-                      id === "scheherazade" && "arabic-scheherazade",
-                      id === "uthmani" && "arabic-uthmani",
-                      id === "amiri" && "arabic-amiri",
-                    )}
+                    className="arabic-text block text-base leading-tight mb-0.5"
+                    style={getFontStyle(id)}
                   >
                     بسم
                   </span>
                   <span className="text-[10px] font-medium">{name}</span>
                 </button>
               ))}
+            </div>
+          </SettingSection>
+
+          {/* ── Text Color Mode ── */}
+          <SettingSection
+            icon={<Palette className="w-4 h-4" />}
+            label="Text Brightness"
+          >
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                {
+                  id: "default" as TextColorMode,
+                  label: "Default",
+                  desc: "Full brightness",
+                },
+                {
+                  id: "soft" as TextColorMode,
+                  label: "Soft",
+                  desc: "Light grey, easier on eyes",
+                },
+              ].map(({ id, label, desc }) => (
+                <button
+                  key={id}
+                  onClick={() => updateSettings({ textColorMode: id })}
+                  className={cn(
+                    "px-3 py-2.5 rounded-xl text-center transition-all duration-200",
+                    "border",
+                    settings.textColorMode === id
+                      ? "bg-[hsl(var(--mushaf-active))]/10 border-[hsl(var(--mushaf-active))]/30 text-[hsl(var(--mushaf-active))]"
+                      : "bg-secondary/30 border-border/30 text-muted-foreground hover:bg-secondary/60",
+                  )}
+                >
+                  <span className="text-xs font-medium block">{label}</span>
+                  <span className="text-[10px] text-muted-foreground/60 block mt-0.5">
+                    {desc}
+                  </span>
+                </button>
+              ))}
+            </div>
+            {/* Preview */}
+            <div className="mt-3 p-3 rounded-xl bg-secondary/30 border border-border/30">
+              <p
+                className={cn(
+                  "arabic-text text-center",
+                  settings.textColorMode === "soft"
+                    ? "text-[hsl(var(--text-soft))]"
+                    : "",
+                )}
+                style={{
+                  fontSize: Math.min(settings.arabicFontSize, 28),
+                  ...getFontStyle(settings.arabicFontFamily),
+                }}
+              >
+                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+              </p>
+            </div>
+          </SettingSection>
+
+          {/* ── Layout & Spacing ── */}
+          <SettingSection
+            icon={<MoveHorizontal className="w-4 h-4" />}
+            label="Layout & Spacing"
+          >
+            <div className="space-y-4">
+              {/* Reading Width */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] text-muted-foreground/70">
+                    Reading Width
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/50 tabular-nums">
+                    {settings.readingWidth}%
+                  </span>
+                </div>
+                <Slider
+                  value={[settings.readingWidth]}
+                  onValueChange={(v: number[]) =>
+                    updateSettings({ readingWidth: v[0] })
+                  }
+                  min={50}
+                  max={100}
+                  step={5}
+                />
+              </div>
+
+              {/* Line Height */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] text-muted-foreground/70">
+                    Line Height
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/50 tabular-nums">
+                    {settings.lineHeight.toFixed(1)}
+                  </span>
+                </div>
+                <Slider
+                  value={[settings.lineHeight * 10]}
+                  onValueChange={(v: number[]) =>
+                    updateSettings({ lineHeight: v[0] / 10 })
+                  }
+                  min={16}
+                  max={34}
+                  step={1}
+                />
+              </div>
+
+              {/* Word Spacing */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] text-muted-foreground/70">
+                    Word Spacing
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/50 tabular-nums">
+                    {settings.wordSpacing}px
+                  </span>
+                </div>
+                <Slider
+                  value={[settings.wordSpacing]}
+                  onValueChange={(v: number[]) =>
+                    updateSettings({ wordSpacing: v[0] })
+                  }
+                  min={0}
+                  max={20}
+                  step={1}
+                />
+              </div>
+
+              {/* Letter Spacing */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] text-muted-foreground/70">
+                    Letter Spacing
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/50 tabular-nums">
+                    {settings.letterSpacing}px
+                  </span>
+                </div>
+                <Slider
+                  value={[settings.letterSpacing]}
+                  onValueChange={(v: number[]) =>
+                    updateSettings({ letterSpacing: v[0] })
+                  }
+                  min={0}
+                  max={10}
+                  step={1}
+                />
+              </div>
+            </div>
+
+            {/* Live preview */}
+            <div className="mt-3 p-3 rounded-xl bg-secondary/30 border border-border/30">
+              <p
+                className="arabic-text text-center"
+                style={{
+                  fontSize: Math.min(settings.arabicFontSize, 26),
+                  lineHeight: settings.lineHeight,
+                  wordSpacing: `${settings.wordSpacing}px`,
+                  letterSpacing: `${settings.letterSpacing}px`,
+                  ...getFontStyle(settings.arabicFontFamily),
+                }}
+              >
+                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+              </p>
             </div>
           </SettingSection>
 

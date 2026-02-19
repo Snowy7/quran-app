@@ -1,16 +1,16 @@
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, DEFAULT_SETTINGS } from '@/lib/db';
-import type { UserSettings } from '@/types/quran';
+import { useLiveQuery } from "dexie-react-hooks";
+import { db, DEFAULT_SETTINGS } from "@/lib/db";
+import type { UserSettings } from "@/types/quran";
 
 export function useOfflineSettings() {
   const settings = useLiveQuery(
-    () => db.settings.get('current'),
+    () => db.settings.get("current"),
     [],
-    DEFAULT_SETTINGS
+    DEFAULT_SETTINGS,
   );
 
   const updateSettings = async (updates: Partial<UserSettings>) => {
-    const current = await db.settings.get('current');
+    const current = await db.settings.get("current");
     const updated: UserSettings = {
       ...(current || DEFAULT_SETTINGS),
       ...updates,
@@ -21,8 +21,11 @@ export function useOfflineSettings() {
     return updated;
   };
 
+  // Merge with defaults so new fields are always present for existing users
+  const mergedSettings = { ...DEFAULT_SETTINGS, ...(settings || {}) };
+
   return {
-    settings: settings || DEFAULT_SETTINGS,
+    settings: mergedSettings,
     updateSettings,
     isLoading: settings === undefined,
   };

@@ -1,4 +1,4 @@
-import Dexie, { type Table } from 'dexie';
+import Dexie, { type Table } from "dexie";
 import type {
   Surah,
   Ayah,
@@ -16,7 +16,7 @@ import type {
   Reciter,
   PrayerLog,
   CachedPrayerTimes,
-} from '@/types/quran';
+} from "@/types/quran";
 
 // =====================================
 // Database Class
@@ -50,59 +50,61 @@ export class NoorDatabase extends Dexie {
   syncQueue!: Table<SyncQueueItem, string>;
 
   constructor() {
-    super('NoorQuranDB');
+    super("NoorQuranDB");
 
     this.version(1).stores({
       // Quran Data - indexed for fast lookups
-      surahs: 'id, revelationType',
-      ayahs: 'id, surahId, [surahId+numberInSurah], juz, page',
-      translations: '[ayahId+translatorId], ayahId, translatorId',
-      juzs: 'id',
-      cachedSurahData: 'surahId',
-      cachedTranslations: '[translatorId+surahId]',
+      surahs: "id, revelationType",
+      ayahs: "id, surahId, [surahId+numberInSurah], juz, page",
+      translations: "[ayahId+translatorId], ayahId, translatorId",
+      juzs: "id",
+      cachedSurahData: "surahId",
+      cachedTranslations: "[translatorId+surahId]",
 
       // Audio
-      reciters: 'id',
-      downloadedAudio: 'id, reciterId, surahId, [reciterId+surahId]',
+      reciters: "id",
+      downloadedAudio: "id, reciterId, surahId, [reciterId+surahId]",
 
       // User Data
-      bookmarks: 'clientId, [surahId+ayahNumber], createdAt, isDeleted, isDirty',
-      readingProgress: 'id',
-      readingHistory: 'id, updatedAt',
-      memorization: 'surahId, status, nextRevisionAt',
-      settings: 'id',
+      bookmarks:
+        "clientId, [surahId+ayahNumber], createdAt, isDeleted, isDirty",
+      readingProgress: "id",
+      readingHistory: "id, updatedAt",
+      memorization: "surahId, status, nextRevisionAt",
+      settings: "id",
 
       // Sync
-      syncQueue: 'id, entity, status, timestamp',
+      syncQueue: "id, entity, status, timestamp",
     });
 
     // Version 2: Add prayer tracking
     this.version(2).stores({
       // Quran Data - indexed for fast lookups
-      surahs: 'id, revelationType',
-      ayahs: 'id, surahId, [surahId+numberInSurah], juz, page',
-      translations: '[ayahId+translatorId], ayahId, translatorId',
-      juzs: 'id',
-      cachedSurahData: 'surahId',
-      cachedTranslations: '[translatorId+surahId]',
+      surahs: "id, revelationType",
+      ayahs: "id, surahId, [surahId+numberInSurah], juz, page",
+      translations: "[ayahId+translatorId], ayahId, translatorId",
+      juzs: "id",
+      cachedSurahData: "surahId",
+      cachedTranslations: "[translatorId+surahId]",
 
       // Audio
-      reciters: 'id',
-      downloadedAudio: 'id, reciterId, surahId, [reciterId+surahId]',
+      reciters: "id",
+      downloadedAudio: "id, reciterId, surahId, [reciterId+surahId]",
 
       // User Data
-      bookmarks: 'clientId, [surahId+ayahNumber], createdAt, isDeleted, isDirty',
-      readingProgress: 'id',
-      readingHistory: 'id, updatedAt',
-      memorization: 'surahId, status, nextRevisionAt',
-      settings: 'id',
+      bookmarks:
+        "clientId, [surahId+ayahNumber], createdAt, isDeleted, isDirty",
+      readingProgress: "id",
+      readingHistory: "id, updatedAt",
+      memorization: "surahId, status, nextRevisionAt",
+      settings: "id",
 
       // Prayer Tracking
-      prayerLogs: 'id, updatedAt',
-      cachedPrayerTimes: 'id',
+      prayerLogs: "id, updatedAt",
+      cachedPrayerTimes: "id",
 
       // Sync
-      syncQueue: 'id, entity, status, timestamp',
+      syncQueue: "id, entity, status, timestamp",
     });
   }
 }
@@ -118,21 +120,26 @@ export const db = new NoorDatabase();
 // =====================================
 
 export const DEFAULT_SETTINGS: UserSettings = {
-  id: 'current',
-  theme: 'system',
+  id: "current",
+  theme: "system",
   arabicFontSize: 28,
-  arabicFontFamily: 'uthmani',
+  arabicFontFamily: "uthmani",
+  textColorMode: "default",
+  readingWidth: 70,
+  lineHeight: 2.4,
+  wordSpacing: 2,
+  letterSpacing: 0,
   translationFontSize: 16,
   showTranslation: true,
   showTajweed: false,
-  readingMode: 'scroll',
-  defaultReciterId: 'Alafasy_128kbps',
+  readingMode: "scroll",
+  defaultReciterId: "Alafasy_128kbps",
   playbackSpeed: 1.0,
   autoPlayNext: true,
-  primaryTranslation: 'en.sahih',
+  primaryTranslation: "en.sahih",
   secondaryTranslation: undefined,
   dailyReminderEnabled: false,
-  dailyReminderTime: '06:00',
+  dailyReminderTime: "06:00",
   revisionRemindersEnabled: false,
   streakRemindersEnabled: false,
   dailyAyahGoal: 10,
@@ -143,7 +150,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
 };
 
 export const DEFAULT_READING_PROGRESS: ReadingProgress = {
-  id: 'current',
+  id: "current",
   lastSurahId: 1,
   lastAyahNumber: 1,
   lastScrollPosition: 0,
@@ -164,13 +171,13 @@ export const DEFAULT_READING_PROGRESS: ReadingProgress = {
 export async function initializeDatabase(): Promise<void> {
   try {
     // Ensure settings exist
-    const settings = await db.settings.get('current');
+    const settings = await db.settings.get("current");
     if (!settings) {
       await db.settings.put(DEFAULT_SETTINGS);
     }
 
     // Ensure reading progress exists
-    const progress = await db.readingProgress.get('current');
+    const progress = await db.readingProgress.get("current");
     if (!progress) {
       await db.readingProgress.put(DEFAULT_READING_PROGRESS);
     }
@@ -181,9 +188,9 @@ export async function initializeDatabase(): Promise<void> {
       await db.reciters.bulkPut(DEFAULT_RECITERS);
     }
 
-    console.log('[NoorDB] Database initialized successfully');
+    console.log("[NoorDB] Database initialized successfully");
   } catch (error) {
-    console.error('[NoorDB] Failed to initialize database:', error);
+    console.error("[NoorDB] Failed to initialize database:", error);
     throw error;
   }
 }
@@ -194,39 +201,39 @@ export async function initializeDatabase(): Promise<void> {
 
 export const DEFAULT_RECITERS: Reciter[] = [
   {
-    id: 'Alafasy_128kbps',
-    name: 'مشاري راشد العفاسي',
-    englishName: 'Mishary Rashid Alafasy',
-    style: 'Murattal',
-    audioBaseUrl: 'https://everyayah.com/data/Alafasy_128kbps',
+    id: "Alafasy_128kbps",
+    name: "مشاري راشد العفاسي",
+    englishName: "Mishary Rashid Alafasy",
+    style: "Murattal",
+    audioBaseUrl: "https://everyayah.com/data/Alafasy_128kbps",
   },
   {
-    id: 'Abdul_Basit_Murattal_192kbps',
-    name: 'عبد الباسط عبد الصمد',
-    englishName: 'Abdul Basit Abdul Samad',
-    style: 'Murattal',
-    audioBaseUrl: 'https://everyayah.com/data/Abdul_Basit_Murattal_192kbps',
+    id: "Abdul_Basit_Murattal_192kbps",
+    name: "عبد الباسط عبد الصمد",
+    englishName: "Abdul Basit Abdul Samad",
+    style: "Murattal",
+    audioBaseUrl: "https://everyayah.com/data/Abdul_Basit_Murattal_192kbps",
   },
   {
-    id: 'Husary_128kbps',
-    name: 'محمود خليل الحصري',
-    englishName: 'Mahmoud Khalil Al-Husary',
-    style: 'Murattal',
-    audioBaseUrl: 'https://everyayah.com/data/Husary_128kbps',
+    id: "Husary_128kbps",
+    name: "محمود خليل الحصري",
+    englishName: "Mahmoud Khalil Al-Husary",
+    style: "Murattal",
+    audioBaseUrl: "https://everyayah.com/data/Husary_128kbps",
   },
   {
-    id: 'Minshawy_Murattal_128kbps',
-    name: 'محمد صديق المنشاوي',
-    englishName: 'Mohamed Siddiq El-Minshawi',
-    style: 'Murattal',
-    audioBaseUrl: 'https://everyayah.com/data/Minshawy_Murattal_128kbps',
+    id: "Minshawy_Murattal_128kbps",
+    name: "محمد صديق المنشاوي",
+    englishName: "Mohamed Siddiq El-Minshawi",
+    style: "Murattal",
+    audioBaseUrl: "https://everyayah.com/data/Minshawy_Murattal_128kbps",
   },
   {
-    id: 'Saood_ash-Shuraym_128kbps',
-    name: 'سعود الشريم',
-    englishName: 'Saud Al-Shuraim',
-    style: 'Murattal',
-    audioBaseUrl: 'https://everyayah.com/data/Saood_ash-Shuraym_128kbps',
+    id: "Saood_ash-Shuraym_128kbps",
+    name: "سعود الشريم",
+    englishName: "Saud Al-Shuraim",
+    style: "Murattal",
+    audioBaseUrl: "https://everyayah.com/data/Saood_ash-Shuraym_128kbps",
   },
 ];
 
@@ -239,5 +246,5 @@ export function generateClientId(): string {
 }
 
 export function getTodayDateString(): string {
-  return new Date().toISOString().split('T')[0];
+  return new Date().toISOString().split("T")[0];
 }

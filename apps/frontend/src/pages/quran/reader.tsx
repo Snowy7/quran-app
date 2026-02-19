@@ -32,7 +32,10 @@ import {
   getVersePageNumber,
   getVerseMeta,
 } from "@/data/quran-data";
-import { ReadingSettingsSheet } from "@/components/reader/reading-settings-sheet";
+import {
+  ReadingSettingsSheet,
+  getFontStyle,
+} from "@/components/reader/reading-settings-sheet";
 import { MushafView } from "@/components/reader/mushaf-view";
 import type { Ayah, Translation } from "@/types/quran";
 import { cn } from "@/lib/utils";
@@ -376,6 +379,11 @@ export default function SurahReaderPage() {
           startPage={pageId}
           arabicFontSize={settings.arabicFontSize}
           arabicFontFamily={settings.arabicFontFamily}
+          textColorMode={settings.textColorMode}
+          readingWidth={settings.readingWidth}
+          lineHeight={settings.lineHeight}
+          wordSpacing={settings.wordSpacing}
+          letterSpacing={settings.letterSpacing}
           currentPlayingAyah={currentPlayingAyahNumber}
           playingSurahId={isCurrentSurahPlaying ? surahId : null}
           onAyahVisible={handleMushafAyahVisible}
@@ -386,7 +394,10 @@ export default function SurahReaderPage() {
         <div className="pb-24">
           {/* ── Surah Opening Card ── */}
           {surah && (
-            <div className="max-w-2xl mx-auto px-4 pt-4 pb-2">
+            <div
+              className="mx-auto px-6 sm:px-10 pt-4 pb-2"
+              style={{ maxWidth: `${settings.readingWidth}%` }}
+            >
               <div className="relative overflow-hidden rounded-2xl">
                 {/* Background gradient */}
                 <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--mushaf-ornament)/0.08)] via-[hsl(var(--mushaf-ornament)/0.12)] to-[hsl(var(--mushaf-ornament)/0.06)]" />
@@ -427,15 +438,10 @@ export default function SurahReaderPage() {
                   {/* Bismillah */}
                   {surahId !== SURAH_WITHOUT_BISMILLAH && surahId !== 1 && (
                     <p
-                      className={cn(
-                        "arabic-text mt-5 text-foreground/75",
-                        settings.arabicFontFamily === "scheherazade" &&
-                          "arabic-scheherazade",
-                        settings.arabicFontFamily === "uthmani" &&
-                          "arabic-uthmani",
-                      )}
+                      className="arabic-text mt-5 text-foreground/75"
                       style={{
                         fontSize: `${settings.arabicFontSize * 0.8}px`,
+                        ...getFontStyle(settings.arabicFontFamily),
                       }}
                     >
                       {BISMILLAH}
@@ -447,7 +453,10 @@ export default function SurahReaderPage() {
           )}
 
           {/* ── Verse List ── */}
-          <div className="max-w-2xl mx-auto">
+          <div
+            className="mx-auto"
+            style={{ maxWidth: `${settings.readingWidth}%` }}
+          >
             {ayahs.map((ayah, index) => {
               const isThisAyahPlaying =
                 isCurrentSurahPlaying &&
@@ -476,7 +485,10 @@ export default function SurahReaderPage() {
           </div>
 
           {/* End of surah */}
-          <div className="max-w-2xl mx-auto text-center py-10">
+          <div
+            className="mx-auto text-center py-10"
+            style={{ maxWidth: `${settings.readingWidth}%` }}
+          >
             <div className="mushaf-ornament-line mx-auto max-w-[160px] mb-3" />
             <p className="text-[11px] text-muted-foreground/40">
               End of {surah?.englishName || "Surah"}
@@ -578,7 +590,7 @@ function AyahCard({
     <div
       ref={cardRef}
       className={cn(
-        "group relative px-5 sm:px-6",
+        "group relative px-6 sm:px-10",
         "transition-colors duration-300",
         isCurrentAyah && "bg-[hsl(var(--mushaf-highlight))]",
       )}
@@ -685,13 +697,16 @@ function AyahCard({
         {/* ── Arabic Text ── */}
         <p
           className={cn(
-            "arabic-text leading-[2.4] mb-1",
-            settings.arabicFontFamily === "scheherazade" &&
-              "arabic-scheherazade",
-            settings.arabicFontFamily === "uthmani" && "arabic-uthmani",
-            settings.arabicFontFamily === "amiri" && "arabic-amiri",
+            "arabic-text mb-1",
+            settings.textColorMode === "soft" && "text-[hsl(var(--text-soft))]",
           )}
-          style={{ fontSize: `${fontSize}px` }}
+          style={{
+            fontSize: `${fontSize}px`,
+            lineHeight: settings.lineHeight || 2.4,
+            wordSpacing: `${settings.wordSpacing || 0}px`,
+            letterSpacing: `${settings.letterSpacing || 0}px`,
+            ...getFontStyle(settings.arabicFontFamily),
+          }}
         >
           {ayah.text}
         </p>
