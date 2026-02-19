@@ -156,7 +156,7 @@ export function ReadingSettingsSheet({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-200"
+        className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity duration-200"
         style={{ opacity: Math.max(0, 1 - dragOffset / 400) }}
         onClick={onClose}
       />
@@ -165,7 +165,7 @@ export function ReadingSettingsSheet({
       <div
         ref={sheetRef}
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 mx-auto",
+          "fixed bottom-0 left-0 right-0 z-[70] mx-auto",
           "w-full max-w-lg",
           "bg-background rounded-t-2xl shadow-2xl shadow-black/20",
           "max-h-[80vh] flex flex-col",

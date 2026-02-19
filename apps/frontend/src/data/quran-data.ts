@@ -154,7 +154,7 @@ export function getPageGroupedBySurah(pageNumber: number): Array<{
       const meta = quranMeta.chapters.find((c) => c.chapter === pv.chapter);
       currentGroup = {
         surahId: pv.chapter,
-        surahName: meta?.englishname || `Surah ${pv.chapter}`,
+        surahName: meta?.name || `Surah ${pv.chapter}`,
         surahArabicName: meta?.arabicname || "",
         verses: [],
       };

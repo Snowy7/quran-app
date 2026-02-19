@@ -118,11 +118,11 @@ export default function SurahReaderPage() {
   }, [surahId, nextSurah]);
 
   useEffect(() => {
-    if (!nextSurah || readingMode === "mushaf") return;
+    if (!nextSurah) return;
 
     let accumulatedScroll = 0;
     let isAtBottom = false;
-    const THRESHOLD = 150; // px of overscroll before navigating
+    const THRESHOLD = 400; // px of overscroll before navigating
 
     const checkBottom = () => {
       const scrollBottom = window.scrollY + window.innerHeight;
@@ -192,7 +192,7 @@ export default function SurahReaderPage() {
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [nextSurah, surahId, readingMode, navigate]);
+  }, [nextSurah, surahId, navigate]);
 
   // Load data from bundled offline source
   const { ayahs, translations } = useMemo(() => {
@@ -386,51 +386,59 @@ export default function SurahReaderPage() {
             : "-translate-y-full opacity-0",
         )}
       >
-        <div className="bg-background/80 backdrop-blur-2xl border-b border-border/40">
-          <div className="flex items-center justify-between h-12 px-2 max-w-3xl mx-auto">
+        <div className="relative overflow-hidden">
+          {/* Ornamental background */}
+          <div className="absolute inset-0 bg-background/85 backdrop-blur-2xl" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--mushaf-ornament)/0.04)] via-[hsl(var(--mushaf-ornament)/0.07)] to-[hsl(var(--mushaf-ornament)/0.04)]" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--mushaf-ornament)/0.2)] to-transparent" />
+
+          <div className="relative z-10 flex items-center justify-between h-12 px-2 max-w-3xl mx-auto">
             {/* Left — back button */}
             <Link
               to="/quran"
-              className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-secondary/80 transition-colors shrink-0"
+              className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-[hsl(var(--mushaf-ornament)/0.08)] transition-colors shrink-0"
             >
-              <ArrowLeft className="w-[18px] h-[18px]" />
+              <ArrowLeft className="w-[18px] h-[18px] text-foreground/70" />
             </Link>
 
-            {/* Center — surah info, tappable area */}
+            {/* Center — surah info with ornamental flanks */}
             <button
-              className="flex flex-col items-center justify-center min-w-0 px-3 py-1 rounded-xl hover:bg-secondary/50 transition-colors"
+              className="flex items-center gap-3 min-w-0 px-3 py-1 rounded-xl hover:bg-[hsl(var(--mushaf-ornament)/0.06)] transition-colors"
               onClick={() => {
-                // Scroll to top
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <div className="flex items-center gap-1.5">
-                <span className="arabic-text text-sm leading-none">
-                  {surah?.name || ""}
-                </span>
-                <span className="text-[11px] font-semibold text-foreground/90 truncate max-w-[120px]">
-                  {surah?.englishName || (pageId ? `Page ${pageId}` : "")}
-                </span>
+              <div className="hidden sm:block flex-shrink-0 w-8 h-px bg-gradient-to-r from-transparent to-[hsl(var(--mushaf-ornament)/0.3)]" />
+              <div className="flex flex-col items-center min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="arabic-text text-sm leading-none text-[hsl(var(--mushaf-ornament))]">
+                    {surah?.name || ""}
+                  </span>
+                  <span className="text-[11px] font-semibold text-foreground/80 truncate max-w-[120px]">
+                    {surah?.englishName || (pageId ? `Page ${pageId}` : "")}
+                  </span>
+                </div>
+                {(surah || currentPage) && (
+                  <span className="text-[9px] text-muted-foreground/50 mt-0.5">
+                    {surah ? `${surah.numberOfAyahs} ayahs` : ""}
+                    {currentPage ? ` · Page ${currentPage}` : ""}
+                  </span>
+                )}
               </div>
-              {(surah || currentPage) && (
-                <span className="text-[9px] text-muted-foreground/60 mt-0.5">
-                  {surah ? `${surah.numberOfAyahs} ayahs` : ""}
-                  {currentPage ? ` · Page ${currentPage}` : ""}
-                </span>
-              )}
+              <div className="hidden sm:block flex-shrink-0 w-8 h-px bg-gradient-to-l from-transparent to-[hsl(var(--mushaf-ornament)/0.3)]" />
             </button>
 
             {/* Right — actions */}
             <div className="flex items-center gap-0.5 shrink-0">
               {/* Mode Toggle — compact pill */}
-              <div className="flex items-center bg-secondary/50 rounded-full p-0.5 mr-0.5">
+              <div className="flex items-center bg-[hsl(var(--mushaf-ornament)/0.06)] rounded-full p-0.5 mr-0.5 border border-[hsl(var(--mushaf-ornament)/0.1)]">
                 <button
                   onClick={() => handleReadingModeChange("ayah")}
                   className={cn(
                     "flex items-center justify-center w-7 h-7 rounded-full transition-all duration-200",
                     readingMode === "ayah"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground/60 hover:text-foreground",
+                      ? "bg-background text-[hsl(var(--mushaf-active))] shadow-sm"
+                      : "text-muted-foreground/50 hover:text-foreground",
                   )}
                   title="Verse by verse"
                 >
@@ -441,8 +449,8 @@ export default function SurahReaderPage() {
                   className={cn(
                     "flex items-center justify-center w-7 h-7 rounded-full transition-all duration-200",
                     readingMode === "mushaf"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground/60 hover:text-foreground",
+                      ? "bg-background text-[hsl(var(--mushaf-active))] shadow-sm"
+                      : "text-muted-foreground/50 hover:text-foreground",
                   )}
                   title="Mushaf layout"
                 >
@@ -453,10 +461,10 @@ export default function SurahReaderPage() {
               {/* Settings */}
               <button
                 onClick={() => setShowSettings(true)}
-                className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-secondary/80 transition-colors"
+                className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-[hsl(var(--mushaf-ornament)/0.08)] transition-colors"
                 title="Reading settings"
               >
-                <Settings2 className="w-4 h-4 text-foreground/70" />
+                <Settings2 className="w-4 h-4 text-foreground/60" />
               </button>
             </div>
           </div>
@@ -488,63 +496,61 @@ export default function SurahReaderPage() {
         />
       ) : (
         <div className="pb-24">
-          {/* ── Surah Opening Card ── */}
+          {/* ── Surah Opening Card — ornamental mushaf style ── */}
           {surah && (
             <div
-              className="mx-auto px-6 sm:px-10 pt-4 pb-2"
+              className="mx-auto px-4 sm:px-8 pt-4 pb-2"
               style={{ maxWidth: `${settings.readingWidth}%` }}
             >
-              <div className="relative overflow-hidden rounded-2xl">
-                {/* Background gradient */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--mushaf-ornament)/0.08)] via-[hsl(var(--mushaf-ornament)/0.12)] to-[hsl(var(--mushaf-ornament)/0.06)]" />
-                <div className="absolute inset-0 border border-[hsl(var(--mushaf-ornament)/0.2)] rounded-2xl" />
+              <div className="relative overflow-hidden rounded-xl">
+                {/* Background */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--mushaf-ornament)/0.05)] via-[hsl(var(--mushaf-ornament)/0.09)] to-[hsl(var(--mushaf-ornament)/0.05)]" />
+                <div className="absolute inset-0 border border-[hsl(var(--mushaf-ornament)/0.15)] rounded-xl" />
 
-                {/* Subtle geometric pattern */}
-                <div
-                  className="absolute inset-0 opacity-[0.03]"
-                  style={{
-                    backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-                    backgroundSize: "20px 20px",
-                  }}
-                />
-
-                <div className="relative z-10 text-center py-8 px-6">
-                  {/* Arabic name — large, decorative */}
-                  <p className="arabic-text text-3xl sm:text-4xl text-[hsl(var(--mushaf-ornament))] leading-normal mb-2">
-                    {surah.name}
-                  </p>
+                <div className="relative z-10 text-center py-6 px-6">
+                  {/* Arabic name with flanking gradient lines */}
+                  <div className="flex items-center justify-center gap-4 mb-2">
+                    <div className="flex-1 max-w-[80px] h-px bg-gradient-to-r from-transparent to-[hsl(var(--mushaf-ornament)/0.3)]" />
+                    <p className="arabic-text text-2xl sm:text-3xl text-[hsl(var(--mushaf-ornament))] leading-normal">
+                      {surah.name}
+                    </p>
+                    <div className="flex-1 max-w-[80px] h-px bg-gradient-to-l from-transparent to-[hsl(var(--mushaf-ornament)/0.3)]" />
+                  </div>
 
                   {/* English name */}
-                  <h1 className="text-base font-semibold text-foreground/85 mb-1">
+                  <p className="text-[11px] text-foreground/70 font-semibold tracking-wide mb-0.5">
                     {surah.englishName}
-                  </h1>
+                  </p>
 
-                  {/* Details */}
-                  <p className="text-xs text-muted-foreground/70">
+                  {/* Details row */}
+                  <p className="text-[9px] text-muted-foreground/50 font-medium tracking-widest uppercase">
                     {surah.englishNameTranslation}
-                    <span className="mx-1.5 text-muted-foreground/30">|</span>
+                    <span className="mx-1.5 text-muted-foreground/20">·</span>
                     {surah.numberOfAyahs} Ayahs
-                    <span className="mx-1.5 text-muted-foreground/30">|</span>
+                    <span className="mx-1.5 text-muted-foreground/20">·</span>
                     {surah.revelationType === "Meccan" ? "Makkah" : "Madinah"}
                   </p>
 
-                  {/* Decorative line */}
-                  <div className="mt-5 mx-auto max-w-[180px] mushaf-ornament-line" />
-
-                  {/* Bismillah */}
-                  {surahId !== SURAH_WITHOUT_BISMILLAH && surahId !== 1 && (
-                    <p
-                      className="arabic-text mt-5 text-foreground/75"
-                      style={{
-                        fontSize: `${settings.arabicFontSize * 0.8}px`,
-                        ...getFontStyle(settings.arabicFontFamily),
-                      }}
-                    >
-                      {BISMILLAH}
-                    </p>
-                  )}
+                  {/* Ornament line */}
+                  <div className="mt-4 mx-auto max-w-[140px] mushaf-ornament-line" />
                 </div>
               </div>
+
+              {/* Bismillah — standalone, centered below the card (matching mushaf style) */}
+              {surahId !== SURAH_WITHOUT_BISMILLAH && surahId !== 1 && (
+                <div className="text-center my-3">
+                  <p
+                    className="arabic-text inline-block text-[hsl(var(--mushaf-text))] opacity-75"
+                    style={{
+                      fontSize: `${settings.arabicFontSize * 0.8}px`,
+                      lineHeight: 2,
+                      ...getFontStyle(settings.arabicFontFamily),
+                    }}
+                  >
+                    {BISMILLAH}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -580,54 +586,108 @@ export default function SurahReaderPage() {
             })}
           </div>
 
-          {/* End of surah + next surah indicator */}
+          {/* End of surah */}
           <div
-            className="mx-auto text-center pt-10 pb-16"
+            className="mx-auto text-center pt-10 pb-4"
             style={{ maxWidth: `${settings.readingWidth}%` }}
           >
             <div className="mushaf-ornament-line mx-auto max-w-[160px] mb-3" />
             <p className="text-[11px] text-muted-foreground/40">
               End of {surah?.englishName || "Surah"}
             </p>
+          </div>
+        </div>
+      )}
 
-            {nextSurah && (
-              <div ref={bottomSentinelRef} className="mt-8">
-                {/* Overscroll progress indicator */}
-                <div
-                  className="flex flex-col items-center gap-2 transition-opacity duration-200"
-                  style={{ opacity: overscrollProgress > 0 ? 1 : 0.5 }}
-                >
-                  <ChevronsDown
-                    className="w-5 h-5 text-muted-foreground/40 transition-transform duration-200"
+      {/* ────────────────────────────────────────────────────
+          Next Surah Transition — shared between both modes
+          ──────────────────────────────────────────────────── */}
+      {nextSurah && (
+        <div ref={bottomSentinelRef} className="pb-24">
+          <div className="max-w-md mx-auto px-6">
+            {/* Ornamental card */}
+            <div
+              className="relative overflow-hidden rounded-2xl transition-all duration-300"
+              style={{
+                opacity: 0.5 + overscrollProgress * 0.5,
+                transform: `translateY(${(1 - overscrollProgress) * 8}px)`,
+              }}
+            >
+              {/* Background */}
+              <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--mushaf-ornament)/0.04)] via-[hsl(var(--mushaf-ornament)/0.08)] to-[hsl(var(--mushaf-ornament)/0.04)]" />
+              <div className="absolute inset-0 border border-[hsl(var(--mushaf-ornament)/0.12)] rounded-2xl" />
+
+              <div className="relative z-10 text-center py-6 px-5">
+                {/* Animated chevrons */}
+                <div className="flex justify-center mb-3">
+                  <div
+                    className="flex flex-col items-center transition-transform duration-200"
                     style={{
-                      transform: `translateY(${overscrollProgress * -4}px) scale(${1 + overscrollProgress * 0.2})`,
-                      opacity: 0.4 + overscrollProgress * 0.6,
+                      transform: `translateY(${overscrollProgress * -6}px)`,
                     }}
-                  />
-                  <p className="text-[11px] text-muted-foreground/50">
-                    {overscrollProgress >= 1
-                      ? "Loading..."
-                      : "Keep scrolling for next surah"}
-                  </p>
-                  <p className="text-[13px] font-medium text-foreground/60 mt-0.5">
-                    <span className="arabic-text text-sm mr-1.5">
-                      {nextSurah.name}
-                    </span>
-                    {nextSurah.englishName}
-                  </p>
-
-                  {/* Progress bar */}
-                  {overscrollProgress > 0 && (
-                    <div className="w-20 h-1 rounded-full bg-border/50 overflow-hidden mt-1">
-                      <div
-                        className="h-full rounded-full bg-[hsl(var(--mushaf-active))] transition-all duration-100"
-                        style={{ width: `${overscrollProgress * 100}%` }}
-                      />
-                    </div>
-                  )}
+                  >
+                    <ChevronsDown
+                      className="w-5 h-5 text-[hsl(var(--mushaf-ornament))] transition-all duration-200"
+                      style={{
+                        opacity: 0.3 + overscrollProgress * 0.7,
+                        transform: `scale(${1 + overscrollProgress * 0.15})`,
+                      }}
+                    />
+                  </div>
                 </div>
+
+                {/* Label */}
+                <p className="text-[10px] text-muted-foreground/50 uppercase tracking-widest font-medium mb-3">
+                  {overscrollProgress >= 1 ? "Loading" : "Continue reading"}
+                </p>
+
+                {/* Next surah name */}
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <div className="w-10 h-px bg-gradient-to-r from-transparent to-[hsl(var(--mushaf-ornament)/0.25)]" />
+                  <div>
+                    <p className="arabic-text text-lg text-[hsl(var(--mushaf-ornament))] leading-normal">
+                      {nextSurah.name}
+                    </p>
+                  </div>
+                  <div className="w-10 h-px bg-gradient-to-l from-transparent to-[hsl(var(--mushaf-ornament)/0.25)]" />
+                </div>
+                <p className="text-[12px] font-medium text-foreground/60">
+                  {nextSurah.englishName}
+                </p>
+                <p className="text-[10px] text-muted-foreground/40 mt-0.5">
+                  {nextSurah.englishNameTranslation}
+                </p>
+
+                {/* Progress indicator */}
+                <div className="mt-4 mx-auto max-w-[120px]">
+                  <div className="h-[2px] rounded-full bg-[hsl(var(--mushaf-ornament)/0.1)] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-100 ease-out"
+                      style={{
+                        width: `${overscrollProgress * 100}%`,
+                        background: `linear-gradient(to right, hsl(var(--mushaf-ornament) / 0.4), hsl(var(--mushaf-active)))`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Hint text */}
+                <p className="text-[9px] text-muted-foreground/35 mt-2">
+                  {overscrollProgress >= 1
+                    ? ""
+                    : overscrollProgress > 0
+                      ? "Keep going..."
+                      : "Scroll down to continue"}
+                </p>
+
+                {/* Loading spinner when triggered */}
+                {overscrollProgress >= 1 && (
+                  <div className="flex justify-center mt-2">
+                    <div className="w-4 h-4 border-2 border-[hsl(var(--mushaf-ornament)/0.2)] border-t-[hsl(var(--mushaf-active))] rounded-full animate-spin" />
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}

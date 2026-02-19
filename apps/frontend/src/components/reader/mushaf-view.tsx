@@ -93,7 +93,7 @@ function SurahHeaderInPage({
               <p className="arabic-text text-xl text-[hsl(var(--mushaf-ornament))] leading-normal">
                 {arabicName}
               </p>
-              <p className="text-[9px] text-muted-foreground/60 font-medium tracking-widest uppercase mt-0.5">
+              <p className="text-[9px] text-muted-foreground/60 font-medium tracking-widest uppercase mt-2">
                 {name}
               </p>
             </div>
@@ -178,6 +178,7 @@ function VerseBookmarkButton({
 
 function MushafPage({
   pageNumber,
+  surahId: filterSurahId,
   arabicFontSize,
   arabicFontFamily,
   textColorMode,
@@ -191,6 +192,7 @@ function MushafPage({
   onPageVisible,
 }: {
   pageNumber: number;
+  surahId?: number;
   arabicFontSize: number;
   arabicFontFamily: string;
   textColorMode?: string;
@@ -206,7 +208,16 @@ function MushafPage({
   const pageRef = useRef<HTMLDivElement>(null);
   const verseRefs = useRef<Map<string, HTMLSpanElement>>(new Map());
 
-  const groups = useMemo(() => getPageGroupedBySurah(pageNumber), [pageNumber]);
+  const groups = useMemo(() => {
+    const allGroups = getPageGroupedBySurah(pageNumber);
+    // When navigating to a specific surah, only show groups from that surah
+    // so we don't render trailing verses from the previous surah on the first page
+    // or leading verses from the next surah on the last page
+    if (filterSurahId != null) {
+      return allGroups.filter((g) => g.surahId === filterSurahId);
+    }
+    return allGroups;
+  }, [pageNumber, filterSurahId]);
 
   // Juz number from first verse on this page
   const juzNumber = useMemo(() => {
@@ -427,6 +438,7 @@ export function MushafView({
         <MushafPage
           key={pageNum}
           pageNumber={pageNum}
+          surahId={surahId}
           arabicFontSize={arabicFontSize}
           arabicFontFamily={arabicFontFamily}
           textColorMode={textColorMode}
