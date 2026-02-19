@@ -23,6 +23,9 @@ interface UIState {
     totalAyahs: number;
   } | null;
 
+  // Zen mode (distraction-free reading)
+  isZenMode: boolean;
+
   // Network
   isOnline: boolean;
 
@@ -46,6 +49,7 @@ interface UIState {
       totalAyahs: number;
     } | null,
   ) => void;
+  setZenMode: (zen: boolean) => void;
   setOnline: (online: boolean) => void;
   setShowInstallPrompt: (show: boolean) => void;
   setDeferredInstallPrompt: (prompt: BeforeInstallPromptEvent | null) => void;
@@ -81,6 +85,7 @@ export const useUIStore = create<UIState>((set) => ({
   isSearchOpen: false,
   currentHighlightedAyah: null,
   readingScrollProgress: null,
+  isZenMode: false,
   isOnline: typeof navigator !== "undefined" ? navigator.onLine : true,
   showInstallPrompt: false,
   deferredInstallPrompt: null,
@@ -98,6 +103,7 @@ export const useUIStore = create<UIState>((set) => ({
   setHighlightedAyah: (ayah) => set({ currentHighlightedAyah: ayah }),
   setReadingScrollProgress: (progress) =>
     set({ readingScrollProgress: progress }),
+  setZenMode: (zen) => set({ isZenMode: zen }),
   setOnline: (online) => set({ isOnline: online }),
   setShowInstallPrompt: (show) => set({ showInstallPrompt: show }),
   setDeferredInstallPrompt: (prompt) => set({ deferredInstallPrompt: prompt }),

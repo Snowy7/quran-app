@@ -405,6 +405,23 @@ export function MushafView({
     setLoadedCount(BATCH);
   }, [surahId, startPage]);
 
+  // Listen for jump-to-ayah requests — force load pages up to the target page
+  useEffect(() => {
+    const handleLoadToPage = (e: Event) => {
+      const { page } = (e as CustomEvent).detail;
+      const targetIndex = allPages.indexOf(page);
+      if (targetIndex >= 0) {
+        setLoadedCount((prev) => Math.max(prev, targetIndex + 1));
+      } else {
+        // Page not in this surah's range — load all
+        setLoadedCount(allPages.length);
+      }
+    };
+    window.addEventListener("mushaf-load-to-page", handleLoadToPage);
+    return () =>
+      window.removeEventListener("mushaf-load-to-page", handleLoadToPage);
+  }, [allPages]);
+
   // Sentinel for lazy loading more pages
   const sentinelRef = useRef<HTMLDivElement>(null);
 

@@ -281,6 +281,9 @@ export function GlobalAudioPlayer() {
     location.pathname.startsWith("/quran/") &&
     location.pathname.split("/").length > 2;
 
+  // Zen mode — hide bottom bar entirely
+  const isZenMode = useUIStore((s) => s.isZenMode);
+
   // Get state directly from store
   const isVisible = useAudioStore((s) => s.isVisible);
   const isMinimized = useAudioStore((s) => s.isMinimized);
@@ -345,7 +348,13 @@ export function GlobalAudioPlayer() {
     };
 
     return (
-      <div className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
+      <div
+        className={cn(
+          "fixed bottom-0 left-0 right-0 z-50 safe-area-bottom",
+          "transition-all duration-500 ease-out",
+          isZenMode && "translate-y-full opacity-0 pointer-events-none",
+        )}
+      >
         {/* Reading scroll progress bar — always visible while reading */}
         <div className="h-0.5 bg-secondary relative overflow-hidden">
           {/* Scroll progress (background layer) */}

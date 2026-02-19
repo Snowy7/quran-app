@@ -11,6 +11,9 @@ import {
   ArrowLeft,
   ChevronDown,
   ChevronsDown,
+  Focus,
+  Hash,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -80,6 +83,15 @@ export default function SurahReaderPage() {
   const [readingMode, setReadingMode] = useState<ReadingMode>(
     pageId ? "mushaf" : settings.readingMode === "page" ? "mushaf" : "ayah",
   );
+
+  // Zen mode (distraction-free)
+  const isZenMode = useUIStore((s) => s.isZenMode);
+  const setZenMode = useUIStore((s) => s.setZenMode);
+
+  // Jump-to-ayah dialog
+  const [showJumpDialog, setShowJumpDialog] = useState(false);
+  const [jumpInput, setJumpInput] = useState("");
+  const jumpInputRef = useRef<HTMLInputElement>(null);
 
   // Header visibility (auto-hide on scroll down, show on scroll up)
   const [headerVisible, setHeaderVisible] = useState(true);
@@ -239,6 +251,78 @@ export default function SurahReaderPage() {
       window.removeEventListener("open-reader-settings", handleOpenSettings);
   }, []);
 
+  // Exit zen mode on unmount (leaving reader page)
+  useEffect(() => {
+    return () => setZenMode(false);
+  }, [setZenMode]);
+
+  // Escape key exits zen mode or closes jump dialog
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (showJumpDialog) {
+          setShowJumpDialog(false);
+        } else if (isZenMode) {
+          setZenMode(false);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isZenMode, setZenMode, showJumpDialog]);
+
+  // Focus jump input when dialog opens
+  useEffect(() => {
+    if (showJumpDialog) {
+      setJumpInput("");
+      setTimeout(() => jumpInputRef.current?.focus(), 100);
+    }
+  }, [showJumpDialog]);
+
+  // Jump to ayah handler
+  const handleJumpToAyah = useCallback(
+    (ayahNumber: number) => {
+      if (!surah || ayahNumber < 1 || ayahNumber > surah.numberOfAyahs) {
+        toast.error(`Invalid ayah. Enter 1–${surah?.numberOfAyahs || "?"}`);
+        return;
+      }
+      setShowJumpDialog(false);
+
+      const scrollToAyah = () => {
+        // In ayah mode: find by data-ayah-number
+        // In mushaf mode: find by data-verse-key
+        const el =
+          document.querySelector(`[data-ayah-number="${ayahNumber}"]`) ||
+          document.querySelector(`[data-verse-key="${surahId}:${ayahNumber}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          // Brief highlight
+          el.classList.add("ring-2", "ring-[hsl(var(--mushaf-active))]");
+          setTimeout(() => {
+            el.classList.remove("ring-2", "ring-[hsl(var(--mushaf-active))]");
+          }, 2000);
+        }
+      };
+
+      if (readingMode === "mushaf") {
+        // In mushaf mode, the target page may not be loaded yet.
+        // Force load all pages by dispatching a custom event, then scroll.
+        const targetPage = getVersePageNumber(surahId, ayahNumber);
+        window.dispatchEvent(
+          new CustomEvent("mushaf-load-to-page", {
+            detail: { page: targetPage },
+          }),
+        );
+        // Wait for render, then scroll
+        setTimeout(scrollToAyah, 150);
+      } else {
+        // In ayah mode all verses are in the DOM
+        scrollToAyah();
+      }
+    },
+    [surah, surahId, readingMode],
+  );
+
   // Handle reading mode change
   const handleReadingModeChange = useCallback(
     (mode: ReadingMode) => {
@@ -380,10 +464,10 @@ export default function SurahReaderPage() {
       <header
         className={cn(
           "fixed top-0 left-0 right-0 z-50 safe-area-top",
-          "transition-all duration-300 ease-out",
-          headerVisible
+          "transition-all duration-500 ease-out",
+          headerVisible && !isZenMode
             ? "translate-y-0 opacity-100"
-            : "-translate-y-full opacity-0",
+            : "-translate-y-full opacity-0 pointer-events-none",
         )}
       >
         <div className="relative overflow-hidden">
@@ -458,6 +542,24 @@ export default function SurahReaderPage() {
                 </button>
               </div>
 
+              {/* Jump to ayah */}
+              <button
+                onClick={() => setShowJumpDialog(true)}
+                className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-[hsl(var(--mushaf-ornament)/0.08)] transition-colors"
+                title="Jump to ayah"
+              >
+                <Hash className="w-3.5 h-3.5 text-foreground/60" />
+              </button>
+
+              {/* Zen mode */}
+              <button
+                onClick={() => setZenMode(true)}
+                className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-[hsl(var(--mushaf-ornament)/0.08)] transition-colors"
+                title="Zen mode"
+              >
+                <Focus className="w-4 h-4 text-foreground/60" />
+              </button>
+
               {/* Settings */}
               <button
                 onClick={() => setShowSettings(true)}
@@ -472,7 +574,69 @@ export default function SurahReaderPage() {
       </header>
 
       {/* Spacer for fixed header */}
-      <div className="h-12 safe-area-top" />
+      <div
+        className={cn(
+          "safe-area-top transition-all duration-500",
+          isZenMode ? "h-0" : "h-12",
+        )}
+      />
+
+      {/* ── Zen mode exit — tap content to briefly show exit button ── */}
+      {isZenMode && <ZenModeOverlay onExit={() => setZenMode(false)} />}
+
+      {/* ── Jump to Ayah dialog ── */}
+      {showJumpDialog && (
+        <>
+          <div
+            className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowJumpDialog(false)}
+          />
+          <div className="fixed z-[70] top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative overflow-hidden rounded-2xl bg-background border border-[hsl(var(--mushaf-ornament)/0.15)] shadow-2xl">
+              {/* Background */}
+              <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--mushaf-ornament)/0.04)] to-transparent" />
+
+              <div className="relative z-10 p-5">
+                <p className="text-[10px] text-muted-foreground/50 uppercase tracking-widest font-medium text-center mb-3">
+                  Jump to Ayah
+                </p>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const num = parseInt(jumpInput, 10);
+                    if (!isNaN(num)) handleJumpToAyah(num);
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={jumpInputRef}
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={surah?.numberOfAyahs || 286}
+                      value={jumpInput}
+                      onChange={(e) => setJumpInput(e.target.value)}
+                      placeholder={`1 – ${surah?.numberOfAyahs || "?"}`}
+                      className="flex-1 h-10 rounded-xl bg-secondary/50 border border-border/40 px-3 text-center text-sm font-medium tabular-nums placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--mushaf-active))]/30 focus:border-[hsl(var(--mushaf-active))]/40"
+                    />
+                    <button
+                      type="submit"
+                      className="h-10 px-4 rounded-xl bg-[hsl(var(--mushaf-active))] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+                    >
+                      Go
+                    </button>
+                  </div>
+                </form>
+
+                <p className="text-[9px] text-muted-foreground/35 text-center mt-2">
+                  {surah?.englishName} · {surah?.numberOfAyahs} ayahs
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ────────────────────────────────────────────────────
           Content Area
@@ -574,6 +738,7 @@ export default function SurahReaderPage() {
                     isCurrentSurahPlaying && currentPlayingAyahIndex === index
                   }
                   isMemorized={isAyahMemorized(ayah.numberInSurah)}
+                  isZenMode={isZenMode}
                   onPlay={() => handlePlayAyah(index)}
                   onVisible={() => handleAyahVisible(ayah.numberInSurah)}
                   onToggleMemorized={() =>
@@ -711,6 +876,7 @@ interface AyahCardProps {
   isPlaying: boolean;
   isCurrentAyah: boolean;
   isMemorized: boolean;
+  isZenMode?: boolean;
   onPlay: () => void;
   onVisible: () => void;
   onToggleMemorized: () => void;
@@ -724,6 +890,7 @@ function AyahCard({
   isPlaying,
   isCurrentAyah,
   isMemorized,
+  isZenMode,
   onPlay,
   onVisible,
   onToggleMemorized,
@@ -784,6 +951,7 @@ function AyahCard({
   return (
     <div
       ref={cardRef}
+      data-ayah-number={ayah.numberInSurah}
       className={cn(
         "group relative px-6 sm:px-10",
         "transition-colors duration-300",
@@ -796,9 +964,19 @@ function AyahCard({
       )}
 
       {/* Inner content */}
-      <div className="py-5 border-b border-border/30">
+      <div
+        className={cn(
+          "py-5 border-b border-border/30",
+          isZenMode && "border-transparent",
+        )}
+      >
         {/* ── Verse Number Row ── */}
-        <div className="flex items-center justify-between mb-4">
+        <div
+          className={cn(
+            "flex items-center justify-between mb-4 transition-all duration-300",
+            isZenMode && "mb-1 opacity-30",
+          )}
+        >
           {/* Verse number badge */}
           <div className="flex items-center gap-2">
             <span
@@ -814,15 +992,20 @@ function AyahCard({
               {ayah.numberInSurah}
             </span>
             {/* Page + Juz micro-label */}
-            {ayah.page > 0 && (
+            {ayah.page > 0 && !isZenMode && (
               <span className="text-[9px] text-muted-foreground/40 tabular-nums">
                 {ayah.juz ? `Juz ${ayah.juz}` : ""} · p.{ayah.page}
               </span>
             )}
           </div>
 
-          {/* Action buttons — subtle, appear more on hover */}
-          <div className="flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
+          {/* Action buttons — subtle, appear more on hover; hidden in zen mode */}
+          <div
+            className={cn(
+              "flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-all duration-300",
+              isZenMode && "opacity-0 pointer-events-none w-0 overflow-hidden",
+            )}
+          >
             {/* Memorization */}
             <button
               type="button"
@@ -927,5 +1110,63 @@ function AyahCard({
         )}
       </div>
     </div>
+  );
+}
+
+// =====================================
+// Zen Mode Overlay — tap to show exit
+// =====================================
+
+function ZenModeOverlay({ onExit }: { onExit: () => void }) {
+  const [showControls, setShowControls] = useState(true);
+  const hideTimer = useRef<number | undefined>(undefined);
+
+  // Show controls briefly on mount, then fade out
+  useEffect(() => {
+    hideTimer.current = window.setTimeout(() => setShowControls(false), 2500);
+    return () => window.clearTimeout(hideTimer.current);
+  }, []);
+
+  const handleTap = useCallback(() => {
+    if (showControls) {
+      // If controls are visible, tapping exits
+      onExit();
+    } else {
+      // Show controls, auto-hide after a few seconds
+      setShowControls(true);
+      window.clearTimeout(hideTimer.current);
+      hideTimer.current = window.setTimeout(() => setShowControls(false), 3000);
+    }
+  }, [showControls, onExit]);
+
+  return (
+    <>
+      {/* Invisible tap target covering the whole screen */}
+      <div className="fixed inset-0 z-40" onClick={handleTap} />
+
+      {/* Exit pill — shown/hidden */}
+      <div
+        className={cn(
+          "fixed top-5 left-1/2 -translate-x-1/2 z-50",
+          "transition-all duration-500 ease-out",
+          showControls
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 -translate-y-4 pointer-events-none",
+        )}
+      >
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onExit();
+          }}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-background/80 backdrop-blur-xl border border-[hsl(var(--mushaf-ornament)/0.15)] shadow-lg"
+        >
+          <X className="w-3.5 h-3.5 text-foreground/60" />
+          <span className="text-[11px] font-medium text-foreground/70">
+            Exit Zen Mode
+          </span>
+        </button>
+      </div>
+    </>
   );
 }
