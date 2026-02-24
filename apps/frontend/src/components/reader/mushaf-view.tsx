@@ -1,270 +1,102 @@
-import { useRef, useEffect, useCallback, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { getSurahById, SURAH_WITHOUT_BISMILLAH } from '@/data/surahs';
+import { useRef, useEffect, useCallback, useState, useMemo } from "react";
+import { Bookmark, BookMarked } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { getFontStyle } from "@/components/reader/reading-settings-sheet";
 import {
-  loadUthmaniData,
-  getUthmaniSurahSync,
-  getSurahPagesSync,
-  loadQcfData,
-  getQcfSurahSync,
-  loadPageFont,
-  getPageFontFamily,
-  type UthmaniSurah,
-} from '@/data/quran-uthmani-data';
-import type { Ayah } from '@/types/quran';
-
-const LONG_PRESS_MS = 500;
+  getPageGroupedBySurah,
+  getVersePageNumber,
+  getVerseMeta,
+  getArabicSurah,
+} from "@/data/quran-data";
+import { BISMILLAH, SURAH_WITHOUT_BISMILLAH } from "@/data/surahs";
+import { useIsBookmarked, useOfflineBookmarks } from "@/lib/hooks";
+import { toast } from "sonner";
 
 interface MushafViewProps {
   surahId: number;
-  ayahs: Ayah[];
+  startPage?: number;
   arabicFontSize: number;
   arabicFontFamily: string;
+  textColorMode?: string;
+  readingWidth?: number;
+  lineHeight?: number;
+  wordSpacing?: number;
+  letterSpacing?: number;
   currentPlayingAyah: number | null;
-  onAyahVisible: (ayahNumber: number) => void;
-  onAyahClick: (ayahNumber: number) => void;
-  onAyahLongPress?: (ayahNumber: number) => void;
+  playingSurahId: number | null;
+  onAyahVisible: (surahId: number, ayahNumber: number) => void;
+  onAyahClick: (surahId: number, ayahNumber: number) => void;
+  onPageChange?: (page: number) => void;
 }
 
 function toArabicNumber(num: number): string {
-  const arabicNums = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-  return num.toString().split('').map(d => arabicNums[parseInt(d)]).join('');
+  const arabicNums = [
+    "\u0660",
+    "\u0661",
+    "\u0662",
+    "\u0663",
+    "\u0664",
+    "\u0665",
+    "\u0666",
+    "\u0667",
+    "\u0668",
+    "\u0669",
+  ];
+  return num
+    .toString()
+    .split("")
+    .map((d) => arabicNums[parseInt(d)])
+    .join("");
 }
 
-/** Hook to load both Uthmani data and QCF v2 text */
-function useMushafData(surahId: number) {
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    setLoaded(false);
-    Promise.all([loadUthmaniData(), loadQcfData()]).then(() => setLoaded(true));
-  }, [surahId]);
-
-  const uthmaniSurah = loaded ? getUthmaniSurahSync(surahId) : undefined;
-  const qcfVerses = loaded ? getQcfSurahSync(surahId) : undefined;
-  const pages = loaded ? getSurahPagesSync(surahId) : [];
-
-  return { uthmaniSurah, qcfVerses, pages, loaded };
-}
-
-/** Hook to load a per-page font and return its font-family when ready */
-function usePageFont(pageNumber: number) {
-  const [fontFamily, setFontFamily] = useState<string | null>(null);
-
-  useEffect(() => {
-    setFontFamily(null);
-    loadPageFont(pageNumber).then(() => {
-      setFontFamily(getPageFontFamily(pageNumber));
-    });
-  }, [pageNumber]);
-
-  return fontFamily;
-}
-
-/** Surah header banner - uses UthmanTN for prefix, SurahNames for the name */
-function SurahBanner({ surahNumber, surahName }: { surahNumber: number; surahName: string }) {
-  const surahMeta = getSurahById(surahNumber);
-  const displayName = surahMeta?.name || surahName;
-
+// Verse end marker — clean ornamental style
+function AyahEndMarker({ number }: { number: number }) {
   return (
-    <div className="flex items-center justify-center my-4">
-      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-primary/30 to-primary/30" />
-      <div className="mx-3 px-6 py-1.5 border border-primary/25 rounded-sm bg-background">
-        <p className="text-center text-primary leading-relaxed" dir="rtl">
-          <span
-            style={{ fontFamily: "'UthmanTN', serif", fontSize: '18px' }}
-          >
-            سُورَةُ{' '}
-          </span>
-          <span
-            style={{ fontFamily: "'SurahNames', 'UthmanTN', serif", fontSize: '22px' }}
-          >
-            {displayName}
-          </span>
-        </p>
-      </div>
-      <div className="flex-1 h-px bg-gradient-to-l from-transparent via-primary/30 to-primary/30" />
-    </div>
+    <span className="inline-flex items-center justify-center mx-0.5 select-none align-middle text-[hsl(var(--mushaf-ornament))]">
+      <span
+        className="relative flex items-center justify-center"
+        style={{ fontFamily: "Amiri Quran, serif" }}
+      >
+        <span className="text-[0.55em] opacity-70">{"\uFD3F"}</span>
+        <span
+          className="text-[0.48em] mx-px"
+          style={{ fontFamily: "Amiri, serif" }}
+        >
+          {toArabicNumber(number)}
+        </span>
+        <span className="text-[0.55em] opacity-70">{"\uFD3E"}</span>
+      </span>
+    </span>
   );
 }
 
-/** Bismillah line - standard Unicode text with UthmanTN font */
-function Bismillah() {
-  return (
-    <p
-      className="text-center my-3 text-foreground/80"
-      style={{
-        fontFamily: "'UthmanTN', 'Amiri Quran', serif",
-        fontSize: '24px',
-        direction: 'rtl',
-        lineHeight: 2,
-      }}
-    >
-      بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
-    </p>
-  );
-}
-
-/**
- * Check if a QCF verse's text begins with the bismillah codepoint sequence.
- * In QCF v2 encoding, the bismillah is 5 word-glyphs. Some surahs embed these
- * at the start of ayah 1; others don't (the bismillah is a separate page element).
- */
-function qcfTextHasBismillah(qcfText: string, bismillahText: string): boolean {
-  if (!bismillahText || !qcfText) return false;
-  // The bismillah text is 5 words separated by spaces (e.g., "X X X X X").
-  // Check if the verse text starts with these exact 5 word-glyphs.
-  return qcfText.startsWith(bismillahText);
-}
-
-/** Single mushaf page with per-page QCF font */
-function MushafPage({
-  pageNumber,
-  surahId,
-  uthmaniSurah,
-  qcfVerses,
-  bismillahQcfText,
-  currentPlayingAyah,
-  onAyahClick,
-  onAyahLongPress,
-  onAyahRef,
-  fontSize,
+// Surah header within a page
+function SurahHeaderInPage({
+  name,
+  arabicName,
 }: {
-  pageNumber: number;
-  surahId: number;
-  uthmaniSurah: UthmaniSurah;
-  qcfVerses: { k: string; t: string; p: number }[] | undefined;
-  bismillahQcfText: string | undefined;
-  currentPlayingAyah: number | null;
-  onAyahClick: (ayahNumber: number) => void;
-  onAyahLongPress?: (ayahNumber: number) => void;
-  onAyahRef: (el: HTMLSpanElement | null, ayahNum: number) => void;
-  fontSize: number;
+  name: string;
+  arabicName: string;
 }) {
-  const pageFontFamily = usePageFont(pageNumber);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longPressFired = useRef(false);
-
-  // Get this surah's ayahs on this page (from Uthmani data for metadata)
-  const pageAyahs = uthmaniSurah.ayahs.filter(a => a.page === pageNumber);
-  if (pageAyahs.length === 0) return null;
-
-  const firstAyahOnPage = pageAyahs[0];
-  const surahStartsHere = firstAyahOnPage.numberInSurah === 1;
-  const needsBismillah = surahStartsHere && surahId !== 1 && surahId !== SURAH_WITHOUT_BISMILLAH;
-
-  // Check if the QCF data already includes the bismillah in ayah 1's text.
-  // If so, the per-page font will render it — no separate Bismillah component needed.
-  const qcfAyah1 = qcfVerses?.find(v => v.k === `${surahId}:1`);
-  const bismillahEmbedded = !!(
-    needsBismillah &&
-    qcfAyah1 &&
-    bismillahQcfText &&
-    qcfTextHasBismillah(qcfAyah1.t, bismillahQcfText)
-  );
-
-  // Only show separate bismillah if the QCF data does NOT embed it in ayah 1
-  const showSeparateBismillah = needsBismillah && !bismillahEmbedded;
-
-  // Don't render QCF text until the per-page font is loaded (prevents FOUT)
-  const fontReady = !!pageFontFamily;
-
-  // Per-page font (only used when font is loaded)
-  const textFontFamily = pageFontFamily
-    ? `'${pageFontFamily}', 'UthmanTN', serif`
-    : "'UthmanTN', serif";
-
   return (
-    <div className="mb-6">
-      <div className="border border-primary/20 rounded">
-        <div className="border border-primary/10 rounded m-0.5 px-3 py-4 md:px-6 md:py-6">
-          {surahStartsHere && (
-            <SurahBanner surahNumber={surahId} surahName={uthmaniSurah.name} />
-          )}
+    <div className="my-6 mx-auto max-w-[90%]">
+      <div className="relative overflow-hidden rounded-xl">
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--mushaf-ornament)/0.06)] via-[hsl(var(--mushaf-ornament)/0.1)] to-[hsl(var(--mushaf-ornament)/0.06)]" />
+        <div className="absolute inset-0 border border-[hsl(var(--mushaf-ornament)/0.15)] rounded-xl" />
 
-          {showSeparateBismillah && (
-            <Bismillah />
-          )}
-
-          {!fontReady ? (
-            /* Show loading placeholder until per-page font is ready */
-            <div className="flex items-center justify-center py-16">
-              <div className="animate-pulse-subtle text-muted-foreground text-sm">
-                Loading page {toArabicNumber(pageNumber)}...
-              </div>
+        <div className="relative z-10 text-center py-4 px-6">
+          <div className="flex items-center justify-center gap-4">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[hsl(var(--mushaf-ornament)/0.25)]" />
+            <div>
+              <p className="arabic-text text-xl text-[hsl(var(--mushaf-ornament))] leading-normal">
+                {arabicName}
+              </p>
+              <p className="text-[9px] text-muted-foreground/60 font-medium tracking-widest uppercase mt-2">
+                {name}
+              </p>
             </div>
-          ) : (
-            /* Quran text with per-page QCF font */
-            <div
-              style={{
-                fontFamily: textFontFamily,
-                fontSize: `${fontSize}px`,
-                direction: 'rtl',
-                textAlign: surahId === 1 ? 'center' : 'justify',
-                lineHeight: 1.9,
-                overflowWrap: 'anywhere',
-              }}
-            >
-              {pageAyahs.map((ayah) => {
-                const isPlaying = currentPlayingAyah === ayah.numberInSurah;
-                // Use QCF v2 encoded text if available, fall back to Uthmani Unicode
-                const qcfVerse = qcfVerses?.find(v => v.k === `${surahId}:${ayah.numberInSurah}`);
-                const displayText = qcfVerse?.t || ayah.text;
-
-                return (
-                  <span
-                    key={ayah.numberInSurah}
-                    ref={(el) => onAyahRef(el, ayah.numberInSurah)}
-                    data-ayah={ayah.numberInSurah}
-                    onClick={() => {
-                      // Don't fire click if long-press just happened
-                      if (longPressFired.current) {
-                        longPressFired.current = false;
-                        return;
-                      }
-                      onAyahClick(ayah.numberInSurah);
-                    }}
-                    onContextMenu={(e) => {
-                      if (onAyahLongPress) e.preventDefault();
-                    }}
-                    onPointerDown={() => {
-                      longPressFired.current = false;
-                      longPressTimer.current = setTimeout(() => {
-                        longPressFired.current = true;
-                        onAyahLongPress?.(ayah.numberInSurah);
-                      }, LONG_PRESS_MS);
-                    }}
-                    onPointerUp={() => {
-                      if (longPressTimer.current) {
-                        clearTimeout(longPressTimer.current);
-                        longPressTimer.current = null;
-                      }
-                    }}
-                    onPointerCancel={() => {
-                      if (longPressTimer.current) {
-                        clearTimeout(longPressTimer.current);
-                        longPressTimer.current = null;
-                      }
-                    }}
-                    className={cn(
-                      'cursor-pointer transition-colors duration-150 select-none',
-                      isPlaying && 'bg-primary/10 text-primary rounded-sm',
-                      !isPlaying && 'hover:bg-secondary/50'
-                    )}
-                  >
-                    {displayText}
-                    {' '}
-                  </span>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Page number */}
-          <div className="flex items-center justify-center mt-6 pt-3 border-t border-primary/10">
-            <span className="text-xs text-muted-foreground font-medium" style={{ fontFamily: "'Almarai', sans-serif" }}>
-              {toArabicNumber(pageNumber)}
-            </span>
+            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[hsl(var(--mushaf-ornament)/0.25)]" />
           </div>
         </div>
       </div>
@@ -272,84 +104,393 @@ function MushafPage({
   );
 }
 
-export function MushafView({
+// Bismillah
+function BismillahInPage({ fontSize }: { fontSize: number }) {
+  return (
+    <div className="text-center my-3">
+      <p
+        className="arabic-text inline-block text-[hsl(var(--mushaf-text))] opacity-75"
+        style={{ fontSize: `${fontSize * 0.8}px`, lineHeight: 2 }}
+      >
+        {BISMILLAH}
+      </p>
+    </div>
+  );
+}
+
+// Bookmark button — appears on hover over a verse
+function VerseBookmarkButton({
   surahId,
-  ayahs,
+  ayahNumber,
+}: {
+  surahId: number;
+  ayahNumber: number;
+}) {
+  const { isBookmarked } = useIsBookmarked(surahId, ayahNumber);
+  const { addBookmark, removeBookmark, getBookmark } = useOfflineBookmarks();
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (isBookmarked) {
+        getBookmark(surahId, ayahNumber)
+          .then((b) => {
+            if (b) return removeBookmark(b.clientId);
+          })
+          .then(() => toast.success("Bookmark removed"));
+      } else {
+        addBookmark(surahId, ayahNumber).then(() =>
+          toast.success("Bookmark added"),
+        );
+      }
+    },
+    [
+      isBookmarked,
+      surahId,
+      ayahNumber,
+      getBookmark,
+      removeBookmark,
+      addBookmark,
+    ],
+  );
+
+  return (
+    <button
+      onClick={handleClick}
+      className={cn(
+        "absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center",
+        "opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+        "bg-background/90 backdrop-blur-sm shadow-sm border border-border/40",
+        isBookmarked && "opacity-100",
+      )}
+    >
+      {isBookmarked ? (
+        <BookMarked className="w-3 h-3 text-[hsl(var(--mushaf-active))] fill-[hsl(var(--mushaf-active))]" />
+      ) : (
+        <Bookmark className="w-3 h-3 text-muted-foreground/50" />
+      )}
+    </button>
+  );
+}
+
+// ─── Single Mushaf Page ─────────────────────────────────────────────
+
+function MushafPage({
+  pageNumber,
+  surahId: filterSurahId,
   arabicFontSize,
+  arabicFontFamily,
+  textColorMode,
+  lineHeight: lineHeightOverride,
+  wordSpacing: wordSpacingOverride,
+  letterSpacing: letterSpacingOverride,
   currentPlayingAyah,
+  playingSurahId,
   onAyahVisible,
   onAyahClick,
-  onAyahLongPress,
-}: MushafViewProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const ayahRefs = useRef<Map<number, HTMLSpanElement>>(new Map());
-  const { uthmaniSurah, qcfVerses, pages, loaded } = useMushafData(surahId);
+  onPageVisible,
+}: {
+  pageNumber: number;
+  surahId?: number;
+  arabicFontSize: number;
+  arabicFontFamily: string;
+  textColorMode?: string;
+  lineHeight?: number;
+  wordSpacing?: number;
+  letterSpacing?: number;
+  currentPlayingAyah: number | null;
+  playingSurahId: number | null;
+  onAyahVisible: (surahId: number, ayahNumber: number) => void;
+  onAyahClick: (surahId: number, ayahNumber: number) => void;
+  onPageVisible?: (page: number) => void;
+}) {
+  const pageRef = useRef<HTMLDivElement>(null);
+  const verseRefs = useRef<Map<string, HTMLSpanElement>>(new Map());
 
-  const mushafFontSize = Math.min(Math.max(arabicFontSize, 18), 24);
+  const groups = useMemo(() => {
+    const allGroups = getPageGroupedBySurah(pageNumber);
+    // When navigating to a specific surah, only show groups from that surah
+    // so we don't render trailing verses from the previous surah on the first page
+    // or leading verses from the next surah on the last page
+    if (filterSurahId != null) {
+      return allGroups.filter((g) => g.surahId === filterSurahId);
+    }
+    return allGroups;
+  }, [pageNumber, filterSurahId]);
 
-  // QCF bismillah text from 1:1 (used to detect if bismillah is embedded in ayah 1)
-  const qcf1 = loaded ? getQcfSurahSync(1) : undefined;
-  const bismillahQcfText = qcf1?.[0]?.t;
+  // Juz number from first verse on this page
+  const juzNumber = useMemo(() => {
+    if (groups.length === 0 || groups[0].verses.length === 0) return null;
+    const first = groups[0];
+    const meta = getVerseMeta(first.surahId, first.verses[0].verse);
+    return meta?.juz ?? null;
+  }, [groups]);
 
-  // Intersection observer for ayah visibility tracking
+  // Track visibility of whole page
+  useEffect(() => {
+    if (!pageRef.current || !onPageVisible) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) onPageVisible(pageNumber);
+      },
+      { threshold: 0.3 },
+    );
+    obs.observe(pageRef.current);
+    return () => obs.disconnect();
+  }, [pageNumber, onPageVisible]);
+
+  // Track visible verses for reading progress
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach(entry => {
+        entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const ayahNum = parseInt(entry.target.getAttribute('data-ayah') || '0');
-            if (ayahNum > 0) onAyahVisible(ayahNum);
+            const [surah, ayah] = (
+              entry.target.getAttribute("data-verse-key") || ""
+            )
+              .split(":")
+              .map(Number);
+            if (surah && ayah) onAyahVisible(surah, ayah);
           }
         });
       },
-      { threshold: 0.5 }
+      { threshold: 0.5 },
     );
-
-    ayahRefs.current.forEach(el => observer.observe(el));
+    verseRefs.current.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [loaded, onAyahVisible]);
+  }, [pageNumber, onAyahVisible]);
 
-  // Auto-scroll to currently playing ayah
-  useEffect(() => {
-    if (currentPlayingAyah !== null) {
-      const el = ayahRefs.current.get(currentPlayingAyah);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, [currentPlayingAyah]);
-
-  const setAyahRef = useCallback((el: HTMLSpanElement | null, ayahNum: number) => {
-    if (el) {
-      ayahRefs.current.set(ayahNum, el);
-    } else {
-      ayahRefs.current.delete(ayahNum);
-    }
+  const setVerseRef = useCallback((el: HTMLSpanElement | null, key: string) => {
+    if (el) verseRefs.current.set(key, el);
+    else verseRefs.current.delete(key);
   }, []);
 
-  if (!loaded || !uthmaniSurah) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="animate-pulse-subtle text-muted-foreground text-sm">Loading mushaf...</div>
-      </div>
-    );
-  }
+  const lineHeightDefault = Math.max(2.2, 2.6 - (arabicFontSize - 24) * 0.015);
+  const lineHeight = lineHeightOverride ?? lineHeightDefault;
 
   return (
-    <div ref={containerRef} className="max-w-xl mx-auto px-2 py-4 md:px-4">
-      {pages.map((pageNumber) => (
+    <div ref={pageRef} data-page={pageNumber}>
+      {/* ── Page body ── */}
+      <div className="px-4 sm:px-5 md:px-6 pt-3">
+        {groups.map((group, gi) => (
+          <div key={`${group.surahId}-${gi}`}>
+            {/* Surah header when verse 1 starts on this page */}
+            {group.verses[0]?.verse === 1 && (
+              <>
+                <SurahHeaderInPage
+                  name={group.surahName}
+                  arabicName={group.surahArabicName}
+                />
+                {group.surahId !== SURAH_WITHOUT_BISMILLAH &&
+                  group.surahId !== 1 && (
+                    <BismillahInPage fontSize={arabicFontSize} />
+                  )}
+              </>
+            )}
+
+            {/* Continuous Arabic text */}
+            <div
+              className={cn(
+                "arabic-text text-justify",
+                textColorMode === "soft"
+                  ? "text-[hsl(var(--mushaf-text-soft))]"
+                  : "text-[hsl(var(--mushaf-text))]",
+              )}
+              style={{
+                fontSize: `${arabicFontSize}px`,
+                lineHeight,
+                wordSpacing:
+                  wordSpacingOverride != null
+                    ? `${wordSpacingOverride}px`
+                    : "0.12em",
+                letterSpacing: letterSpacingOverride
+                  ? `${letterSpacingOverride}px`
+                  : undefined,
+                ...getFontStyle(arabicFontFamily as any),
+              }}
+            >
+              {group.verses.map((v) => {
+                const verseKey = `${group.surahId}:${v.verse}`;
+                const isPlaying =
+                  playingSurahId === group.surahId &&
+                  currentPlayingAyah === v.verse;
+
+                return (
+                  <span
+                    key={verseKey}
+                    ref={(el) => setVerseRef(el, verseKey)}
+                    data-verse-key={verseKey}
+                    onClick={() => onAyahClick(group.surahId, v.verse)}
+                    className={cn(
+                      "relative group cursor-pointer rounded-sm transition-all duration-200",
+                      "hover:bg-[hsl(var(--mushaf-highlight))]",
+                      isPlaying && "mushaf-verse-active",
+                    )}
+                  >
+                    {v.text}
+                    <AyahEndMarker number={v.verse} />
+                    <VerseBookmarkButton
+                      surahId={group.surahId}
+                      ayahNumber={v.verse}
+                    />
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Page number footer ── */}
+      <div className="flex items-center gap-3 py-3 px-2">
+        <div className="flex-1 mushaf-ornament-line" />
+        <div className="flex items-center gap-2 shrink-0">
+          {juzNumber && (
+            <span className="text-[9px] text-muted-foreground/35 font-medium tracking-wider uppercase">
+              Juz {juzNumber}
+            </span>
+          )}
+          <span className="text-[10px] text-[hsl(var(--mushaf-ornament)/0.6)] font-semibold tabular-nums">
+            {pageNumber}
+          </span>
+        </div>
+        <div className="flex-1 mushaf-ornament-line" />
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Mushaf View ───────────────────────────────────────────────
+
+export function MushafView({
+  surahId,
+  startPage,
+  arabicFontSize,
+  arabicFontFamily,
+  textColorMode,
+  readingWidth,
+  lineHeight: lineHeightProp,
+  wordSpacing: wordSpacingProp,
+  letterSpacing: letterSpacingProp,
+  currentPlayingAyah,
+  playingSurahId,
+  onAyahVisible,
+  onAyahClick,
+  onPageChange,
+}: MushafViewProps) {
+  // Determine page range for this surah
+  const { firstPage, lastPage } = useMemo(() => {
+    const first = startPage || getVersePageNumber(surahId, 1);
+    const verses = getArabicSurah(surahId);
+    const lastVerse = verses.length;
+    const last = getVersePageNumber(surahId, lastVerse);
+    return { firstPage: first, lastPage: last };
+  }, [surahId, startPage]);
+
+  // Pages loaded so far (lazy-loaded in batches)
+  const BATCH = 3;
+  const [loadedCount, setLoadedCount] = useState(BATCH);
+
+  const allPages = useMemo(() => {
+    const pages: number[] = [];
+    for (let p = firstPage; p <= lastPage; p++) pages.push(p);
+    return pages;
+  }, [firstPage, lastPage]);
+
+  const visiblePages = allPages.slice(0, loadedCount);
+
+  // Reset when surah changes
+  useEffect(() => {
+    setLoadedCount(BATCH);
+  }, [surahId, startPage]);
+
+  // Listen for jump-to-ayah requests — force load pages up to the target page
+  useEffect(() => {
+    const handleLoadToPage = (e: Event) => {
+      const { page } = (e as CustomEvent).detail;
+      const targetIndex = allPages.indexOf(page);
+      if (targetIndex >= 0) {
+        setLoadedCount((prev) => Math.max(prev, targetIndex + 1));
+      } else {
+        // Page not in this surah's range — load all
+        setLoadedCount(allPages.length);
+      }
+    };
+    window.addEventListener("mushaf-load-to-page", handleLoadToPage);
+    return () =>
+      window.removeEventListener("mushaf-load-to-page", handleLoadToPage);
+  }, [allPages]);
+
+  // Sentinel for lazy loading more pages
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && loadedCount < allPages.length) {
+          setLoadedCount((prev) => Math.min(prev + BATCH, allPages.length));
+        }
+      },
+      { rootMargin: "600px" },
+    );
+    obs.observe(sentinelRef.current);
+    return () => obs.disconnect();
+  }, [loadedCount, allPages.length]);
+
+  const handlePageVisible = useCallback(
+    (page: number) => {
+      onPageChange?.(page);
+    },
+    [onPageChange],
+  );
+
+  return (
+    <div
+      className="mushaf-container px-1 sm:px-3 md:px-4 py-2 sm:py-3 pb-24"
+      style={readingWidth ? { maxWidth: `${readingWidth}%` } : undefined}
+    >
+      {visiblePages.map((pageNum) => (
         <MushafPage
-          key={pageNumber}
-          pageNumber={pageNumber}
+          key={pageNum}
+          pageNumber={pageNum}
           surahId={surahId}
-          uthmaniSurah={uthmaniSurah}
-          qcfVerses={qcfVerses}
-          bismillahQcfText={bismillahQcfText}
+          arabicFontSize={arabicFontSize}
+          arabicFontFamily={arabicFontFamily}
+          textColorMode={textColorMode}
+          lineHeight={lineHeightProp}
+          wordSpacing={wordSpacingProp}
+          letterSpacing={letterSpacingProp}
           currentPlayingAyah={currentPlayingAyah}
+          playingSurahId={playingSurahId}
+          onAyahVisible={onAyahVisible}
           onAyahClick={onAyahClick}
-          onAyahLongPress={onAyahLongPress}
-          onAyahRef={setAyahRef}
-          fontSize={mushafFontSize}
+          onPageVisible={handlePageVisible}
         />
       ))}
+
+      {/* Sentinel for lazy loading */}
+      {loadedCount < allPages.length && (
+        <div
+          ref={sentinelRef}
+          className="flex items-center justify-center py-10"
+        >
+          <div className="flex items-center gap-2 text-muted-foreground/30 text-xs">
+            <div className="w-4 h-4 border-2 border-muted-foreground/15 border-t-muted-foreground/40 rounded-full animate-spin" />
+            <span>Loading...</span>
+          </div>
+        </div>
+      )}
+
+      {/* End indicator */}
+      {loadedCount >= allPages.length && allPages.length > 0 && (
+        <div className="text-center py-8">
+          <div className="mushaf-ornament-line mx-auto max-w-[160px] mb-3" />
+          <p className="text-[10px] text-muted-foreground/30 tabular-nums">
+            Pages {firstPage} – {lastPage}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

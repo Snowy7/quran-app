@@ -1,23 +1,28 @@
-import { useCallback, useEffect, useState, useRef } from 'react';
-import { useAuth, useUser } from '@clerk/clerk-react';
-import { useConvex } from 'convex/react';
-import { FunctionReference } from 'convex/server';
-import { db } from '@/lib/db';
-import type { Bookmark, SurahMemorization, UserSettings } from '@/types/quran';
+import { useCallback, useEffect, useState, useRef } from "react";
+import { useAuth, useUser } from "@clerk/clerk-react";
+import { useConvex } from "convex/react";
+import { FunctionReference } from "convex/server";
+import { db } from "@/lib/db";
+import type { Bookmark, SurahMemorization, UserSettings } from "@/types/quran";
 
 // Dynamic function references - these will be available once Convex dev server runs
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const api: any = {
   quranSync: {
-    syncReadingProgress: 'quranSync:syncReadingProgress' as unknown as FunctionReference<'mutation'>,
-    syncBookmarks: 'quranSync:syncBookmarks' as unknown as FunctionReference<'mutation'>,
-    syncMemorization: 'quranSync:syncMemorization' as unknown as FunctionReference<'mutation'>,
-    syncSettings: 'quranSync:syncSettings' as unknown as FunctionReference<'mutation'>,
-    getAllUserData: 'quranSync:getAllUserData' as unknown as FunctionReference<'query'>,
+    syncReadingProgress:
+      "quranSync:syncReadingProgress" as unknown as FunctionReference<"mutation">,
+    syncBookmarks:
+      "quranSync:syncBookmarks" as unknown as FunctionReference<"mutation">,
+    syncMemorization:
+      "quranSync:syncMemorization" as unknown as FunctionReference<"mutation">,
+    syncSettings:
+      "quranSync:syncSettings" as unknown as FunctionReference<"mutation">,
+    getAllUserData:
+      "quranSync:getAllUserData" as unknown as FunctionReference<"query">,
   },
 };
 
-export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'offline';
+export type SyncStatus = "idle" | "syncing" | "success" | "error" | "offline";
 
 interface SyncState {
   status: SyncStatus;
@@ -31,7 +36,7 @@ export function useConvexSync() {
   const { user } = useUser();
   const convex = useConvex();
   const [syncState, setSyncState] = useState<SyncState>({
-    status: 'idle',
+    status: "idle",
     lastSyncedAt: null,
     error: null,
     itemsSynced: 0,
@@ -48,7 +53,10 @@ export function useConvexSync() {
 
     // Get current reading position for each surah we've visited
     const history = await db.readingHistory.toArray();
-    const surahProgress: Record<number, { lastAyahRead: number; totalAyahsRead: number; lastReadAt: number }> = {};
+    const surahProgress: Record<
+      number,
+      { lastAyahRead: number; totalAyahsRead: number; lastReadAt: number }
+    > = {};
 
     for (const entry of history) {
       for (const ayah of entry.ayahsRead) {
@@ -67,13 +75,15 @@ export function useConvexSync() {
       }
     }
 
-    const progressData = Object.entries(surahProgress).map(([surahId, data]) => ({
-      surahId: parseInt(surahId),
-      lastAyahRead: data.lastAyahRead,
-      totalAyahsRead: data.totalAyahsRead,
-      lastReadAt: data.lastReadAt,
-      updatedAt: Date.now(),
-    }));
+    const progressData = Object.entries(surahProgress).map(
+      ([surahId, data]) => ({
+        surahId: parseInt(surahId),
+        lastAyahRead: data.lastAyahRead,
+        totalAyahsRead: data.totalAyahsRead,
+        lastReadAt: data.lastReadAt,
+        updatedAt: Date.now(),
+      }),
+    );
 
     if (progressData.length === 0) return 0;
 
@@ -89,7 +99,9 @@ export function useConvexSync() {
   const syncBookmarksToCloud = useCallback(async () => {
     if (!clerkId) return 0;
 
-    const localBookmarks = await db.bookmarks.filter((b) => !b.isDeleted).toArray();
+    const localBookmarks = await db.bookmarks
+      .filter((b) => !b.isDeleted)
+      .toArray();
     if (localBookmarks.length === 0) return 0;
 
     const bookmarkData = localBookmarks.map((b) => ({
@@ -159,7 +171,7 @@ export function useConvexSync() {
   const syncSettingsToCloud = useCallback(async () => {
     if (!clerkId) return 0;
 
-    const localSettings = await db.settings.get('current');
+    const localSettings = await db.settings.get("current");
     if (!localSettings) return 0;
 
     await convex.mutation(api.quranSync.syncSettings, {
@@ -185,13 +197,18 @@ export function useConvexSync() {
   const pullFromCloud = useCallback(async () => {
     if (!clerkId) return 0;
 
-    const cloudData = await convex.query(api.quranSync.getAllUserData, { clerkId });
+    const cloudData = await convex.query(api.quranSync.getAllUserData, {
+      clerkId,
+    });
     let itemsUpdated = 0;
 
     // Merge bookmarks from cloud
     for (const cloudBookmark of cloudData.bookmarks) {
       const localBookmark = await db.bookmarks
-        .where({ surahId: cloudBookmark.surahId, ayahNumber: cloudBookmark.ayahNumber })
+        .where({
+          surahId: cloudBookmark.surahId,
+          ayahNumber: cloudBookmark.ayahNumber,
+        })
         .first();
 
       if (!localBookmark || cloudBookmark.updatedAt > localBookmark.updatedAt) {
@@ -213,7 +230,14 @@ export function useConvexSync() {
     }
 
     // Merge memorization from cloud
-    const memBySurah: Record<number, { ayahs: number[]; lastUpdated: number; data: typeof cloudData.memorization[0] }> = {};
+    const memBySurah: Record<
+      number,
+      {
+        ayahs: number[];
+        lastUpdated: number;
+        data: (typeof cloudData.memorization)[0];
+      }
+    > = {};
     for (const mem of cloudData.memorization) {
       if (!memBySurah[mem.surahId]) {
         memBySurah[mem.surahId] = { ayahs: [], lastUpdated: 0, data: mem };
@@ -232,7 +256,11 @@ export function useConvexSync() {
       if (!localMem || data.lastUpdated > localMem.updatedAt) {
         const newMem: SurahMemorization = {
           surahId,
-          status: data.data.status as 'not_started' | 'learning' | 'memorized' | 'needs_revision',
+          status: data.data.status as
+            | "not_started"
+            | "learning"
+            | "memorized"
+            | "needs_revision",
           memorizedAyahs: data.ayahs,
           lastRevisedAt: data.data.lastReviewedAt,
           nextRevisionAt: data.data.nextReviewAt,
@@ -249,17 +277,25 @@ export function useConvexSync() {
 
     // Merge settings from cloud
     if (cloudData.settings) {
-      const localSettings = await db.settings.get('current');
-      if (!localSettings || cloudData.settings.updatedAt > (localSettings.lastSyncedAt || 0)) {
+      const localSettings = await db.settings.get("current");
+      if (
+        !localSettings ||
+        cloudData.settings.updatedAt > (localSettings.lastSyncedAt || 0)
+      ) {
         const newSettings: UserSettings = {
-          id: 'current',
-          theme: cloudData.settings.theme as 'light' | 'dark' | 'system',
+          id: "current",
+          theme: cloudData.settings.theme as "light" | "dark" | "system",
           arabicFontSize: cloudData.settings.arabicFontSize,
-          arabicFontFamily: localSettings?.arabicFontFamily || 'amiri',
+          arabicFontFamily: localSettings?.arabicFontFamily || "amiri",
+          textColorMode: localSettings?.textColorMode || "default",
+          readingWidth: localSettings?.readingWidth || 70,
+          lineHeight: localSettings?.lineHeight || 2.4,
+          wordSpacing: localSettings?.wordSpacing || 2,
+          letterSpacing: localSettings?.letterSpacing || 0,
           translationFontSize: cloudData.settings.translationFontSize,
           showTranslation: cloudData.settings.showTranslation,
           showTajweed: localSettings?.showTajweed || false,
-          readingMode: localSettings?.readingMode || 'scroll',
+          readingMode: localSettings?.readingMode || "scroll",
           defaultReciterId: cloudData.settings.preferredReciter,
           playbackSpeed: cloudData.settings.playbackSpeed,
           autoPlayNext: cloudData.settings.autoPlayNext,
@@ -268,9 +304,11 @@ export function useConvexSync() {
           showTafsir: localSettings?.showTafsir || false,
           primaryTafsir: localSettings?.primaryTafsir || 16,
           dailyReminderEnabled: localSettings?.dailyReminderEnabled || false,
-          dailyReminderTime: localSettings?.dailyReminderTime || '08:00',
-          revisionRemindersEnabled: localSettings?.revisionRemindersEnabled || false,
-          streakRemindersEnabled: localSettings?.streakRemindersEnabled || false,
+          dailyReminderTime: localSettings?.dailyReminderTime || "08:00",
+          revisionRemindersEnabled:
+            localSettings?.revisionRemindersEnabled || false,
+          streakRemindersEnabled:
+            localSettings?.streakRemindersEnabled || false,
           dailyAyahGoal: cloudData.settings.dailyAyahGoal,
           dailyTimeGoalMinutes: localSettings?.dailyTimeGoalMinutes || 30,
           lastSyncedAt: Date.now(),
@@ -288,16 +326,16 @@ export function useConvexSync() {
   // Full bidirectional sync
   const syncAll = useCallback(async () => {
     if (!isSignedIn || !clerkId) {
-      setSyncState((prev) => ({ ...prev, status: 'idle' }));
+      setSyncState((prev) => ({ ...prev, status: "idle" }));
       return;
     }
 
     if (!navigator.onLine) {
-      setSyncState((prev) => ({ ...prev, status: 'offline' }));
+      setSyncState((prev) => ({ ...prev, status: "offline" }));
       return;
     }
 
-    setSyncState((prev) => ({ ...prev, status: 'syncing', error: null }));
+    setSyncState((prev) => ({ ...prev, status: "syncing", error: null }));
 
     try {
       // Push local changes to cloud
@@ -309,26 +347,27 @@ export function useConvexSync() {
       // Pull cloud changes to local
       const pullCount = await pullFromCloud();
 
-      const totalItems = progressCount + bookmarkCount + memCount + settingsCount + pullCount;
+      const totalItems =
+        progressCount + bookmarkCount + memCount + settingsCount + pullCount;
 
       setSyncState({
-        status: 'success',
+        status: "success",
         lastSyncedAt: Date.now(),
         error: null,
         itemsSynced: totalItems,
       });
 
       // Update local settings with sync timestamp
-      const settings = await db.settings.get('current');
+      const settings = await db.settings.get("current");
       if (settings) {
-        await db.settings.update('current', { lastSyncedAt: Date.now() });
+        await db.settings.update("current", { lastSyncedAt: Date.now() });
       }
     } catch (error) {
-      console.error('[Sync] Error:', error);
+      console.error("[Sync] Error:", error);
       setSyncState((prev) => ({
         ...prev,
-        status: 'error',
-        error: error instanceof Error ? error.message : 'Sync failed',
+        status: "error",
+        error: error instanceof Error ? error.message : "Sync failed",
       }));
     }
   }, [
@@ -365,14 +404,14 @@ export function useConvexSync() {
 
       // Sync when coming online
       const handleOnline = () => syncAll();
-      window.addEventListener('online', handleOnline);
+      window.addEventListener("online", handleOnline);
 
       return () => {
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
         }
-        window.removeEventListener('online', handleOnline);
+        window.removeEventListener("online", handleOnline);
       };
     } else {
       // Reset initialization flag when signed out

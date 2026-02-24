@@ -1,35 +1,293 @@
-import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Play, Pause, X, SkipBack, SkipForward, Loader2, ChevronDown, AlertCircle, User, Check } from 'lucide-react';
-import { Button } from '@template/ui';
-import { useAudioStore } from '@/lib/stores/audio-store';
-import { getSurahById } from '@/data/surahs';
-import { useTranslation } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Play,
+  Pause,
+  X,
+  SkipBack,
+  SkipForward,
+  Loader2,
+  ChevronDown,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import {
+  Button,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@template/ui";
+import { useAudioStore } from "@/lib/stores/audio-store";
+import { useUIStore } from "@/lib/stores/ui-store";
+import { getSurahById, SURAHS } from "@/data/surahs";
+import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
-// Ordered reciter list — user's preferred 5 first, then extras
-const RECITER_LIST = [
-  { id: 'Abdul_Basit_Murattal_192kbps', en: 'Abdul Basit Abdul Samad', ar: 'عبد الباسط عبد الصمد' },
-  { id: 'Minshawy_Murattal_128kbps', en: 'Mohamed Siddiq Al-Minshawi', ar: 'محمد صديق المنشاوي' },
-  { id: 'Husary_128kbps', en: 'Mahmoud Khalil Al-Husary', ar: 'محمود خليل الحصري' },
-  { id: 'Mustafa_Ismail_48kbps', en: 'Mustafa Ismail', ar: 'مصطفى إسماعيل' },
-  { id: 'Abdurrahmaan_As-Sudais_192kbps', en: 'Abdurrahman As-Sudais', ar: 'عبد الرحمن السديس' },
-  { id: 'Alafasy_128kbps', en: 'Mishary Rashid Alafasy', ar: 'مشاري راشد العفاسي' },
-  { id: 'Saood_ash-Shuraym_128kbps', en: 'Saud Al-Shuraim', ar: 'سعود الشريم' },
-];
+// Get saved position from localStorage
+function getSavedPosition(): { x: number; y: number } | null {
+  try {
+    const saved = localStorage.getItem("audio-player-position");
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    // Ignore errors
+  }
+  return null;
+}
 
-function getReciterName(reciterId: string) {
-  return RECITER_LIST.find(r => r.id === reciterId) || RECITER_LIST[0];
+// Save position to localStorage
+function savePosition(x: number, y: number) {
+  try {
+    localStorage.setItem("audio-player-position", JSON.stringify({ x, y }));
+  } catch (e) {
+    // Ignore errors
+  }
+}
+
+// Draggable Bubble Component
+interface DraggableBubbleProps {
+  surahName: string;
+  currentAyah: number;
+  totalAyahs: number;
+  isPlaying: boolean;
+  isLoading: boolean;
+  error: string | null;
+  onExpand: () => void;
+  onTogglePlay: () => void;
+  onClose: () => void;
+}
+
+function DraggableBubble({
+  surahName,
+  currentAyah,
+  totalAyahs,
+  isPlaying,
+  isLoading,
+  error,
+  onExpand,
+  onTogglePlay,
+  onClose,
+}: DraggableBubbleProps) {
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{ x: number; y: number }>(() => {
+    const saved = getSavedPosition();
+    return saved || { x: window.innerWidth - 200, y: window.innerHeight - 150 };
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [hasMoved, setHasMoved] = useState(false);
+
+  // Constrain position to viewport
+  const constrainPosition = useCallback((x: number, y: number) => {
+    const bubble = bubbleRef.current;
+    if (!bubble) return { x, y };
+
+    const rect = bubble.getBoundingClientRect();
+    const padding = 10;
+
+    const maxX = window.innerWidth - rect.width - padding;
+    const maxY = window.innerHeight - rect.height - padding;
+
+    return {
+      x: Math.max(padding, Math.min(x, maxX)),
+      y: Math.max(padding, Math.min(y, maxY)),
+    };
+  }, []);
+
+  // Handle touch/mouse start
+  const handleDragStart = useCallback(
+    (clientX: number, clientY: number) => {
+      setIsDragging(true);
+      setHasMoved(false);
+      setDragStart({
+        x: clientX - position.x,
+        y: clientY - position.y,
+      });
+    },
+    [position],
+  );
+
+  // Handle touch/mouse move
+  const handleDragMove = useCallback(
+    (clientX: number, clientY: number) => {
+      if (!isDragging) return;
+
+      const newX = clientX - dragStart.x;
+      const newY = clientY - dragStart.y;
+      const constrained = constrainPosition(newX, newY);
+
+      // Check if moved significantly
+      if (Math.abs(newX - position.x) > 5 || Math.abs(newY - position.y) > 5) {
+        setHasMoved(true);
+      }
+
+      setPosition(constrained);
+    },
+    [isDragging, dragStart, constrainPosition, position],
+  );
+
+  // Handle touch/mouse end
+  const handleDragEnd = useCallback(() => {
+    if (isDragging) {
+      setIsDragging(false);
+      savePosition(position.x, position.y);
+
+      // Snap to edges
+      const bubble = bubbleRef.current;
+      if (bubble) {
+        const rect = bubble.getBoundingClientRect();
+        const centerX = position.x + rect.width / 2;
+        const screenCenterX = window.innerWidth / 2;
+        const padding = 10;
+
+        // Snap to left or right edge
+        const snapX =
+          centerX < screenCenterX
+            ? padding
+            : window.innerWidth - rect.width - padding;
+        const snapped = constrainPosition(snapX, position.y);
+        setPosition(snapped);
+        savePosition(snapped.x, snapped.y);
+      }
+    }
+  }, [isDragging, position, constrainPosition]);
+
+  // Mouse events
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      e.preventDefault();
+      handleDragMove(e.clientX, e.clientY);
+    };
+
+    const handleMouseUp = () => {
+      handleDragEnd();
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging, handleDragMove, handleDragEnd]);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition((prev) => constrainPosition(prev.x, prev.y));
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [constrainPosition]);
+
+  return (
+    <div
+      ref={bubbleRef}
+      className="fixed z-50 touch-none"
+      style={{
+        left: position.x,
+        top: position.y,
+        transition: isDragging
+          ? "none"
+          : "left 0.3s ease-out, top 0.3s ease-out",
+      }}
+    >
+      <div
+        className={cn(
+          "flex items-center gap-1 bg-primary text-primary-foreground",
+          "rounded-full shadow-lg shadow-primary/25 pl-3 pr-1 py-1",
+          isDragging ? "scale-105 cursor-grabbing" : "cursor-grab",
+          "transition-transform duration-200",
+        )}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          handleDragStart(e.clientX, e.clientY);
+        }}
+        onTouchStart={(e) => {
+          const touch = e.touches[0];
+          handleDragStart(touch.clientX, touch.clientY);
+        }}
+        onTouchMove={(e) => {
+          const touch = e.touches[0];
+          handleDragMove(touch.clientX, touch.clientY);
+        }}
+        onTouchEnd={handleDragEnd}
+      >
+        {/* Surah info - tap to expand (only if not dragged) */}
+        <button
+          className="flex items-center gap-2 min-w-0 py-1"
+          onClick={() => !hasMoved && onExpand()}
+        >
+          <div className="text-xs font-medium truncate max-w-24">
+            {surahName}
+          </div>
+          <div className="text-[10px] opacity-80 tabular-nums">
+            {currentAyah}/{totalAyahs}
+          </div>
+        </button>
+
+        {/* Play/Pause button */}
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-8 w-8 rounded-full hover:bg-white/20 text-primary-foreground"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!hasMoved) onTogglePlay();
+          }}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : error ? (
+            <AlertCircle className="h-4 w-4" />
+          ) : isPlaying ? (
+            <Pause className="h-4 w-4" />
+          ) : (
+            <Play className="h-4 w-4 ml-0.5" />
+          )}
+        </Button>
+
+        {/* Close button */}
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-6 w-6 rounded-full hover:bg-white/20 text-primary-foreground"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!hasMoved) onClose();
+          }}
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function GlobalAudioPlayer() {
   const navigate = useNavigate();
   const location = useLocation();
   const { language } = useTranslation();
-  const isAr = language === 'ar';
-  const [showReciterPicker, setShowReciterPicker] = useState(false);
+  const isAr = language === "ar";
 
-  // Get state from store
+  // Check if we're on the reader page
+  const isOnReaderPage =
+    location.pathname.startsWith("/quran/") &&
+    location.pathname.split("/").length > 2;
+
+  // Zen mode — hide bottom bar entirely
+  const isZenMode = useUIStore((s) => s.isZenMode);
+
+  // Get state directly from store
   const isVisible = useAudioStore((s) => s.isVisible);
   const isMinimized = useAudioStore((s) => s.isMinimized);
   const surahId = useAudioStore((s) => s.currentSurahId);
@@ -38,7 +296,6 @@ export function GlobalAudioPlayer() {
   const isPlaying = useAudioStore((s) => s.isPlaying);
   const isLoading = useAudioStore((s) => s.isLoading);
   const error = useAudioStore((s) => s.error);
-  const reciterId = useAudioStore((s) => s.reciterId);
 
   // Get actions
   const pause = useAudioStore((s) => s.pause);
@@ -48,18 +305,18 @@ export function GlobalAudioPlayer() {
   const previous = useAudioStore((s) => s.previous);
   const setMinimized = useAudioStore((s) => s.setMinimized);
   const play = useAudioStore((s) => s.play);
-  const setReciterId = useAudioStore((s) => s.setReciterId);
-  const seekTo = useAudioStore((s) => s.seekTo);
+
+  const readingScrollProgress = useUIStore((s) => s.readingScrollProgress);
 
   const surah = surahId ? getSurahById(surahId) : null;
   const currentAyahNumber = ayahIndex !== null ? ayahIndex + 1 : 0;
-  const progress = totalAyahs > 0 ? (currentAyahNumber / totalAyahs) * 100 : 0;
-
-  // Check if bottom nav is hidden (reader pages)
-  const isOnReaderPage = location.pathname.startsWith('/quran/') && location.pathname.split('/').length > 2;
-
-  const reciterName = getReciterName(reciterId);
-  const surahDisplayName = isAr ? surah?.name : surah?.englishName;
+  const audioProgress =
+    totalAyahs > 0 ? (currentAyahNumber / totalAyahs) * 100 : 0;
+  // Reading scroll progress (always available while scrolling on reader page)
+  const scrollProgress = readingScrollProgress
+    ? (readingScrollProgress.currentAyah / readingScrollProgress.totalAyahs) *
+      100
+    : 0;
 
   const handleTogglePlay = () => {
     if (error && surahId !== null && ayahIndex !== null) {
@@ -81,263 +338,288 @@ export function GlobalAudioPlayer() {
     }
   };
 
-  const handleReciterChange = (newId: string) => {
-    setShowReciterPicker(false);
-    if (newId === reciterId) return;
-    setReciterId(newId);
-    // Replay current ayah with new reciter
-    if (surahId !== null && ayahIndex !== null) {
-      seekTo(ayahIndex);
-    }
-  };
+  // On reader page: show integrated bottom bar with navigation + player
+  if (isOnReaderPage) {
+    // Extract surah ID from URL for navigation
+    const pathParts = location.pathname.split("/");
+    const currentPageSurahId = parseInt(pathParts[2] || "1", 10);
+    const currentPageSurah = getSurahById(currentPageSurahId);
+    const isPlayingThisSurah = isVisible && surahId === currentPageSurahId;
 
-  if (!isVisible || surahId === null) {
-    return null;
-  }
+    const handleSurahChange = (newSurahId: string) => {
+      navigate(`/quran/${newSurahId}`);
+    };
 
-  const bottomClass = cn(
-    'fixed left-3 right-3 z-50 safe-area-bottom animate-slide-up',
-    isOnReaderPage ? 'bottom-4' : 'bottom-24 lg:bottom-4'
-  );
-
-  // Minimized: Clean floating card
-  if (isMinimized) {
     return (
-      <div className={bottomClass}>
-        <div className="bg-primary rounded-2xl shadow-xl shadow-black/20 overflow-hidden max-w-lg mx-auto">
-          {/* Thin progress bar */}
-          <div className="h-0.5 bg-primary-foreground/10">
+      <div
+        className={cn(
+          "fixed bottom-0 left-0 right-0 z-50 safe-area-bottom",
+          "transition-all duration-500 ease-out",
+          isZenMode && "translate-y-full opacity-0 pointer-events-none",
+        )}
+      >
+        {/* Reading scroll progress bar — always visible while reading */}
+        <div className="h-0.5 bg-secondary relative overflow-hidden">
+          {/* Scroll progress (background layer) */}
+          <div
+            className="h-full bg-primary/30 transition-all duration-300 ease-out absolute inset-y-0 left-0"
+            style={{ width: `${scrollProgress}%` }}
+          />
+          {/* Audio progress (foreground layer, brighter) */}
+          {isPlayingThisSurah && (
             <div
-              className="h-full bg-primary-foreground/40 transition-all duration-300"
-              style={{ width: `${progress}%` }}
+              className="h-full bg-primary transition-all duration-300 ease-out relative"
+              style={{ width: `${audioProgress}%` }}
             />
-          </div>
+          )}
+        </div>
 
-          <div className="flex items-center gap-3 px-4 py-3">
-            {/* Reciter icon */}
-            <div
-              className="w-11 h-11 rounded-full bg-primary-foreground/15 flex items-center justify-center shrink-0 cursor-pointer"
-              onClick={() => setMinimized(false)}
-            >
-              <User className="w-5 h-5 text-primary-foreground/70" />
+        <div className="bg-background border-t border-border">
+          <div className="flex items-center justify-between h-14 px-3">
+            {/* Left: Surah navigation */}
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() =>
+                  currentPageSurahId > 1 &&
+                  navigate(`/quran/${currentPageSurahId - 1}`)
+                }
+                disabled={currentPageSurahId <= 1}
+                className="h-8 w-8"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+
+              <Select
+                value={currentPageSurahId.toString()}
+                onValueChange={handleSurahChange}
+              >
+                <SelectTrigger className="h-8 w-[130px] border-0 bg-secondary/60 hover:bg-secondary text-xs font-medium px-2">
+                  <span className="truncate">
+                    {currentPageSurah?.englishName}
+                  </span>
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {SURAHS.map((s) => (
+                    <SelectItem key={s.id} value={s.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground w-5">
+                          {s.id}
+                        </span>
+                        <span className="text-sm">{s.englishName}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() =>
+                  currentPageSurahId < 114 &&
+                  navigate(`/quran/${currentPageSurahId + 1}`)
+                }
+                disabled={currentPageSurahId >= 114}
+                className="h-8 w-8"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </Button>
             </div>
 
-            {/* Info - tap to expand */}
-            <button
-              className="flex-1 min-w-0 text-right"
-              onClick={() => setMinimized(false)}
-              dir="rtl"
-            >
-              <p className="text-sm font-semibold text-primary-foreground truncate font-arabic-ui">
-                القارئ {reciterName.ar}
-              </p>
-              <p className="text-xs text-primary-foreground/60 truncate">
-                {surah?.name} · آية {currentAyahNumber}/{totalAyahs}
-              </p>
-            </button>
-
-            {/* Play/Pause */}
-            <button
-              className={cn(
-                'w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all',
-                'bg-primary-foreground text-primary',
-                'hover:bg-primary-foreground/90 active:scale-95'
+            {/* Right: Audio controls */}
+            <div className="flex items-center gap-1">
+              {/* Ayah counter */}
+              {isPlayingThisSurah && (
+                <span className="text-xs text-muted-foreground tabular-nums mr-1">
+                  {currentAyahNumber}/{totalAyahs}
+                </span>
               )}
-              onClick={handleTogglePlay}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : error ? (
-                <AlertCircle className="h-5 w-5" />
-              ) : isPlaying ? (
-                <Pause className="h-5 w-5 fill-current" />
-              ) : (
-                <Play className="h-5 w-5 ml-0.5 fill-current" />
-              )}
-            </button>
 
-            {/* Close */}
-            <button
-              className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-primary-foreground/40 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-colors"
-              onClick={handleClose}
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
+              {/* Skip back */}
+              {isPlayingThisSurah && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={previous}
+                  disabled={ayahIndex === 0}
+                >
+                  <SkipBack className="w-4 h-4" />
+                </Button>
+              )}
+
+              {/* Play/Pause */}
+              <Button
+                variant={
+                  isPlaying && isPlayingThisSurah ? "default" : "outline"
+                }
+                size="icon"
+                className="h-10 w-10 rounded-full"
+                onClick={() => {
+                  if (isPlayingThisSurah) {
+                    handleTogglePlay();
+                  } else {
+                    play(currentPageSurahId, 0);
+                  }
+                }}
+                disabled={isLoading && isPlayingThisSurah}
+              >
+                {isLoading && isPlayingThisSurah ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : error && isPlayingThisSurah ? (
+                  <AlertCircle className="w-4 h-4" />
+                ) : isPlaying && isPlayingThisSurah ? (
+                  <Pause className="w-5 h-5" />
+                ) : (
+                  <Play className="w-5 h-5 ml-0.5" />
+                )}
+              </Button>
+
+              {/* Skip forward */}
+              {isPlayingThisSurah && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={next}
+                  disabled={ayahIndex === null || ayahIndex >= totalAyahs - 1}
+                >
+                  <SkipForward className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+  // Not on reader page: show floating player only if playing
+  if (!isVisible || surahId === null) {
+    return null;
+  }
+
+  // Minimized bubble view - draggable
+  if (isMinimized) {
+    return (
+      <DraggableBubble
+        surahName={surah?.englishName || "Playing"}
+        currentAyah={currentAyahNumber}
+        totalAyahs={totalAyahs}
+        isPlaying={isPlaying}
+        isLoading={isLoading}
+        error={error}
+        onExpand={() => setMinimized(false)}
+        onTogglePlay={handleTogglePlay}
+        onClose={handleClose}
+      />
+    );
+  }
+
   // Expanded player view
   return (
-    <>
-      {/* Reciter picker overlay — rendered outside the card so it's not clipped */}
-      {showReciterPicker && (
-        <>
-          <div className="fixed inset-0 z-[60]" onClick={() => setShowReciterPicker(false)} />
-          <div className={cn(
-            'fixed left-3 right-3 z-[60]',
-            isOnReaderPage ? 'bottom-4' : 'bottom-24 lg:bottom-4'
-          )}>
-            {/* Position list above where the card sits */}
-            <div className="max-w-lg mx-auto mb-[270px]">
-              <div className="bg-background border border-border rounded-xl shadow-2xl overflow-hidden animate-fade-in max-w-[280px] mx-auto">
-                <div className="max-h-[50vh] overflow-y-auto scrollbar-hide">
-                  {RECITER_LIST.map((r) => (
-                    <button
-                      key={r.id}
-                      onClick={() => handleReciterChange(r.id)}
-                      className={cn(
-                        'w-full flex items-center gap-3 px-4 py-2.5 transition-colors',
-                        r.id === reciterId
-                          ? 'bg-primary/10 text-primary'
-                          : 'hover:bg-secondary/50'
-                      )}
-                      dir="rtl"
-                    >
-                      <p className="text-sm font-semibold font-arabic-ui text-right flex-1">
-                        {r.ar}
-                      </p>
-                      {r.id === reciterId && (
-                        <Check className="w-4 h-4 text-primary shrink-0" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+    <div className="fixed bottom-20 left-4 right-4 z-50 safe-area-bottom">
+      <div className="bg-card border border-border rounded-2xl shadow-xl overflow-hidden">
+        {/* Progress bar */}
+        <div className="h-1 bg-secondary">
+          <div
+            className="h-full bg-primary transition-all duration-300"
+            style={{ width: `${audioProgress}%` }}
+          />
+        </div>
 
-      {/* Card */}
-      <div className={bottomClass}>
-        <div className="bg-card border border-border rounded-2xl shadow-xl max-w-lg mx-auto">
-          {/* Progress bar — overflow-hidden only here for rounded corners */}
-          <div className="h-1 bg-secondary rounded-t-2xl overflow-hidden">
-            <div
-              className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          <div className="p-4" dir={isAr ? 'rtl' : 'ltr'}>
-            {/* Header with collapse/close */}
-            <div className="flex items-center justify-between mb-3">
-              <button
-                onClick={handleClose}
-                className="p-1 -m-1 rounded-lg hover:bg-secondary transition-colors"
-              >
-                <X className="w-5 h-5 text-muted-foreground" />
-              </button>
-              <button
-                onClick={() => setMinimized(true)}
-                className="p-1 -m-1 rounded-lg hover:bg-secondary transition-colors"
-              >
-                <ChevronDown className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </div>
-
-            {/* Surah info */}
-            <div
-              className="text-center mb-3 cursor-pointer"
-              onClick={handleGoToSurah}
-            >
-              <h3 className={cn(
-                'font-semibold text-lg',
-                isAr && 'font-arabic-ui'
-              )}>
-                {surahDisplayName}
-              </h3>
-              {!isAr && (
-                <p className="text-sm text-muted-foreground arabic-text">
-                  {surah?.name}
-                </p>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                {isAr
-                  ? `آية ${currentAyahNumber} من ${totalAyahs}`
-                  : `Ayah ${currentAyahNumber} of ${totalAyahs}`}
-              </p>
-            </div>
-
-            {/* Reciter selector */}
-            <div className="flex justify-center mb-3">
-              <button
-                onClick={() => setShowReciterPicker(!showReciterPicker)}
-                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-arabic-ui px-3 py-1.5 rounded-full hover:bg-secondary transition-colors"
-                dir="rtl"
-              >
-                القارئ {reciterName.ar}
-                <ChevronDown className={cn(
-                  'w-3 h-3 transition-transform',
-                  showReciterPicker && 'rotate-180'
-                )} />
-              </button>
-            </div>
-
-            {/* Error message */}
-            {error && (
-              <div className="text-center mb-3 text-sm text-destructive">
-                {error}
-              </div>
-            )}
-
-            {/* Controls */}
-            <div className="flex items-center justify-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10"
-                onClick={previous}
-                disabled={ayahIndex === 0}
-              >
-                <SkipBack className="h-5 w-5" />
-              </Button>
-
-              <Button
-                size="icon"
-                className={cn(
-                  "h-14 w-14 rounded-full",
-                  error && "bg-destructive hover:bg-destructive/90"
-                )}
-                onClick={handleTogglePlay}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                ) : error ? (
-                  <AlertCircle className="h-6 w-6" />
-                ) : isPlaying ? (
-                  <Pause className="h-6 w-6" />
-                ) : (
-                  <Play className="h-6 w-6 ml-1" />
-                )}
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10"
-                onClick={next}
-                disabled={ayahIndex === null || ayahIndex >= totalAyahs - 1}
-              >
-                <SkipForward className="h-5 w-5" />
-              </Button>
-            </div>
-
-            {/* Go to surah link */}
+        <div className="p-4">
+          {/* Header with collapse/close */}
+          <div className="flex items-center justify-between mb-3">
             <button
-              onClick={handleGoToSurah}
-              className="w-full mt-4 py-2 text-sm text-primary hover:underline"
+              onClick={() => setMinimized(true)}
+              className="p-1 -m-1 rounded-lg hover:bg-secondary transition-colors"
             >
-              {isAr ? 'الذهاب إلى السورة' : 'Go to Surah'}
+              <ChevronDown className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <button
+              onClick={handleClose}
+              className="p-1 -m-1 rounded-lg hover:bg-secondary transition-colors"
+            >
+              <X className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
+
+          {/* Surah info */}
+          <div
+            className="text-center mb-4 cursor-pointer"
+            onClick={handleGoToSurah}
+          >
+            <h3 className="font-semibold text-lg">{surah?.englishName}</h3>
+            <p className="text-sm text-muted-foreground arabic-text">
+              {surah?.name}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Ayah {currentAyahNumber} of {totalAyahs}
+            </p>
+          </div>
+
+          {/* Error message */}
+          {error && (
+            <div className="text-center mb-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
+          {/* Controls */}
+          <div className="flex items-center justify-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10"
+              onClick={previous}
+              disabled={ayahIndex === 0}
+            >
+              <SkipBack className="h-5 w-5" />
+            </Button>
+
+            <Button
+              size="icon"
+              className={cn(
+                "h-14 w-14 rounded-full",
+                error && "bg-destructive hover:bg-destructive/90",
+              )}
+              onClick={handleTogglePlay}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : error ? (
+                <AlertCircle className="h-6 w-6" />
+              ) : isPlaying ? (
+                <Pause className="h-6 w-6" />
+              ) : (
+                <Play className="h-6 w-6 ml-1" />
+              )}
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10"
+              onClick={next}
+              disabled={ayahIndex === null || ayahIndex >= totalAyahs - 1}
+            >
+              <SkipForward className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Go to surah link */}
+          <button
+            onClick={handleGoToSurah}
+            className="w-full mt-4 py-2 text-sm text-primary hover:underline"
+          >
+            Go to Surah
+          </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }

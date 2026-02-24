@@ -3,28 +3,42 @@ import { Link } from 'react-router-dom';
 import { Search, Menu } from 'lucide-react';
 import { Button } from '@template/ui';
 import { usePrayerTimes, usePrayerNotifications, useOfflineReadingProgress, useOfflineSettings, useReadingHistory } from '@/lib/hooks';
-import { PrayerHero, DailyVerse, QuickActions, PrayerTimesCards, DailyStats, HifzWidget } from '@/components/home';
+import { PrayerHero, DailyVerse, QuickActions, PrayerTimesCards, DailyStats, HifzWidget, RamadanBanner } from '@/components/home';
 import { useSidebarContext } from '@/components/layout/app-layout';
 import { useTranslation } from '@/lib/i18n';
+import { SURAHS } from '@/data/surahs';
 import { cn } from '@/lib/utils';
 
 export default function HomePage() {
   const sidebar = useSidebarContext();
   const { t, isRTL } = useTranslation();
-  const { times: prayerTimes } = usePrayerTimes();
+  const { times: prayerTimes, hijriDate } = usePrayerTimes();
   const { scheduleNotifications, isPermitted, settings: notificationSettings } = usePrayerNotifications(prayerTimes);
   const { progress } = useOfflineReadingProgress();
   const { history } = useReadingHistory();
   const { settings } = useOfflineSettings();
 
+  // Ramadan detection — Hijri month 9 is Ramadan
+  const isRamadan = hijriDate?.monthNumber === 9;
+  const ramadanDay = isRamadan ? parseInt(hijriDate.day, 10) || 1 : 0;
+
   useEffect(() => {
     if (prayerTimes && isPermitted && notificationSettings.enabled) {
       scheduleNotifications(prayerTimes);
     }
-  }, [prayerTimes, isPermitted, notificationSettings.enabled, scheduleNotifications]);
+  }, [
+    prayerTimes,
+    isPermitted,
+    notificationSettings.enabled,
+    scheduleNotifications,
+  ]);
 
   const todayAyahs = history?.totalAyahs || 0;
   const dailyGoal = settings.dailyAyahGoal || 10;
+
+  const lastSurah = progress?.lastSurahId
+    ? SURAHS.find((s) => s.id === progress.lastSurahId)
+    : null;
 
   return (
     <div className="page-container min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -92,7 +106,21 @@ export default function HomePage() {
           <PrayerHero />
         </div>
 
-        {/* Daily Verse Carousel — full bleed on mobile, contained on desktop */}
+        {/* Ramadan Banner — only shown during Ramadan */}
+        {isRamadan && prayerTimes && (
+          <div
+            className="mt-4 animate-slide-up"
+            style={{ animationDelay: '20ms', animationFillMode: 'both' }}
+          >
+            <RamadanBanner
+              hijriDay={ramadanDay}
+              suhoorTime={prayerTimes.Fajr}
+              iftarTime={prayerTimes.Maghrib}
+            />
+          </div>
+        )}
+
+        {/* Daily Verse Carousel */}
         <div className="mt-5 md:mt-6">
           <DailyVerse />
         </div>
@@ -115,7 +143,7 @@ export default function HomePage() {
           <PrayerTimesCards />
         </section>
 
-        {/* Stats + Hifz — 2-col on tablet+ */}
+        {/* Stats + Hifz */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mt-6 md:mt-8">
           <section
             className="animate-slide-up"

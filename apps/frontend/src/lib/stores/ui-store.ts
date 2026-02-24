@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import type { PlaybackState } from '@/types/quran';
+import { create } from "zustand";
+import type { PlaybackState } from "@/types/quran";
 
 // =====================================
 // UI State Store (Non-Persistent)
@@ -17,6 +17,14 @@ interface UIState {
 
   // Reading
   currentHighlightedAyah: { surahId: number; ayahNumber: number } | null;
+  readingScrollProgress: {
+    surahId: number;
+    currentAyah: number;
+    totalAyahs: number;
+  } | null;
+
+  // Zen mode (distraction-free reading)
+  isZenMode: boolean;
 
   // Network
   isOnline: boolean;
@@ -31,7 +39,17 @@ interface UIState {
   setPlayback: (playback: Partial<PlaybackState>) => void;
   setSidebarOpen: (open: boolean) => void;
   setSearchOpen: (open: boolean) => void;
-  setHighlightedAyah: (ayah: { surahId: number; ayahNumber: number } | null) => void;
+  setHighlightedAyah: (
+    ayah: { surahId: number; ayahNumber: number } | null,
+  ) => void;
+  setReadingScrollProgress: (
+    progress: {
+      surahId: number;
+      currentAyah: number;
+      totalAyahs: number;
+    } | null,
+  ) => void;
+  setZenMode: (zen: boolean) => void;
   setOnline: (online: boolean) => void;
   setShowInstallPrompt: (show: boolean) => void;
   setDeferredInstallPrompt: (prompt: BeforeInstallPromptEvent | null) => void;
@@ -41,7 +59,7 @@ interface UIState {
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
   readonly userChoice: Promise<{
-    outcome: 'accepted' | 'dismissed';
+    outcome: "accepted" | "dismissed";
     platform: string;
   }>;
   prompt(): Promise<void>;
@@ -51,9 +69,9 @@ const DEFAULT_PLAYBACK: PlaybackState = {
   isPlaying: false,
   currentSurah: null,
   currentAyah: null,
-  reciterId: 'Alafasy_128kbps',
+  reciterId: "Alafasy_128kbps",
   playbackRate: 1.0,
-  repeatMode: 'none',
+  repeatMode: "none",
   repeatCount: 0,
   volume: 1.0,
 };
@@ -66,13 +84,16 @@ export const useUIStore = create<UIState>((set) => ({
   isSidebarOpen: false,
   isSearchOpen: false,
   currentHighlightedAyah: null,
-  isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+  readingScrollProgress: null,
+  isZenMode: false,
+  isOnline: typeof navigator !== "undefined" ? navigator.onLine : true,
   showInstallPrompt: false,
   deferredInstallPrompt: null,
 
   // Actions
   setAudioPlayerVisible: (visible) => set({ isAudioPlayerVisible: visible }),
-  setAudioPlayerExpanded: (expanded) => set({ isAudioPlayerExpanded: expanded }),
+  setAudioPlayerExpanded: (expanded) =>
+    set({ isAudioPlayerExpanded: expanded }),
   setPlayback: (playback) =>
     set((state) => ({
       playback: { ...state.playback, ...playback },
@@ -80,6 +101,9 @@ export const useUIStore = create<UIState>((set) => ({
   setSidebarOpen: (open) => set({ isSidebarOpen: open }),
   setSearchOpen: (open) => set({ isSearchOpen: open }),
   setHighlightedAyah: (ayah) => set({ currentHighlightedAyah: ayah }),
+  setReadingScrollProgress: (progress) =>
+    set({ readingScrollProgress: progress }),
+  setZenMode: (zen) => set({ isZenMode: zen }),
   setOnline: (online) => set({ isOnline: online }),
   setShowInstallPrompt: (show) => set({ showInstallPrompt: show }),
   setDeferredInstallPrompt: (prompt) => set({ deferredInstallPrompt: prompt }),
@@ -93,7 +117,7 @@ let networkListenerInitialized = false;
 let networkCleanup: (() => void) | null = null;
 
 export function initializeNetworkListener() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   // Prevent duplicate initialization
   if (networkListenerInitialized) {
@@ -104,12 +128,12 @@ export function initializeNetworkListener() {
   const handleOnline = () => useUIStore.getState().setOnline(true);
   const handleOffline = () => useUIStore.getState().setOnline(false);
 
-  window.addEventListener('online', handleOnline);
-  window.addEventListener('offline', handleOffline);
+  window.addEventListener("online", handleOnline);
+  window.addEventListener("offline", handleOffline);
 
   networkCleanup = () => {
-    window.removeEventListener('online', handleOnline);
-    window.removeEventListener('offline', handleOffline);
+    window.removeEventListener("online", handleOnline);
+    window.removeEventListener("offline", handleOffline);
     networkListenerInitialized = false;
     networkCleanup = null;
   };
@@ -125,7 +149,7 @@ let pwaListenerInitialized = false;
 let pwaCleanup: (() => void) | null = null;
 
 export function initializePWAInstallListener() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   // Prevent duplicate initialization
   if (pwaListenerInitialized) {
@@ -135,14 +159,19 @@ export function initializePWAInstallListener() {
 
   const handleBeforeInstallPrompt = (e: Event) => {
     e.preventDefault();
-    useUIStore.getState().setDeferredInstallPrompt(e as BeforeInstallPromptEvent);
+    useUIStore
+      .getState()
+      .setDeferredInstallPrompt(e as BeforeInstallPromptEvent);
     useUIStore.getState().setShowInstallPrompt(true);
   };
 
-  window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
   pwaCleanup = () => {
-    window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.removeEventListener(
+      "beforeinstallprompt",
+      handleBeforeInstallPrompt,
+    );
     pwaListenerInitialized = false;
     pwaCleanup = null;
   };
@@ -160,5 +189,5 @@ export async function triggerPWAInstall() {
   useUIStore.getState().setDeferredInstallPrompt(null);
   useUIStore.getState().setShowInstallPrompt(false);
 
-  return outcome === 'accepted';
+  return outcome === "accepted";
 }

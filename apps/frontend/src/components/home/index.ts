@@ -8,3 +8,4 @@ export { DailyStats } from './daily-stats';
 export { DailyVerse } from './daily-verse';
 export { FeatureGrid } from './feature-grid';
 export { CategoryTabs } from './category-tabs';
+export { RamadanBanner } from './ramadan-banner';

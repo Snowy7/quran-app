@@ -69,6 +69,50 @@ export default defineSchema({
     .index("by_clerk_surah", ["clerkId", "surahId"])
     .index("by_clerk_surah_ayah", ["clerkId", "surahId", "ayahNumber"]),
 
+  // Push notification subscriptions
+  pushSubscriptions: defineTable({
+    clerkId: v.string(),
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_clerk_id", ["clerkId"])
+    .index("by_endpoint", ["endpoint"]),
+
+  // Server-side notification schedule per user
+  // Stores the user's prayer times + preferences so the cron can fire at the right times
+  notificationSchedules: defineTable({
+    clerkId: v.string(),
+    enabled: v.boolean(),
+    // Prayer times in "HH:MM" format (local time of the user)
+    prayerTimes: v.optional(
+      v.object({
+        Fajr: v.string(),
+        Sunrise: v.string(),
+        Dhuhr: v.string(),
+        Asr: v.string(),
+        Maghrib: v.string(),
+        Isha: v.string(),
+      }),
+    ),
+    // User's timezone offset in minutes (from Date.getTimezoneOffset())
+    timezoneOffset: v.number(),
+    // Notification preferences
+    atPrayerTime: v.boolean(),
+    beforePrayerTime: v.boolean(),
+    beforeMinutes: v.number(),
+    reminderAfter: v.boolean(),
+    reminderMinutes: v.number(),
+    dailyReadingReminder: v.boolean(),
+    dailyReadingReminderTime: v.string(), // "HH:MM"
+    // Track which notifications have been sent today to avoid duplicates
+    sentToday: v.optional(v.array(v.string())),
+    lastResetDate: v.optional(v.string()), // "YYYY-MM-DD"
+    updatedAt: v.number(),
+  }).index("by_clerk_id", ["clerkId"]),
+
   // User settings
   userSettings: defineTable({
     clerkId: v.string(),
