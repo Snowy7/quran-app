@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import type { Ayah, Translation, CachedSurahData, CachedTranslation } from '@/types/quran';
+import type { Ayah, Translation, CachedSurahData, CachedTranslation, TafsirEntry, CachedTafsir } from '@/types/quran';
 
 const API_BASE_URL = 'https://api.quran.com/api/v4';
 const CACHE_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -203,6 +203,87 @@ export const AVAILABLE_TRANSLATIONS: TranslatorOption[] = [
 ];
 
 // =====================================
+// Tafsir API
+// =====================================
+
+export interface TafsirOption {
+  id: number;
+  name: string;
+  nameAr: string;
+  language: string;
+}
+
+export const AVAILABLE_TAFSIRS: TafsirOption[] = [
+  { id: 16, name: 'Tafsir Muyassar', nameAr: 'التفسير الميسر', language: 'ar' },
+  { id: 91, name: 'Tafsir Al-Sa\'di', nameAr: 'تفسير السعدي', language: 'ar' },
+  { id: 14, name: 'Tafsir Ibn Kathir', nameAr: 'تفسير ابن كثير', language: 'ar' },
+  { id: 15, name: 'Tafsir al-Tabari', nameAr: 'تفسير الطبري', language: 'ar' },
+  { id: 90, name: 'Tafsir al-Qurtubi', nameAr: 'تفسير القرطبي', language: 'ar' },
+  { id: 169, name: 'Ibn Kathir (English)', nameAr: 'ابن كثير (إنجليزي)', language: 'en' },
+];
+
+interface TafsirApiResponse {
+  tafsirs: Array<{
+    resource_id: number;
+    verse_key: string;
+    text: string;
+  }>;
+  pagination: {
+    per_page: number;
+    current_page: number;
+    next_page: number | null;
+    total_pages: number;
+    total_records: number;
+  };
+}
+
+export async function fetchTafsir(
+  surahId: number,
+  tafsirId: number
+): Promise<TafsirEntry[]> {
+  // Check cache first
+  const cached = await db.cachedTafsirs.get([tafsirId, surahId]);
+  if (cached && Date.now() - cached.fetchedAt < CACHE_DURATION_MS) {
+    return cached.entries;
+  }
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/tafsirs/${tafsirId}/by_chapter/${surahId}?per_page=300`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Tafsir API request failed: ${response.status}`);
+    }
+
+    const data: TafsirApiResponse = await response.json();
+
+    const entries: TafsirEntry[] = data.tafsirs.map((t) => ({
+      verseKey: t.verse_key,
+      text: t.text,
+    }));
+
+    // Cache the data
+    const cacheEntry: CachedTafsir = {
+      tafsirId,
+      surahId,
+      entries,
+      fetchedAt: Date.now(),
+    };
+    await db.cachedTafsirs.put(cacheEntry);
+
+    return entries;
+  } catch (error) {
+    // If network fails, try stale cache
+    if (cached) {
+      console.warn('[QuranAPI] Using stale tafsir cache due to network error');
+      return cached.entries;
+    }
+    throw error;
+  }
+}
+
+// =====================================
 // Audio URL Helper
 // =====================================
 
@@ -226,34 +307,42 @@ function getGlobalAyahNumber(surahId: number, ayahNumber: number): number {
 }
 
 // Reciter mapping for different CDNs
-const RECITERS = {
-  'Alafasy_128kbps': {
-    everyayah: 'Alafasy_128kbps',
-    qurancdn: 7, // Mishari Rashid al-`Afasy
-  },
+const RECITERS: Record<string, { everyayah: string; qurancdn: number | null }> = {
   'Abdul_Basit_Murattal_192kbps': {
     everyayah: 'Abdul_Basit_Murattal_192kbps',
-    qurancdn: 1, // Abdul Basit (Murattal)
-  },
-  'Husary_128kbps': {
-    everyayah: 'Husary_128kbps',
-    qurancdn: 6, // Mahmoud Khalil Al-Husary
+    qurancdn: 1,
   },
   'Minshawy_Murattal_128kbps': {
     everyayah: 'Minshawy_Murattal_128kbps',
-    qurancdn: 9, // Mohamed Siddiq al-Minshawi
+    qurancdn: 9,
+  },
+  'Husary_128kbps': {
+    everyayah: 'Husary_128kbps',
+    qurancdn: 6,
+  },
+  'Mustafa_Ismail_48kbps': {
+    everyayah: 'Mustafa_Ismail_48kbps',
+    qurancdn: null, // Not available on qurancdn
+  },
+  'Abdurrahmaan_As-Sudais_192kbps': {
+    everyayah: 'Abdurrahmaan_As-Sudais_192kbps',
+    qurancdn: 3,
+  },
+  'Alafasy_128kbps': {
+    everyayah: 'Alafasy_128kbps',
+    qurancdn: 7,
   },
   'Saood_ash-Shuraym_128kbps': {
     everyayah: 'Saood_ash-Shuraym_128kbps',
-    qurancdn: 11, // Saud Al-Shuraim
+    qurancdn: 10,
   },
-} as const;
+};
 
-type ReciterId = keyof typeof RECITERS;
+const DEFAULT_RECITER = 'Abdul_Basit_Murattal_192kbps';
 
 // Get audio URL from primary CDN (EveryAyah - good CORS support)
 export function getAyahAudioUrl(reciterId: string, surahId: number, ayahNumber: number): string {
-  const reciterKey = (reciterId in RECITERS ? reciterId : 'Alafasy_128kbps') as ReciterId;
+  const reciterKey = reciterId in RECITERS ? reciterId : DEFAULT_RECITER;
   const everyayahReciter = RECITERS[reciterKey].everyayah;
 
   // Format: 001001.mp3 for surah 1, ayah 1
@@ -265,9 +354,11 @@ export function getAyahAudioUrl(reciterId: string, surahId: number, ayahNumber: 
 }
 
 // Get fallback audio URL from Quran.com CDN
-export function getAyahAudioUrlFallback(reciterId: string, surahId: number, ayahNumber: number): string {
-  const reciterKey = (reciterId in RECITERS ? reciterId : 'Alafasy_128kbps') as ReciterId;
+export function getAyahAudioUrlFallback(reciterId: string, surahId: number, ayahNumber: number): string | null {
+  const reciterKey = reciterId in RECITERS ? reciterId : DEFAULT_RECITER;
   const qurancdnReciter = RECITERS[reciterKey].qurancdn;
+
+  if (qurancdnReciter === null) return null;
 
   // Quran.com audio CDN format
   return `https://audio.qurancdn.com/${qurancdnReciter}/${surahId}/${ayahNumber}.mp3`;
@@ -275,10 +366,10 @@ export function getAyahAudioUrlFallback(reciterId: string, surahId: number, ayah
 
 // Get all possible audio URLs for an ayah (for fallback chain)
 export function getAyahAudioUrls(reciterId: string, surahId: number, ayahNumber: number): string[] {
-  return [
-    getAyahAudioUrl(reciterId, surahId, ayahNumber),
-    getAyahAudioUrlFallback(reciterId, surahId, ayahNumber),
-  ];
+  const urls = [getAyahAudioUrl(reciterId, surahId, ayahNumber)];
+  const fallback = getAyahAudioUrlFallback(reciterId, surahId, ayahNumber);
+  if (fallback) urls.push(fallback);
+  return urls;
 }
 
 // Alternative: Get full surah audio URL from QuranicAudio
@@ -286,13 +377,15 @@ export function getSurahAudioUrl(reciterId: string, surahId: number): string {
   const paddedSurah = surahId.toString().padStart(3, '0');
   // QuranicAudio has full surah recordings
   const reciterMap: Record<string, string> = {
-    'Alafasy_128kbps': 'mishaari_raashid_al_3afaasee',
     'Abdul_Basit_Murattal_192kbps': 'abdulbaset_mujawwad',
-    'Husary_128kbps': 'mahmoud_khalil_al-husary',
     'Minshawy_Murattal_128kbps': 'muhammad_siddeeq_al-minshaawee',
+    'Husary_128kbps': 'mahmoud_khalil_al-husary',
+    'Mustafa_Ismail_48kbps': 'mustafa_ismail',
+    'Abdurrahmaan_As-Sudais_192kbps': 'abdurrahmaan_as-sudais',
+    'Alafasy_128kbps': 'mishaari_raashid_al_3afaasee',
     'Saood_ash-Shuraym_128kbps': 'sa3ood_al-shuraym',
   };
-  const reciterPath = reciterMap[reciterId] || 'mishaari_raashid_al_3afaasee';
+  const reciterPath = reciterMap[reciterId] || 'abdulbaset_mujawwad';
   return `https://download.quranicaudio.com/quran/${reciterPath}/${paddedSurah}.mp3`;
 }
 

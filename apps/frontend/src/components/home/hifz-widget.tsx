@@ -1,93 +1,79 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight, AlertCircle } from 'lucide-react';
+import { ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
 import { useOfflineMemorization } from '@/lib/hooks';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 export function HifzWidget() {
   const { stats, memorizations } = useOfflineMemorization();
-  const { t } = useTranslation();
+  const { t, isRTL } = useTranslation();
 
   const needsRevision = memorizations.filter((m) => m.status === 'needs_revision');
   const totalProgress = Math.round((stats.memorized / 114) * 100);
 
+  const ChevronIcon = isRTL ? ChevronLeft : ChevronRight;
+
   return (
     <Link to="/memorize" className="block">
-      <div className="p-4 md:p-5 rounded-xl border border-border bg-card hover:border-primary/30 transition-colors h-full">
-        <div className="flex items-center justify-between mb-3 md:mb-4">
-          <p className="font-medium md:text-lg">{t('memorization')}</p>
-          <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+      <div className="rounded-2xl bg-card border border-border/50 p-4 md:p-5 hover:border-primary/30 transition-colors h-full">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <p className={cn('font-semibold', isRTL && 'font-arabic-ui')}>{t('memorization')}</p>
+          <ChevronIcon className="w-4 h-4 text-muted-foreground" />
         </div>
 
-        <div className="flex items-center gap-4 md:gap-5">
-          {/* Progress Ring */}
-          <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0">
+        {/* Progress ring + stats */}
+        <div className="flex items-center gap-5">
+          <div className="relative w-[72px] h-[72px] md:w-[88px] md:h-[88px] shrink-0">
             <svg className="w-full h-full -rotate-90">
               <circle
                 cx="50%"
                 cy="50%"
-                r="45%"
+                r="40%"
                 fill="none"
-                stroke="hsl(var(--secondary))"
+                stroke="hsl(var(--border))"
                 strokeWidth="5"
               />
               <circle
                 cx="50%"
                 cy="50%"
-                r="45%"
+                r="40%"
                 fill="none"
                 stroke="hsl(var(--primary))"
                 strokeWidth="5"
                 strokeLinecap="round"
-                strokeDasharray={`${totalProgress * 2.83} 283`}
-                className="transition-all duration-500"
+                strokeDasharray={`${totalProgress * 2.51} 251`}
+                className="transition-all duration-700"
               />
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-sm md:text-lg font-semibold">{stats.memorized}</span>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-base md:text-lg font-bold leading-none">{stats.memorized}</span>
+              <span className="text-[9px] text-muted-foreground/60 mt-0.5">/114</span>
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm md:text-base text-muted-foreground mb-2 md:mb-3">
-              {stats.memorized} / 114
-            </p>
-
-            {/* Stats Row */}
-            <div className="flex gap-3 md:gap-4 text-xs md:text-sm">
+          <div className="flex-1 min-w-0 space-y-2.5">
+            <div className={cn('flex gap-4 text-xs', isRTL && 'font-arabic-ui')}>
               <div>
-                <span className="font-medium text-primary">{stats.memorized}</span>
-                <span className="text-muted-foreground ml-1">{t('done')}</span>
+                <span className="font-bold text-primary">{stats.memorized}</span>
+                <span className="text-muted-foreground ms-1">{t('done')}</span>
               </div>
               <div>
-                <span className="font-medium">{stats.learning}</span>
-                <span className="text-muted-foreground ml-1">Learning</span>
+                <span className="font-bold">{stats.learning}</span>
+                <span className="text-muted-foreground ms-1">{t('learning')}</span>
               </div>
-              {stats.needsRevision > 0 && (
-                <div className="flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3 md:w-3.5 md:h-3.5 text-amber-500" />
-                  <span className="font-medium text-amber-600 dark:text-amber-500">
-                    {stats.needsRevision}
-                  </span>
-                </div>
-              )}
             </div>
+
+            {needsRevision.length > 0 && (
+              <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                <span className={cn('text-xs font-medium', isRTL && 'font-arabic-ui')}>
+                  {needsRevision.length} {isRTL ? '\u0633\u0648\u0631 \u062A\u062D\u062A\u0627\u062C \u0645\u0631\u0627\u062C\u0639\u0629' : 'due for revision'}
+                </span>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Revision Alert */}
-        {needsRevision.length > 0 && (
-          <div className={cn(
-            'mt-3 md:mt-4 p-2.5 rounded-lg',
-            'bg-amber-500/10 text-amber-700 dark:text-amber-400'
-          )}>
-            <p className="text-xs md:text-sm">
-              <span className="font-medium">{needsRevision.length} surah{needsRevision.length > 1 ? 's' : ''}</span>
-              {' '}due for revision
-            </p>
-          </div>
-        )}
       </div>
     </Link>
   );

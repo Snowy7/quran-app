@@ -40,9 +40,9 @@ type AudioStore = AudioState & AudioActions;
 let audioElement: HTMLAudioElement | null = null;
 let preloadedAudio: HTMLAudioElement | null = null;
 let preloadedAyahIndex: number | null = null;
-let preloadedReady = false; // Flag to track if preload completed successfully
+let preloadedReady = false;
 let currentAyahs: { numberInSurah: number }[] = [];
-let isLoadingAudio = false; // Flag to ignore errors during load phase
+let isLoadingAudio = false;
 
 const initialState: AudioState = {
   isPlaying: false,
@@ -51,7 +51,7 @@ const initialState: AudioState = {
   currentAyahIndex: null,
   totalAyahs: 0,
   error: null,
-  reciterId: 'Alafasy_128kbps',
+  reciterId: 'Abdul_Basit_Murattal_192kbps',
   playbackSpeed: 1,
   autoPlayNext: true,
   isMinimized: true,
@@ -83,7 +83,7 @@ function track(event: string, props: Record<string, unknown> = {}) {
 // Create audio element with proper settings
 function createAudioElement(): HTMLAudioElement {
   const audio = new Audio();
-  audio.crossOrigin = 'anonymous'; // Enable CORS
+  audio.crossOrigin = 'anonymous';
   audio.preload = 'auto';
   return audio;
 }
@@ -115,7 +115,6 @@ async function loadAudioWithFallback(
         audio.load();
       });
 
-      // Success - track which CDN worked
       if (i > 0) {
         track('audio_fallback_used', { ...context, fallback_index: i, url });
       }
@@ -123,12 +122,7 @@ async function loadAudioWithFallback(
     } catch (err) {
       console.warn(`Audio URL ${i + 1}/${urls.length} failed:`, url, err);
       if (i === urls.length - 1) {
-        // All URLs failed
-        track('audio_all_urls_failed', {
-          ...context,
-          urls,
-          error: String(err),
-        });
+        track('audio_all_urls_failed', { ...context, urls, error: String(err) });
         return false;
       }
     }
@@ -189,6 +183,159 @@ function preloadNextAyah(
   });
 }
 
+// Detach all handlers and optionally stop an audio element
+function releaseAudioElement(audio: HTMLAudioElement, delayed: boolean) {
+  audio.onended = null;
+  audio.ontimeupdate = null;
+  audio.onpause = null;
+  audio.onplay = null;
+  audio.onerror = null;
+  if (delayed) {
+    // Let it finish playing its last bit, then clean up
+    setTimeout(() => { audio.pause(); audio.src = ''; }, 1000);
+  } else {
+    audio.pause();
+    audio.src = '';
+  }
+}
+
+// Set up event handlers on an audio element for a specific ayah.
+// This is extracted so both playAyahInternal and performCrossfade can share it.
+function setupAudioHandlers(
+  audio: HTMLAudioElement,
+  surahId: number,
+  ayahIndex: number,
+  reciterId: string,
+  playbackSpeed: number,
+  autoPlayNext: boolean
+) {
+  const context = {
+    surah_id: surahId,
+    ayah_index: ayahIndex,
+    ayah_number: currentAyahs[ayahIndex]?.numberInSurah,
+    reciter_id: reciterId,
+  };
+
+  let hasTriggeredMidPreload = false;
+  let hasTriggeredCrossfade = false;
+
+  audio.onplay = () => {
+    useAudioStore.setState({ isPlaying: true, isLoading: false });
+    track('audio_play_started', { ...context, url: audio.src });
+  };
+
+  audio.onpause = () => {
+    // Only update if this is still the active element (not a released crossfade element)
+    if (audio === audioElement) {
+      useAudioStore.setState({ isPlaying: false });
+    }
+  };
+
+  audio.onended = () => {
+    track('audio_play_completed', context);
+    // If crossfade already started the next ayah, skip
+    if (hasTriggeredCrossfade) return;
+    if (autoPlayNext && ayahIndex < currentAyahs.length - 1) {
+      const nextIndex = ayahIndex + 1;
+      useAudioStore.setState({ currentAyahIndex: nextIndex });
+      playAyahInternal(surahId, nextIndex, reciterId, playbackSpeed, autoPlayNext);
+    } else {
+      useAudioStore.setState({ isPlaying: false });
+    }
+  };
+
+  audio.ontimeupdate = () => {
+    if (!audio || audio.duration <= 0) return;
+
+    const currentTime = audio.currentTime;
+    const duration = audio.duration;
+
+    // Preload next ayah at 30% through current
+    if (!hasTriggeredMidPreload && (currentTime / duration) * 100 >= 30) {
+      hasTriggeredMidPreload = true;
+      preloadNextAyah(surahId, ayahIndex, reciterId);
+    }
+
+    // Crossfade: start next ayah ~500ms before this one ends.
+    // timeupdate fires ~every 250ms, so 500ms window is reliably caught.
+    const remaining = duration - currentTime;
+    if (
+      !hasTriggeredCrossfade &&
+      remaining > 0 && remaining <= 0.5 &&
+      autoPlayNext &&
+      ayahIndex < currentAyahs.length - 1 &&
+      preloadedAudio && preloadedAyahIndex === ayahIndex + 1 && preloadedReady
+    ) {
+      hasTriggeredCrossfade = true;
+      performCrossfade(audio, surahId, ayahIndex + 1, reciterId, playbackSpeed, autoPlayNext);
+    }
+  };
+
+  audio.onerror = () => {
+    if (isLoadingAudio) return;
+
+    const error = audio?.error;
+    if (!error || (!error.message && error.code === undefined)) return;
+
+    const errorMsg = error.message || `Audio error code: ${error.code}`;
+    console.error('Audio error:', error.code, error.message);
+
+    track('audio_error', {
+      ...context,
+      error_code: error.code,
+      error_message: error.message,
+      url: audio.src,
+    });
+
+    toast.error(errorMsg, { duration: 5000 });
+    useAudioStore.setState({
+      isPlaying: false,
+      isLoading: false,
+      error: errorMsg,
+    });
+  };
+}
+
+// Direct crossfade — plays preloaded audio immediately without going through
+// the full playAyahInternal async flow, for minimal gap between ayahs.
+function performCrossfade(
+  oldAudio: HTMLAudioElement,
+  surahId: number,
+  nextIndex: number,
+  reciterId: string,
+  playbackSpeed: number,
+  autoPlayNext: boolean
+) {
+  // Detach old element handlers, let it finish its last ~500ms naturally
+  releaseAudioElement(oldAudio, true);
+
+  // Grab preloaded audio directly
+  const nextAudio = preloadedAudio!;
+  preloadedAudio = null;
+  preloadedAyahIndex = null;
+  preloadedReady = false;
+
+  // Swap in as current element
+  audioElement = nextAudio;
+  nextAudio.playbackRate = playbackSpeed;
+
+  // Update state
+  useAudioStore.setState({ currentAyahIndex: nextIndex, error: null });
+
+  // Set up handlers for new element (enables its own future crossfade)
+  setupAudioHandlers(nextAudio, surahId, nextIndex, reciterId, playbackSpeed, autoPlayNext);
+
+  // Fire and forget — no await, minimum latency
+  nextAudio.play().catch((err) => {
+    console.error('Crossfade play failed:', err);
+    track('audio_play_failed', { surah_id: surahId, ayah_index: nextIndex, error: String(err) });
+    useAudioStore.setState({ isPlaying: false, isLoading: false });
+  });
+
+  // Start preloading the one after next
+  preloadNextAyah(surahId, nextIndex, reciterId);
+}
+
 export const useAudioStore = create<AudioStore>((set, get) => ({
   ...initialState,
 
@@ -232,8 +379,7 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
 
   stop: () => {
     if (audioElement) {
-      audioElement.pause();
-      audioElement.src = '';
+      releaseAudioElement(audioElement, false);
       audioElement = null;
     }
     if (preloadedAudio) {
@@ -303,8 +449,7 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
 
   cleanup: () => {
     if (audioElement) {
-      audioElement.pause();
-      audioElement.src = '';
+      releaseAudioElement(audioElement, false);
       audioElement = null;
     }
     if (preloadedAudio) {
@@ -317,6 +462,8 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
   },
 }));
 
+// Standard playback — used for first play, skip, seek, and non-crossfade transitions.
+// For seamless ayah-to-ayah transitions, performCrossfade() is used instead.
 async function playAyahInternal(
   surahId: number,
   ayahIndex: number,
@@ -324,129 +471,74 @@ async function playAyahInternal(
   playbackSpeed: number,
   autoPlayNext: boolean
 ) {
-  // Cleanup previous
+  // Cleanup previous element
   if (audioElement) {
-    audioElement.pause();
-    audioElement.src = '';
+    releaseAudioElement(audioElement, false);
   }
 
   const ayah = currentAyahs[ayahIndex];
   if (!ayah) return;
 
-  useAudioStore.setState({ isLoading: true, error: null });
-
   // Check if we have this ayah preloaded and ready
-  if (preloadedAudio && preloadedAyahIndex === ayahIndex && preloadedReady) {
-    audioElement = preloadedAudio;
+  const usingPreloaded = !!(preloadedAudio && preloadedAyahIndex === ayahIndex && preloadedReady);
+
+  if (usingPreloaded) {
+    audioElement = preloadedAudio!;
     preloadedAudio = null;
     preloadedAyahIndex = null;
     preloadedReady = false;
+    useAudioStore.setState({ error: null });
   } else {
     audioElement = createAudioElement();
+    useAudioStore.setState({ isLoading: true, error: null });
   }
 
-  const urls = getAyahAudioUrls(reciterId, surahId, ayah.numberInSurah);
-  const context = {
-    surah_id: surahId,
-    ayah_index: ayahIndex,
-    ayah_number: ayah.numberInSurah,
-    reciter_id: reciterId,
-  };
-
   // Set up event handlers
-  audioElement.onplay = () => {
-    useAudioStore.setState({ isPlaying: true, isLoading: false });
-    track('audio_play_started', { ...context, url: audioElement?.src });
-  };
-
-  audioElement.onpause = () => {
-    useAudioStore.setState({ isPlaying: false });
-  };
-
-  audioElement.onended = () => {
-    track('audio_play_completed', context);
-    if (autoPlayNext && ayahIndex < currentAyahs.length - 1) {
-      const nextIndex = ayahIndex + 1;
-      useAudioStore.setState({ currentAyahIndex: nextIndex });
-      playAyahInternal(surahId, nextIndex, reciterId, playbackSpeed, autoPlayNext);
-    } else {
-      useAudioStore.setState({ isPlaying: false });
-    }
-  };
-
-  // Preload more aggressively when 40% complete
-  let hasTriggeredMidPreload = false;
-  audioElement.ontimeupdate = () => {
-    if (!hasTriggeredMidPreload && audioElement && audioElement.duration > 0) {
-      const percentComplete = (audioElement.currentTime / audioElement.duration) * 100;
-      if (percentComplete >= 40) {
-        hasTriggeredMidPreload = true;
-        // Ensure next ayah is preloaded
-        preloadNextAyah(surahId, ayahIndex, reciterId);
-      }
-    }
-  };
-
-  audioElement.onerror = () => {
-    // Ignore errors during loading phase (handled by loadAudioWithFallback)
-    if (isLoadingAudio) {
-      return;
-    }
-
-    // Ignore errors with no meaningful error info
-    const error = audioElement?.error;
-    if (!error || (!error.message && error.code === undefined)) {
-      return;
-    }
-
-    const errorMsg = error.message || `Audio error code: ${error.code}`;
-    console.error('Audio error:', error.code, error.message);
-
-    track('audio_error', {
-      ...context,
-      error_code: error.code,
-      error_message: error.message,
-      url: audioElement?.src,
-    });
-
-    toast.error(errorMsg, { duration: 5000 });
-    useAudioStore.setState({
-      isPlaying: false,
-      isLoading: false,
-      error: errorMsg,
-    });
-  };
+  setupAudioHandlers(audioElement, surahId, ayahIndex, reciterId, playbackSpeed, autoPlayNext);
 
   // Set playback speed
   audioElement.playbackRate = playbackSpeed;
 
-  // Try to load audio with fallback URLs
-  isLoadingAudio = true;
-  const loaded = await loadAudioWithFallback(audioElement, urls, context);
-  isLoadingAudio = false;
+  // Only load from network if not using preloaded audio
+  if (!usingPreloaded) {
+    const urls = getAyahAudioUrls(reciterId, surahId, ayah.numberInSurah);
+    const context = {
+      surah_id: surahId,
+      ayah_index: ayahIndex,
+      ayah_number: ayah.numberInSurah,
+      reciter_id: reciterId,
+    };
 
-  if (!loaded) {
-    const errorMsg = 'Could not load audio. Please check your connection.';
-    toast.error(errorMsg, { duration: 5000 });
-    useAudioStore.setState({
-      isPlaying: false,
-      isLoading: false,
-      error: errorMsg,
-    });
-    return;
+    isLoadingAudio = true;
+    const loaded = await loadAudioWithFallback(audioElement, urls, context);
+    isLoadingAudio = false;
+
+    if (!loaded) {
+      const errorMsg = 'Could not load audio. Please check your connection.';
+      toast.error(errorMsg, { duration: 5000 });
+      useAudioStore.setState({
+        isPlaying: false,
+        isLoading: false,
+        error: errorMsg,
+      });
+      return;
+    }
   }
 
-  // Start preloading next ayah immediately after loading (before play)
+  // Start preloading next ayah
   preloadNextAyah(surahId, ayahIndex, reciterId);
 
-  // Play the audio
+  // Play
   try {
     await audioElement.play();
   } catch (err) {
     console.error('Play failed:', err);
-    track('audio_play_failed', { ...context, error: String(err) });
+    track('audio_play_failed', {
+      surah_id: surahId,
+      ayah_index: ayahIndex,
+      error: String(err),
+    });
 
-    // On mobile, user interaction is required
     const errorMsg = 'Tap play button to start audio';
     toast.info(errorMsg);
     useAudioStore.setState({

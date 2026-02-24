@@ -13,6 +13,7 @@ import type {
   DownloadedAudio,
   CachedSurahData,
   CachedTranslation,
+  CachedTafsir,
   Reciter,
   PrayerLog,
   CachedPrayerTimes,
@@ -30,6 +31,7 @@ export class NoorDatabase extends Dexie {
   juzs!: Table<Juz, number>;
   cachedSurahData!: Table<CachedSurahData, number>;
   cachedTranslations!: Table<CachedTranslation, [string, number]>;
+  cachedTafsirs!: Table<CachedTafsir, [number, number]>;
 
   // Audio
   reciters!: Table<Reciter, string>;
@@ -104,6 +106,31 @@ export class NoorDatabase extends Dexie {
       // Sync
       syncQueue: 'id, entity, status, timestamp',
     });
+
+    // Version 3: Add tafsir cache
+    this.version(3).stores({
+      surahs: 'id, revelationType',
+      ayahs: 'id, surahId, [surahId+numberInSurah], juz, page',
+      translations: '[ayahId+translatorId], ayahId, translatorId',
+      juzs: 'id',
+      cachedSurahData: 'surahId',
+      cachedTranslations: '[translatorId+surahId]',
+      cachedTafsirs: '[tafsirId+surahId]',
+
+      reciters: 'id',
+      downloadedAudio: 'id, reciterId, surahId, [reciterId+surahId]',
+
+      bookmarks: 'clientId, [surahId+ayahNumber], createdAt, isDeleted, isDirty',
+      readingProgress: 'id',
+      readingHistory: 'id, updatedAt',
+      memorization: 'surahId, status, nextRevisionAt',
+      settings: 'id',
+
+      prayerLogs: 'id, updatedAt',
+      cachedPrayerTimes: 'id',
+
+      syncQueue: 'id, entity, status, timestamp',
+    });
   }
 }
 
@@ -131,6 +158,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   autoPlayNext: true,
   primaryTranslation: 'en.sahih',
   secondaryTranslation: undefined,
+  showTafsir: false,
+  primaryTafsir: 16,  // Tafsir Muyassar (Arabic, accessible)
   dailyReminderEnabled: false,
   dailyReminderTime: '06:00',
   revisionRemindersEnabled: false,

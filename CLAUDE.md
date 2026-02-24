@@ -4,86 +4,93 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a monorepo template for building full-stack applications with:
-- **Frontend**: React + Vite + Tailwind CSS + shadcn/ui
+**Noor** - A Quran reading, listening, and memorization PWA built as a monorepo with:
+- **Frontend**: React 19 + Vite + Tailwind CSS + shadcn/ui (PWA with offline support)
 - **Backend**: Convex (real-time database + serverless functions)
-- **Auth**: Clerk (user authentication)
-- **UI Library**: Reusable component library based on shadcn/ui
-
-## Repository Structure
-
-```
-template/
-├── apps/
-│   └── frontend/           # React + Vite web application
-│       └── src/
-│           ├── components/ # App-specific components
-│           ├── pages/      # Route pages
-│           ├── lib/        # Utilities
-│           └── router.tsx  # React Router config
-├── packages/
-│   ├── backend/            # Convex backend
-│   │   └── convex/
-│   │       ├── schema.ts   # Database schema
-│   │       ├── users.ts    # User management
-│   │       └── todos.ts    # Example CRUD operations
-│   └── ui/                 # Shared UI component library
-│       └── src/            # shadcn/ui components
-├── .env.example            # Environment variables template
-├── package.json
-├── turbo.json
-└── pnpm-workspace.yaml
-```
+- **Auth**: Clerk (optional, for cloud sync)
+- **Local Storage**: Dexie (IndexedDB) for offline-first data
 
 ## Development Commands
 
-### Initial Setup
 ```bash
+# Install dependencies
 pnpm install
-cd packages/backend && npx convex dev  # Initialize Convex
-```
 
-### Running Development Servers
+# Initialize Convex (first time only)
+cd packages/backend && npx convex dev
 
-**Terminal 1 - Frontend**:
-```bash
-cd apps/frontend
+# Run both frontend and backend
 pnpm dev
+
+# Or run separately:
+cd apps/frontend && pnpm dev      # Frontend on port 3000
+cd packages/backend && pnpm dev   # Convex backend
+
+# Build all packages
+pnpm build
+
+# Lint
+pnpm lint
+
+# Deploy Convex to production
+cd packages/backend && pnpm deploy
 ```
 
-**Terminal 2 - Backend (Convex)**:
-```bash
-cd packages/backend
-pnpm dev
-```
+## Architecture
 
-### Build
-```bash
-pnpm build    # Build all packages
-```
+### Data Flow
+The app uses an **offline-first** architecture:
+1. **Dexie (IndexedDB)** stores all user data locally for instant access
+2. **Convex** syncs data to the cloud when user is authenticated
+3. **Service Worker** (Workbox) caches Quran text and audio for offline use
 
-## Tech Stack
+### Audio System
+Uses **native HTML5 Audio** (not Howler.js) for better CORS compatibility. Audio is fetched from:
+- Islamic Network CDN
+- QuranicAudio
 
-- **Frontend**: React 19, React Router v7, Vite, Tailwind CSS
-- **Backend**: Convex (real-time database + serverless)
-- **Auth**: Clerk
-- **UI**: shadcn/ui components in `@template/ui`
-- **Package Manager**: pnpm 9.15+ with Turborepo
+### State Management
+- **Zustand** stores in `apps/frontend/src/lib/stores/`
+- **Dexie** database in `apps/frontend/src/lib/db/`
 
 ## Key Entry Points
 
-- **Frontend router**: `apps/frontend/src/router.tsx`
-- **Root layout**: `apps/frontend/src/layouts/root-layout.tsx`
-- **Database schema**: `packages/backend/convex/schema.ts`
-- **User functions**: `packages/backend/convex/users.ts`
-- **Todo functions**: `packages/backend/convex/todos.ts`
-- **UI components**: `packages/ui/src/index.ts`
+| Purpose | Location |
+|---------|----------|
+| App router | `apps/frontend/src/router.tsx` |
+| Root layout | `apps/frontend/src/layouts/root-layout.tsx` |
+| Database schema | `packages/backend/convex/schema.ts` |
+| Local DB (Dexie) | `apps/frontend/src/lib/db/` |
+| Zustand stores | `apps/frontend/src/lib/stores/` |
+| UI components | `packages/ui/src/` |
+| PWA config | `apps/frontend/vite.config.ts` (VitePWA plugin) |
 
-## Data Model (Convex)
+## Data Model
 
-Core tables:
-- `users` - User records synced from Clerk
-- `todos` - Example todo items (per-user)
+### Convex Tables (Cloud Sync)
+- `users` - Synced from Clerk
+- `readingProgress` - Per-surah reading progress
+- `bookmarks` - User bookmarks with notes/colors
+- `memorization` - Ayah memorization status & spaced repetition
+- `userSettings` - Theme, font sizes, reciter preferences
+
+### Dexie Tables (Local Storage)
+Mirror the Convex schema for offline-first functionality.
+
+## Routes
+
+```
+/                   Home dashboard
+/quran              Surah index
+/quran/:surahId     Surah reader
+/bookmarks          User bookmarks
+/memorize           Memorization tracker
+/settings           App settings
+/search             Search Quran
+/prayer-times       Prayer times
+/qibla              Qibla compass
+/onboarding         First-time setup
+```
 
 ## Environment Variables
 
@@ -93,11 +100,14 @@ CONVEX_DEPLOYMENT=dev:your-deployment
 VITE_CONVEX_URL=https://your-deployment.convex.cloud
 VITE_CLERK_PUBLISHABLE_KEY=pk_test_xxxxx
 CLERK_SECRET_KEY=sk_test_xxxxx
+VITE_PUBLIC_POSTHOG_KEY=phc_xxxxx        # Optional: analytics
+VITE_PUBLIC_POSTHOG_HOST=https://...     # Optional: analytics
 ```
 
 ## Code Patterns
 
-- UI components from `@template/ui` (shadcn/ui based)
-- Convex functions use standard mutation/query pattern
-- Auth state managed by Clerk with sync to Convex
-- Tailwind CSS for styling with CSS variables for theming
+- Import UI components from `@template/ui`
+- Import Convex API from `@template/backend`
+- Use `@/` path alias for frontend src imports
+- Clerk auth components: `<SignedIn>`, `<SignedOut>`, `<UserButton>`
+- Wrap Clerk provider in `main.tsx` with `VITE_CLERK_PUBLISHABLE_KEY`

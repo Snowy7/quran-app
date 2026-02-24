@@ -49,6 +49,9 @@ importers:
       dexie-react-hooks:
         specifier: ^4.2.0
         version: 4.2.0(@types/react@19.2.9)(dexie@4.2.1)(react@19.2.3)
+      dompurify:
+        specifier: ^3.3.1
+        version: 3.3.1
       framer-motion:
         specifier: ^12.29.2
         version: 12.29.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -89,6 +92,9 @@ importers:
         specifier: ^5.0.10
         version: 5.0.10(@types/react@19.2.9)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))
     devDependencies:
+      '@types/dompurify':
+        specifier: ^3.2.0
+        version: 3.2.0
       '@types/howler':
         specifier: ^2.2.12
         version: 2.2.12
@@ -2094,6 +2100,10 @@ packages:
   '@types/babel__traverse@7.28.0':
     resolution: {integrity: sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q==}
 
+  '@types/dompurify@3.2.0':
+    resolution: {integrity: sha512-Fgg31wv9QbLDA0SpTOXO3MaxySc4DKGLi8sna4/Utjo4r3ZRPdCt4UQee8BWr+Q5z21yifghREPJGYaEOEIACg==}
+    deprecated: This is a stub types definition. dompurify provides its own type definitions, so you do not need this installed.
+
   '@types/estree@0.0.39':
     resolution: {integrity: sha512-EYNwp3bU+98cpU4lAWYYL7Zz+2gryWH1qbdDTidVd6hkiR6weksdbMadyXKXNPEkQFhXM+hVO9ZygomHXp+AIw==}
 
@@ -2641,6 +2651,7 @@ packages:
   glob@11.1.0:
     resolution: {integrity: sha512-vuNwKSaKiqm7g0THUBu2x7ckSs3XJLXE+2ssL7/MfTGPLLcrJQ/4Uq1CjPTtO5cCIiRxqvN6Twy1qOwhL0Xjcw==}
     engines: {node: 20 || >=22}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   globalthis@1.0.4:
@@ -5555,6 +5566,10 @@ snapshots:
   '@types/babel__traverse@7.28.0':
     dependencies:
       '@babel/types': 7.28.6
+
+  '@types/dompurify@3.2.0':
+    dependencies:
+      dompurify: 3.3.1
 
   '@types/estree@0.0.39': {}
 

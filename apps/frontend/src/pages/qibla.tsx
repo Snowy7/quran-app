@@ -3,6 +3,7 @@ import { MapPin, RefreshCw } from 'lucide-react';
 import { Button } from '@template/ui';
 import { useQibla } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
 import { AppHeader } from '@/components/layout/app-header';
 
 
@@ -215,6 +216,8 @@ export default function QiblaPage() {
     refresh,
   } = useQibla();
 
+  const { t, isRTL } = useTranslation();
+
   // Calculate rotation instruction
   const getRotationInstruction = () => {
     if (!hasCompass || qiblaDirection === null || compassHeading === null) return null;
@@ -227,12 +230,12 @@ export default function QiblaPage() {
     const absDiff = Math.abs(diff);
 
     if (absDiff < 10) {
-      return { text: "You're facing Qibla!", isAligned: true };
+      return { text: t('facingQibla'), isAligned: true };
     }
 
-    const direction = diff > 0 ? 'right' : 'left';
+    const direction = diff > 0 ? t('toTheRight') : t('toTheLeft');
     return {
-      text: `Rotate the phone ${Math.round(absDiff)}° to the ${direction}`,
+      text: `${t('rotatePhone')} ${Math.round(absDiff)}° ${direction}`,
       isAligned: false,
     };
   };
@@ -240,7 +243,7 @@ export default function QiblaPage() {
   const instruction = getRotationInstruction();
 
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <div className="min-h-screen bg-background pb-28" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Gradient background */}
       <div
         className="fixed inset-0 pointer-events-none"
@@ -249,7 +252,7 @@ export default function QiblaPage() {
         }}
       />
 
-      <AppHeader title="Qibla Finder" showSearch={false} />
+      <AppHeader title={t('qiblaFinder')} showSearch={false} />
 
       <div className="relative flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] px-4">
         {/* Error State */}
@@ -258,10 +261,10 @@ export default function QiblaPage() {
             <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
               <MapPin className="w-10 h-10 text-destructive" />
             </div>
-            <h2 className="text-lg font-semibold mb-2">Location Required</h2>
+            <h2 className={cn('text-lg font-semibold mb-2', isRTL && 'font-arabic-ui')}>{t('locationRequired')}</h2>
             <p className="text-muted-foreground mb-4 max-w-xs">{error}</p>
-            <Button onClick={() => refresh()}>
-              Enable Location
+            <Button onClick={() => refresh()} className={cn(isRTL && 'font-arabic-ui')}>
+              {t('enableLocation')}
             </Button>
           </div>
         )}
@@ -272,7 +275,7 @@ export default function QiblaPage() {
             <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <RefreshCw className="w-10 h-10 text-primary animate-spin" />
             </div>
-            <p className="text-muted-foreground">Finding Qibla direction...</p>
+            <p className={cn('text-muted-foreground', isRTL && 'font-arabic-ui')}>{t('findingQibla')}</p>
           </div>
         )}
 
@@ -282,16 +285,16 @@ export default function QiblaPage() {
             {/* Permission prompt for iOS */}
             {permissionStatus === 'prompt' && (
               <div className="text-center mb-6">
-                <Button onClick={() => requestCompassPermission()} variant="outline">
-                  Enable Compass
+                <Button onClick={() => requestCompassPermission()} variant="outline" className={cn(isRTL && 'font-arabic-ui')}>
+                  {t('enableCompass')}
                 </Button>
               </div>
             )}
 
             {/* Calibration warning */}
             {needsCalibration && (
-              <div className="bg-amber-500/10 text-amber-700 dark:text-amber-400 px-4 py-2 rounded-full mb-6 text-sm">
-                Move your device in a figure-8 to calibrate
+              <div className={cn('bg-amber-500/10 text-amber-700 dark:text-amber-400 px-4 py-2 rounded-full mb-6 text-sm', isRTL && 'font-arabic-ui')}>
+                {t('calibrateCompass')}
               </div>
             )}
 
@@ -307,8 +310,8 @@ export default function QiblaPage() {
               <p className="text-5xl font-light tracking-tight">
                 {Math.round(qiblaDirection)}°
               </p>
-              <p className="text-muted-foreground mt-1">
-                {hasCompass ? "Device's angle to Qibla" : 'Qibla direction from North'}
+              <p className={cn('text-muted-foreground mt-1', isRTL && 'font-arabic-ui')}>
+                {hasCompass ? t('angleToQibla') : t('qiblaFromNorth')}
               </p>
             </div>
 
@@ -318,6 +321,7 @@ export default function QiblaPage() {
                 <div
                   className={cn(
                     'px-5 py-3 rounded-full text-center text-sm font-medium transition-all duration-300',
+                    isRTL && 'font-arabic-ui',
                     instruction.isAligned
                       ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                       : 'bg-primary/10 text-primary'
@@ -330,16 +334,16 @@ export default function QiblaPage() {
 
             {/* Compass status when no compass */}
             {!hasCompass && permissionStatus !== 'prompt' && (
-              <div className="mt-6 p-4 rounded-2xl bg-secondary/50 text-center max-w-xs">
+              <div className={cn('mt-6 p-4 rounded-2xl bg-secondary/50 text-center max-w-xs', isRTL && 'font-arabic-ui')}>
                 <p className="text-sm text-muted-foreground">
                   {permissionStatus === 'unsupported' || permissionStatus === 'unavailable'
-                    ? 'Live compass not available on this device'
+                    ? t('compassNotAvailable')
                     : permissionStatus === 'denied'
-                      ? 'Compass permission denied'
-                      : 'Checking compass...'}
+                      ? t('compassDenied')
+                      : t('checkingCompass')}
                 </p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Face {Math.round(qiblaDirection)}° from North to face Qibla
+                  {t('faceDirection')} {Math.round(qiblaDirection)}{t('fromNorthForQibla')}
                 </p>
               </div>
             )}
@@ -348,8 +352,8 @@ export default function QiblaPage() {
       </div>
 
       {/* Footer info */}
-      <div className="fixed bottom-24 left-0 right-0 text-center text-xs text-muted-foreground">
-        <p>Direction to Masjid al-Haram, Mecca</p>
+      <div className={cn('fixed bottom-24 left-0 right-0 text-center text-xs text-muted-foreground', isRTL && 'font-arabic-ui')}>
+        <p>{t('directionToMecca')}</p>
       </div>
     </div>
   );

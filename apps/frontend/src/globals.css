@@ -2,8 +2,41 @@
    Noor Quran App - Clean Minimal Design
    ===================================== */
 
-/* Arabic Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Scheherazade+New:wght@400;500;600;700&display=swap');
+/* Arabic Fonts - Google Fonts (Scheherazade for fallback) */
+@import url('https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;500;600;700&display=swap');
+
+/* Amiri Quran - local, offline-ready (primary Quran text font) */
+@font-face {
+  font-family: 'Amiri Quran';
+  src: url('/fonts/AmiriQuranColored.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+/* Amiri - local, offline-ready (general Arabic text) */
+@font-face {
+  font-family: 'Amiri';
+  src: url('/fonts/Amiri-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+/* UthmanTN - authentic Mushaf Uthmani font (used by mushaf per-page view) */
+@font-face {
+  font-family: 'UthmanTN';
+  src: url('/fonts/UthmanTN_v2-0.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+/* Surah Names - decorative mushaf surah title font */
+@font-face {
+  font-family: 'SurahNames';
+  src: url('/fonts/SurahNames.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 /* Arabic UI Font (Figma design system) */
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
 /* UI Font */
@@ -117,18 +150,26 @@
 
 @layer components {
   .arabic-text {
-    font-family: 'Amiri Quran', 'Scheherazade New', serif;
+    font-family: 'Amiri Quran', 'Amiri', 'Scheherazade New', serif;
     direction: rtl;
     text-align: right;
     line-height: 2.2;
   }
 
   .arabic-uthmani {
-    font-family: 'Amiri Quran', serif;
+    font-family: 'Amiri Quran', 'Amiri', 'Scheherazade New', serif;
   }
 
   .arabic-scheherazade {
-    font-family: 'Scheherazade New', serif;
+    font-family: 'Scheherazade New', 'Amiri Quran', serif;
+  }
+
+  /* Mushaf page text - authentic Uthmani font */
+  .mushaf-text {
+    font-family: 'UthmanTN', serif;
+    direction: rtl;
+    text-align: right;
+    line-height: 2;
   }
 
   /* Ayah number - minimal */
@@ -273,6 +314,15 @@
   animation: fade-out 0.2s ease-out;
 }
 
+@keyframes sheet-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
 }
@@ -315,6 +365,31 @@
 /* =====================================
    Print Styles
    ===================================== */
+
+/* Tafsir content styling - sanitized HTML from API */
+.tafsir-content h1,
+.tafsir-content h2,
+.tafsir-content h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.tafsir-content h1:first-child,
+.tafsir-content h2:first-child,
+.tafsir-content h3:first-child {
+  margin-top: 0;
+}
+
+.tafsir-content p {
+  margin: 0.375rem 0;
+}
+
+.tafsir-content[dir="rtl"] {
+  font-family: 'Almarai', 'Amiri', sans-serif;
+  line-height: 1.9;
+}
 
 @media print {
   .bottom-nav,

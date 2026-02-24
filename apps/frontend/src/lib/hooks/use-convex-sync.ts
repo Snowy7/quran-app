@@ -265,6 +265,8 @@ export function useConvexSync() {
           autoPlayNext: cloudData.settings.autoPlayNext,
           primaryTranslation: cloudData.settings.preferredTranslation,
           secondaryTranslation: localSettings?.secondaryTranslation,
+          showTafsir: localSettings?.showTafsir || false,
+          primaryTafsir: localSettings?.primaryTafsir || 16,
           dailyReminderEnabled: localSettings?.dailyReminderEnabled || false,
           dailyReminderTime: localSettings?.dailyReminderTime || '08:00',
           revisionRemindersEnabled: localSettings?.revisionRemindersEnabled || false,

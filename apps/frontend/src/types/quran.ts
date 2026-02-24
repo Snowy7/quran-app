@@ -179,6 +179,10 @@ export interface UserSettings {
   primaryTranslation: string;
   secondaryTranslation?: string;
 
+  // Tafsir
+  showTafsir: boolean;
+  primaryTafsir: number;       // Tafsir resource ID
+
   // Notifications
   dailyReminderEnabled: boolean;
   dailyReminderTime: string;       // "HH:mm" format
@@ -301,5 +305,21 @@ export interface CachedTranslation {
   translatorId: string;
   surahId: number;
   translations: Translation[];
+  fetchedAt: number;
+}
+
+// =====================================
+// Tafsir Types
+// =====================================
+
+export interface TafsirEntry {
+  verseKey: string;           // "1:1", "1:2", etc.
+  text: string;               // HTML content
+}
+
+export interface CachedTafsir {
+  tafsirId: number;
+  surahId: number;
+  entries: TafsirEntry[];
   fetchedAt: number;
 }

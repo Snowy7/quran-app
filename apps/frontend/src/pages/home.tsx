@@ -6,6 +6,7 @@ import { usePrayerTimes, usePrayerNotifications, useOfflineReadingProgress, useO
 import { PrayerHero, DailyVerse, QuickActions, PrayerTimesCards, DailyStats, HifzWidget } from '@/components/home';
 import { useSidebarContext } from '@/components/layout/app-layout';
 import { useTranslation } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 
 export default function HomePage() {
   const sidebar = useSidebarContext();
@@ -26,26 +27,22 @@ export default function HomePage() {
   const dailyGoal = settings.dailyAyahGoal || 10;
 
   return (
-    <div className="page-container min-h-screen">
+    <div className="page-container min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* App Bar */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm safe-area-top">
         <div className="flex items-center justify-between px-5 py-3 md:px-8">
-          {/* LTR: Search left, Title+Menu right | RTL: Menu+Title left, Search right */}
-          {isRTL ? (
-            <>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-primary hover:bg-primary/10 lg:hidden"
-                  onClick={sidebar.open}
-                >
-                  <Menu className="w-5 h-5" />
-                </Button>
-                <h1 className="font-arabic-ui text-xl font-bold text-primary">
-                  {t('noor')}
-                </h1>
-              </div>
+          <div className="flex items-center gap-3">
+            {isRTL && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-primary hover:bg-primary/10 lg:hidden"
+                onClick={sidebar.open}
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
+            )}
+            {!isRTL && (
               <Link to="/search">
                 <Button
                   variant="ghost"
@@ -55,9 +52,15 @@ export default function HomePage() {
                   <Search className="w-5 h-5" />
                 </Button>
               </Link>
-            </>
-          ) : (
-            <>
+            )}
+          </div>
+
+          <h1 className="font-arabic-ui text-xl font-bold text-primary">
+            {t('noor')}
+          </h1>
+
+          <div className="flex items-center gap-3">
+            {isRTL && (
               <Link to="/search">
                 <Button
                   variant="ghost"
@@ -67,72 +70,82 @@ export default function HomePage() {
                   <Search className="w-5 h-5" />
                 </Button>
               </Link>
-              <div className="flex items-center gap-3">
-                <h1 className="font-arabic-ui text-xl font-bold text-primary">
-                  {t('noor')}
-                </h1>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-primary hover:bg-primary/10 lg:hidden"
-                  onClick={sidebar.open}
-                >
-                  <Menu className="w-5 h-5" />
-                </Button>
-              </div>
-            </>
-          )}
+            )}
+            {!isRTL && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-primary hover:bg-primary/10 lg:hidden"
+                onClick={sidebar.open}
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Main content */}
       <div className="px-5 pb-6 md:px-8 lg:pb-10">
-        {/* Top section: Prayer Hero + Daily Verse side by side on tablet+ */}
-        <div className="flex flex-col md:flex-row gap-4 md:gap-5">
-          <div className="md:flex-1">
-            <PrayerHero />
-          </div>
-          <div className="md:flex-1">
-            <DailyVerse />
-          </div>
+        {/* Top hero section */}
+        <div className="animate-fade-in">
+          <PrayerHero />
+        </div>
+
+        {/* Daily Verse Carousel — full bleed on mobile, contained on desktop */}
+        <div className="mt-5 md:mt-6">
+          <DailyVerse />
         </div>
 
         {/* Quick Actions */}
-        <section className="mt-5 md:mt-6 animate-slide-up" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
-          <h2 className="text-sm md:text-base font-medium text-muted-foreground mb-3 font-arabic-ui">
-            {t('quickAccess')}
-          </h2>
+        <section
+          className="mt-6 md:mt-8 animate-slide-up"
+          style={{ animationDelay: '100ms', animationFillMode: 'both' }}
+        >
+          <SectionHeading>{t('quickAccess')}</SectionHeading>
           <QuickActions />
         </section>
 
         {/* Prayer Times Cards */}
-        <section className="mt-5 md:mt-6 animate-slide-up" style={{ animationDelay: '150ms', animationFillMode: 'both' }}>
-          <h2 className="text-sm md:text-base font-medium text-muted-foreground mb-3 font-arabic-ui">
-            {t('prayerTimes')}
-          </h2>
+        <section
+          className="mt-6 md:mt-8 animate-slide-up"
+          style={{ animationDelay: '150ms', animationFillMode: 'both' }}
+        >
+          <SectionHeading>{t('prayerTimes')}</SectionHeading>
           <PrayerTimesCards />
         </section>
 
-        {/* Daily Stats + Hifz side by side on tablet+ */}
-        <div className="flex flex-col md:flex-row gap-4 md:gap-5 mt-5 md:mt-6">
-          <section className="md:flex-1 animate-slide-up" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
-            <h2 className="text-sm md:text-base font-medium text-muted-foreground mb-3 font-arabic-ui">
-              {t('todaysProgress')}
-            </h2>
+        {/* Stats + Hifz — 2-col on tablet+ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mt-6 md:mt-8">
+          <section
+            className="animate-slide-up"
+            style={{ animationDelay: '200ms', animationFillMode: 'both' }}
+          >
+            <SectionHeading>{t('todaysProgress')}</SectionHeading>
             <DailyStats
               streak={progress.currentStreak}
               todayAyahs={todayAyahs}
               dailyGoal={dailyGoal}
             />
           </section>
-          <section className="md:flex-1 animate-slide-up" style={{ animationDelay: '250ms', animationFillMode: 'both' }}>
-            <h2 className="text-sm md:text-base font-medium text-muted-foreground mb-3 font-arabic-ui">
-              {t('memorization')}
-            </h2>
+          <section
+            className="animate-slide-up"
+            style={{ animationDelay: '250ms', animationFillMode: 'both' }}
+          >
+            <SectionHeading>{t('memorization')}</SectionHeading>
             <HifzWidget />
           </section>
         </div>
       </div>
     </div>
+  );
+}
+
+/** Small reusable section heading */
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-xs md:text-sm font-semibold text-muted-foreground/70 uppercase tracking-wider mb-3 font-arabic-ui">
+      {children}
+    </h2>
   );
 }

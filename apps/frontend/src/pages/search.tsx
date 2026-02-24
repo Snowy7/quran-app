@@ -1,11 +1,13 @@
 import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search as SearchIcon, X, ChevronRight, Clock } from 'lucide-react';
+import { Search as SearchIcon, X, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Input, Button, Card, CardContent } from '@template/ui';
 import { AppHeader } from '@/components/layout/app-header';
 import { searchQuran } from '@/lib/api/quran-api';
 import { SURAHS, searchSurahs, getSurahById } from '@/data/surahs';
 import { useDebouncedCallback } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 
 interface SearchResult {
   surahId: number;
@@ -16,6 +18,7 @@ interface SearchResult {
 
 export default function SearchPage() {
   const navigate = useNavigate();
+  const { t, isRTL } = useTranslation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -62,19 +65,20 @@ export default function SearchPage() {
   };
 
   const matchedSurahs = query.length >= 2 ? searchSurahs(query).slice(0, 5) : [];
+  const ChevronIcon = isRTL ? ChevronLeft : ChevronRight;
 
   return (
-    <div className="page-container">
-      <AppHeader title="Search" showSearch={false} />
+    <div className="page-container" dir={isRTL ? 'rtl' : 'ltr'}>
+      <AppHeader title={t('search')} showSearch={false} />
 
       <main className="px-4 py-4 space-y-4">
         {/* Search Input */}
-        <div className="relative">
+        <div className="relative" dir="ltr">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search surahs, verses, or type 2:255..."
-            className="pl-10 pr-10"
+            placeholder={t('searchPlaceholder')}
+            className={cn('pl-10 pr-10', isRTL && 'text-right font-arabic-ui')}
             value={query}
             onChange={(e) => handleQueryChange(e.target.value)}
             autoFocus
@@ -98,7 +102,7 @@ export default function SearchPage() {
         {/* Surah Matches */}
         {matchedSurahs.length > 0 && (
           <div className="space-y-2">
-            <h2 className="text-sm font-medium text-muted-foreground">Surahs</h2>
+            <h2 className={cn('text-sm font-medium text-muted-foreground', isRTL && 'font-arabic-ui')}>{t('surahs')}</h2>
             {matchedSurahs.map((surah) => (
               <Link key={surah.id} to={`/quran/${surah.id}`}>
                 <Card className="hover:border-primary/30 transition-colors">
@@ -108,15 +112,15 @@ export default function SearchPage() {
                         {surah.id}
                       </div>
                       <div>
-                        <p className="font-medium">{surah.englishName}</p>
+                        <p className="font-medium">{isRTL ? surah.name : surah.englishName}</p>
                         <p className="text-xs text-muted-foreground">
-                          {surah.englishNameTranslation}
+                          {isRTL ? surah.englishName : surah.englishNameTranslation}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="arabic-text">{surah.name}</span>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      <span className="arabic-text">{isRTL ? surah.englishNameTranslation : surah.name}</span>
+                      <ChevronIcon className="w-4 h-4 text-muted-foreground" />
                     </div>
                   </CardContent>
                 </Card>
@@ -135,8 +139,8 @@ export default function SearchPage() {
         {/* Search Results */}
         {!isSearching && results.length > 0 && (
           <div className="space-y-2">
-            <h2 className="text-sm font-medium text-muted-foreground">
-              Verses ({results.length})
+            <h2 className={cn('text-sm font-medium text-muted-foreground', isRTL && 'font-arabic-ui')}>
+              {t('versesCount')} ({results.length})
             </h2>
             {results.map((result, index) => {
               const surah = getSurahById(result.surahId);
@@ -145,8 +149,8 @@ export default function SearchPage() {
                   <Card className="hover:border-primary/30 transition-colors">
                     <CardContent className="p-3">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm font-medium">
-                          {surah?.englishName || `Surah ${result.surahId}`}
+                        <span className={cn('text-sm font-medium', isRTL && 'font-arabic-ui')}>
+                          {isRTL ? (surah?.name || `${t('surah')} ${result.surahId}`) : (surah?.englishName || `Surah ${result.surahId}`)}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {result.surahId}:{result.ayahNumber}
@@ -167,18 +171,18 @@ export default function SearchPage() {
         {/* No Results */}
         {!isSearching && hasSearched && results.length === 0 && matchedSurahs.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No results found for "{query}"</p>
+            <p className={cn('text-muted-foreground', isRTL && 'font-arabic-ui')}>{t('noResults')} "{query}"</p>
           </div>
         )}
 
         {/* Quick Tips */}
         {!hasSearched && (
           <div className="space-y-4 pt-4">
-            <h2 className="text-sm font-medium text-muted-foreground">Search Tips</h2>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>• Search by surah name: "Al-Fatihah" or "الفاتحة"</p>
-              <p>• Jump to a verse: "2:255" or "36:1"</p>
-              <p>• Search by meaning: "mercy" or "guidance"</p>
+            <h2 className={cn('text-sm font-medium text-muted-foreground', isRTL && 'font-arabic-ui')}>{t('searchTips')}</h2>
+            <div className={cn('space-y-2 text-sm text-muted-foreground', isRTL && 'font-arabic-ui')}>
+              <p>• {t('searchTipSurah')}</p>
+              <p>• {t('searchTipVerse')}</p>
+              <p>• {t('searchTipMeaning')}</p>
             </div>
           </div>
         )}

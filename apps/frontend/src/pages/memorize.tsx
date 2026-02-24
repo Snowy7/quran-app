@@ -1,24 +1,19 @@
 import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle, BookOpen, AlertCircle, ChevronRight, Check, MoreVertical } from 'lucide-react';
+import { CheckCircle, BookOpen, AlertCircle, ChevronRight, ChevronLeft, Check, MoreVertical } from 'lucide-react';
 import { Button, Progress, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@template/ui';
 import { toast } from 'sonner';
 import { useOfflineMemorization } from '@/lib/hooks';
 import { SURAHS } from '@/data/surahs';
 import type { MemorizationStatus } from '@/types/quran';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
 import { AppHeader } from '@/components/layout/app-header';
 
 type FilterTab = 'all' | MemorizationStatus;
 
-const tabs: { id: FilterTab; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'memorized', label: 'Done' },
-  { id: 'learning', label: 'Learning' },
-  { id: 'needs_revision', label: 'Review' },
-];
-
 export default function MemorizePage() {
+  const { t, isRTL } = useTranslation();
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const { memorizations, stats, markAyahMemorized, updateMemorizationStatus } = useOfflineMemorization();
   const [bulkMarkDialog, setBulkMarkDialog] = useState<{ isOpen: boolean; surah: typeof SURAHS[0] | null }>({
@@ -26,33 +21,39 @@ export default function MemorizePage() {
     surah: null,
   });
 
+  const tabs: { id: FilterTab; label: string }[] = [
+    { id: 'all', label: t('all') },
+    { id: 'memorized', label: t('done') },
+    { id: 'learning', label: t('learning') },
+    { id: 'needs_revision', label: t('review') },
+  ];
+
   const getMemorizationForSurah = (surahId: number) => {
     return memorizations.find((m) => m.surahId === surahId);
   };
 
-  // Mark entire surah as memorized (for importing existing progress)
+  // Mark entire surah as memorized
   const markSurahAsMemorized = useCallback(async (surah: typeof SURAHS[0]) => {
     try {
-      // Mark all ayahs as memorized
       for (let i = 1; i <= surah.numberOfAyahs; i++) {
         await markAyahMemorized(surah.id, i);
       }
       setBulkMarkDialog({ isOpen: false, surah: null });
-      toast.success(`${surah.englishName} marked as memorized`);
+      toast.success(isRTL ? `تم تعليم ${surah.name} كمحفوظة` : `${surah.englishName} marked as memorized`);
     } catch (error) {
-      toast.error('Failed to mark surah as memorized');
+      toast.error(isRTL ? 'فشل في تعليم السورة كمحفوظة' : 'Failed to mark surah as memorized');
     }
-  }, [markAyahMemorized]);
+  }, [markAyahMemorized, isRTL]);
 
   // Reset surah memorization
   const resetSurahMemorization = useCallback(async (surahId: number) => {
     try {
       await updateMemorizationStatus(surahId, 'not_started');
-      toast.success('Progress reset');
+      toast.success(isRTL ? 'تمت إعادة تعيين التقدم' : 'Progress reset');
     } catch (error) {
-      toast.error('Failed to reset progress');
+      toast.error(isRTL ? 'فشل في إعادة تعيين التقدم' : 'Failed to reset progress');
     }
-  }, [updateMemorizationStatus]);
+  }, [updateMemorizationStatus, isRTL]);
 
   const filteredSurahs = SURAHS.filter((surah) => {
     if (activeTab === 'all') return true;
@@ -61,9 +62,11 @@ export default function MemorizePage() {
     return mem?.status === activeTab;
   });
 
+  const ChevronIcon = isRTL ? ChevronLeft : ChevronRight;
+
   return (
-    <div className="page-container">
-      <AppHeader title="Memorization" />
+    <div className="page-container" dir={isRTL ? 'rtl' : 'ltr'}>
+      <AppHeader title={t('memorization')} />
 
       {/* Progress Overview */}
       <div className="px-4 py-6 border-b border-border">
@@ -97,21 +100,21 @@ export default function MemorizePage() {
 
           {/* Stats */}
           <div className="flex-1">
-            <p className="text-sm text-muted-foreground mb-3">
-              {stats.memorized} of 114 surahs
+            <p className={cn('text-sm text-muted-foreground mb-3', isRTL && 'font-arabic-ui')}>
+              {stats.memorized} {t('ofSurahs')}
             </p>
             <div className="flex gap-4">
               <div>
                 <p className="text-lg font-semibold text-primary">{stats.memorized}</p>
-                <p className="text-xs text-muted-foreground">Done</p>
+                <p className={cn('text-xs text-muted-foreground', isRTL && 'font-arabic-ui')}>{t('done')}</p>
               </div>
               <div>
                 <p className="text-lg font-semibold">{stats.learning}</p>
-                <p className="text-xs text-muted-foreground">Learning</p>
+                <p className={cn('text-xs text-muted-foreground', isRTL && 'font-arabic-ui')}>{t('learning')}</p>
               </div>
               <div>
                 <p className="text-lg font-semibold">{stats.needsRevision}</p>
-                <p className="text-xs text-muted-foreground">Review</p>
+                <p className={cn('text-xs text-muted-foreground', isRTL && 'font-arabic-ui')}>{t('review')}</p>
               </div>
             </div>
           </div>
@@ -125,7 +128,7 @@ export default function MemorizePage() {
             key={tab.id}
             variant={activeTab === tab.id ? 'default' : 'ghost'}
             size="sm"
-            className="shrink-0"
+            className={cn('shrink-0', isRTL && 'font-arabic-ui')}
             onClick={() => setActiveTab(tab.id)}
           >
             {tab.label}
@@ -162,35 +165,37 @@ export default function MemorizePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <p className="font-medium truncate">{surah.englishName}</p>
-                    <span className="text-xs text-muted-foreground ml-2">
+                    <p className={cn('font-medium truncate', isRTL && 'font-arabic-ui')}>
+                      {isRTL ? surah.name : surah.englishName}
+                    </p>
+                    <span className="text-xs text-muted-foreground ms-2">
                       {memorizedCount}/{surah.numberOfAyahs}
                     </span>
                   </div>
                   <Progress value={percentage} className="h-1" />
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                <ChevronIcon className="w-4 h-4 text-muted-foreground shrink-0" />
               </Link>
               {/* Quick actions dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 mr-2 shrink-0">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 me-2 shrink-0">
                     <MoreVertical className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align={isRTL ? 'start' : 'end'}>
                   {status !== 'memorized' && (
-                    <DropdownMenuItem onClick={() => setBulkMarkDialog({ isOpen: true, surah })}>
-                      <Check className="w-4 h-4 mr-2" />
-                      Mark as memorized
+                    <DropdownMenuItem onClick={() => setBulkMarkDialog({ isOpen: true, surah })} className={cn(isRTL && 'font-arabic-ui')}>
+                      <Check className="w-4 h-4 me-2" />
+                      {t('markAsMemorized')}
                     </DropdownMenuItem>
                   )}
                   {status !== 'not_started' && (
                     <DropdownMenuItem
                       onClick={() => resetSurahMemorization(surah.id)}
-                      className="text-destructive"
+                      className={cn('text-destructive', isRTL && 'font-arabic-ui')}
                     >
-                      Reset progress
+                      {t('resetProgress')}
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
@@ -202,27 +207,25 @@ export default function MemorizePage() {
 
       {filteredSurahs.length === 0 && (
         <div className="text-center py-16">
-          <p className="text-muted-foreground">No surahs in this category</p>
+          <p className={cn('text-muted-foreground', isRTL && 'font-arabic-ui')}>{t('noSurahsInCategory')}</p>
         </div>
       )}
 
       {/* Bulk mark as memorized dialog */}
       <Dialog open={bulkMarkDialog.isOpen} onOpenChange={(open) => !open && setBulkMarkDialog({ isOpen: false, surah: null })}>
-        <DialogContent>
+        <DialogContent dir={isRTL ? 'rtl' : 'ltr'}>
           <DialogHeader>
-            <DialogTitle>Mark as Memorized</DialogTitle>
-            <DialogDescription>
-              This will mark all {bulkMarkDialog.surah?.numberOfAyahs} ayahs of{' '}
-              <strong>{bulkMarkDialog.surah?.englishName}</strong> as memorized.
-              Use this if you've already memorized this surah before using the app.
+            <DialogTitle className={cn(isRTL && 'font-arabic-ui')}>{t('markAsMemorizedTitle')}</DialogTitle>
+            <DialogDescription className={cn(isRTL && 'font-arabic-ui')}>
+              {t('markAsMemorizedDesc')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setBulkMarkDialog({ isOpen: false, surah: null })}>
-              Cancel
+            <Button variant="outline" onClick={() => setBulkMarkDialog({ isOpen: false, surah: null })} className={cn(isRTL && 'font-arabic-ui')}>
+              {t('cancel')}
             </Button>
-            <Button onClick={() => bulkMarkDialog.surah && markSurahAsMemorized(bulkMarkDialog.surah)}>
-              Mark as Memorized
+            <Button onClick={() => bulkMarkDialog.surah && markSurahAsMemorized(bulkMarkDialog.surah)} className={cn(isRTL && 'font-arabic-ui')}>
+              {t('markAsMemorized')}
             </Button>
           </DialogFooter>
         </DialogContent>

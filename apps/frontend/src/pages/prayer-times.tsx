@@ -3,6 +3,7 @@ import { MapPin, RefreshCw, Check, ChevronLeft, ChevronRight, Calendar, AlertCir
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@template/ui';
 import { usePrayerTimes, usePrayerTracking } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
 import type { PrayerName, PrayerLog } from '@/types/quran';
 import { AppHeader } from '@/components/layout/app-header';
 
@@ -47,18 +48,20 @@ const PrayerIcons = {
   ),
 };
 
-const prayerDetails: { key: PrayerName; name: string; arabicName: string }[] = [
-  { key: 'Fajr', name: 'Fajr', arabicName: 'الفجر' },
-  { key: 'Dhuhr', name: 'Dhuhr', arabicName: 'الظهر' },
-  { key: 'Asr', name: 'Asr', arabicName: 'العصر' },
-  { key: 'Maghrib', name: 'Maghrib', arabicName: 'المغرب' },
-  { key: 'Isha', name: 'Isha', arabicName: 'العشاء' },
-];
+const prayerTranslationKeys = {
+  Fajr: 'fajr',
+  Dhuhr: 'dhuhr',
+  Asr: 'asr',
+  Maghrib: 'maghrib',
+  Isha: 'isha',
+} as const;
 
 type ViewMode = 'today' | 'calendar';
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const DAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAYS_AR = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
+const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTHS_AR = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
 // Helper to parse time string to today's Date
 function parseTimeToDate(timeStr: string): Date {
@@ -80,6 +83,7 @@ interface LatePrayerDialogState {
 export default function PrayerTimesPage() {
   const { times, nextPrayer, countdown, loading, error, location, refresh } = usePrayerTimes();
   const { todayPrayers, todayCompletedCount, togglePrayer, getLogsForMonth, getStats } = usePrayerTracking();
+  const { t, isRTL, language } = useTranslation();
 
   const [viewMode, setViewMode] = useState<ViewMode>('today');
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
@@ -91,29 +95,27 @@ export default function PrayerTimesPage() {
     prayerTime: null,
   });
 
-  // Check if a prayer is considered "late" (its time has passed and we're past the next prayer's time)
+  const DAYS = isRTL ? DAYS_AR : DAYS_EN;
+  const MONTHS = isRTL ? MONTHS_AR : MONTHS_EN;
+
+  // Check if a prayer is considered "late"
   const isPrayerLate = useCallback((prayer: PrayerName): boolean => {
     if (!times) return false;
 
     const now = new Date();
     const prayerTime = parseTimeToDate(times[prayer]);
 
-    // If prayer time hasn't arrived yet, it's not late
     if (prayerTime > now) return false;
 
-    // Find the next prayer in order
     const currentIndex = prayerOrderForLate.indexOf(prayer);
     if (currentIndex === -1) return false;
 
-    // If it's Isha, it's late if current time is past midnight or before Fajr
     if (prayer === 'Isha') {
       const fajrTime = parseTimeToDate(times.Fajr);
-      // If we're past midnight and before Fajr, Isha is still "on time"
       if (now < fajrTime && now.getHours() < 6) return false;
       return true;
     }
 
-    // For other prayers, check if the next prayer's time has arrived
     const nextIndex = currentIndex + 1;
     if (nextIndex < prayerOrderForLate.length) {
       const nextPrayerName = prayerOrderForLate[nextIndex];
@@ -136,13 +138,11 @@ export default function PrayerTimesPage() {
   const handlePrayerClick = useCallback((prayer: PrayerName) => {
     const isCompleted = todayPrayers[prayer]?.completed || false;
 
-    // If unchecking, just toggle without dialog
     if (isCompleted) {
       togglePrayer(prayer);
       return;
     }
 
-    // If the prayer is late, show confirmation dialog
     if (isPrayerLate(prayer) && times) {
       setLatePrayerDialog({
         isOpen: true,
@@ -152,17 +152,13 @@ export default function PrayerTimesPage() {
       return;
     }
 
-    // Otherwise, just toggle normally (including future prayers)
     togglePrayer(prayer);
   }, [todayPrayers, togglePrayer, isPrayerLate, times]);
 
   // Confirm late prayer
   const handleConfirmLatePrayer = useCallback((prayedOnTime: boolean) => {
     if (latePrayerDialog.prayer) {
-      // Toggle the prayer (mark as completed)
       togglePrayer(latePrayerDialog.prayer);
-      // Note: In a real app, you might want to store whether it was prayed on time or late
-      // For now, we just mark it as completed
     }
     setLatePrayerDialog({ isOpen: false, prayer: null, prayerTime: null });
   }, [latePrayerDialog.prayer, togglePrayer]);
@@ -185,7 +181,7 @@ export default function PrayerTimesPage() {
     setCurrentMonth(d => new Date(d.getFullYear(), d.getMonth() - 1, 1));
   };
 
-  const nextMonth = () => {
+  const nextMonthFn = () => {
     setCurrentMonth(d => new Date(d.getFullYear(), d.getMonth() + 1, 1));
   };
 
@@ -219,19 +215,21 @@ export default function PrayerTimesPage() {
   const today = new Date();
   const isCurrentMonth = currentMonth.getMonth() === today.getMonth() && currentMonth.getFullYear() === today.getFullYear();
 
+  const getPrayerName = (key: PrayerName) => t(prayerTranslationKeys[key] as any);
+
   return (
-    <div className="page-container">
+    <div className="page-container" dir={isRTL ? 'rtl' : 'ltr'}>
       <AppHeader
-        title="Prayer Times"
+        title={t('prayerTimes')}
         rightContent={
           <div className="flex items-center gap-1">
             <Button
               variant={viewMode === 'today' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('today')}
-              className="h-8"
+              className={cn('h-8', isRTL && 'font-arabic-ui')}
             >
-              Today
+              {t('today')}
             </Button>
             <Button
               variant={viewMode === 'calendar' ? 'default' : 'ghost'}
@@ -273,10 +271,10 @@ export default function PrayerTimesPage() {
               <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
                 <MapPin className="w-8 h-8 text-destructive" />
               </div>
-              <h2 className="text-lg font-semibold mb-2">Location Required</h2>
+              <h2 className={cn('text-lg font-semibold mb-2', isRTL && 'font-arabic-ui')}>{t('locationRequired')}</h2>
               <p className="text-muted-foreground mb-4">{error}</p>
-              <Button onClick={() => refresh()}>
-                Try Again
+              <Button onClick={() => refresh()} className={cn(isRTL && 'font-arabic-ui')}>
+                {t('tryAgain')}
               </Button>
             </div>
           )}
@@ -303,7 +301,7 @@ export default function PrayerTimesPage() {
               <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 mb-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Today's Progress</p>
+                    <p className={cn('text-sm text-muted-foreground', isRTL && 'font-arabic-ui')}>{t('todaysProgress')}</p>
                     <p className="text-2xl font-bold">{todayCompletedCount}/5</p>
                   </div>
                   <div className="flex gap-1">
@@ -325,10 +323,10 @@ export default function PrayerTimesPage() {
                 <div className="p-4 rounded-2xl bg-primary text-primary-foreground mb-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm opacity-80">Next Prayer</p>
-                      <p className="text-xl font-semibold">{nextPrayer}</p>
+                      <p className={cn('text-sm opacity-80', isRTL && 'font-arabic-ui')}>{t('nextPrayerLabel')}</p>
+                      <p className={cn('text-xl font-semibold', isRTL && 'font-arabic-ui')}>{getPrayerName(nextPrayer as PrayerName)}</p>
                       <p className="text-sm opacity-80">
-                        {times[nextPrayer as keyof typeof times]} - in {countdown}
+                        {times[nextPrayer as keyof typeof times]} - {t('inTime')} {countdown}
                       </p>
                     </div>
                     <div className="text-primary-foreground opacity-80">
@@ -339,7 +337,7 @@ export default function PrayerTimesPage() {
               )}
 
               {/* All Prayers */}
-              {prayerDetails.map(({ key, name, arabicName }) => {
+              {prayerOrderForLate.map((key) => {
                 const Icon = PrayerIcons[key];
                 const time = times[key as keyof typeof times];
                 const isNext = nextPrayer === key;
@@ -352,7 +350,8 @@ export default function PrayerTimesPage() {
                     key={key}
                     onClick={() => handlePrayerClick(key)}
                     className={cn(
-                      'flex items-center gap-4 p-4 rounded-xl border transition-all w-full text-left',
+                      'flex items-center gap-4 p-4 rounded-xl border transition-all w-full',
+                      isRTL ? 'text-right' : 'text-left',
                       isCompleted
                         ? 'border-primary/30 bg-primary/5'
                         : isNext
@@ -386,34 +385,30 @@ export default function PrayerTimesPage() {
                       <div className="flex items-center gap-2">
                         <p className={cn(
                           'font-medium',
+                          isRTL && 'font-arabic-ui',
                           isCompleted && 'line-through opacity-60'
                         )}>
-                          {name}
+                          {getPrayerName(key)}
                         </p>
-                        <span className="arabic-text text-sm text-muted-foreground">
-                          {arabicName}
-                        </span>
                         {isFuture && !isCompleted && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
-                            Upcoming
+                          <span className={cn('text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground', isRTL && 'font-arabic-ui')}>
+                            {t('upcoming')}
                           </span>
                         )}
                         {isLate && !isCompleted && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600">
-                            Late
+                          <span className={cn('text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600', isRTL && 'font-arabic-ui')}>
+                            {t('late')}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className={cn('text-xs text-muted-foreground', isRTL && 'font-arabic-ui')}>
                         {isCompleted
-                          ? 'Completed'
+                          ? t('completed')
                           : isFuture
-                            ? 'Tap to mark in advance'
+                            ? t('tapToMarkAdvance')
                             : isNext
-                              ? 'Coming up'
-                              : isLate
-                                ? 'Tap to mark as prayed'
-                                : 'Tap to mark as prayed'}
+                              ? t('comingUp')
+                              : t('tapToMark')}
                       </p>
                     </div>
 
@@ -434,13 +429,13 @@ export default function PrayerTimesPage() {
         <div className="p-4">
           {/* Month Navigation */}
           <div className="flex items-center justify-between mb-4">
-            <Button variant="ghost" size="icon" onClick={prevMonth}>
+            <Button variant="ghost" size="icon" onClick={isRTL ? nextMonthFn : prevMonth}>
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <h2 className="font-semibold">
+            <h2 className={cn('font-semibold', isRTL && 'font-arabic-ui')}>
               {MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
             </h2>
-            <Button variant="ghost" size="icon" onClick={nextMonth}>
+            <Button variant="ghost" size="icon" onClick={isRTL ? prevMonth : nextMonthFn}>
               <ChevronRight className="w-5 h-5" />
             </Button>
           </div>
@@ -450,15 +445,15 @@ export default function PrayerTimesPage() {
             <div className="grid grid-cols-3 gap-3 mb-4">
               <div className="p-3 rounded-xl bg-secondary/50 text-center">
                 <p className="text-2xl font-bold text-primary">{stats.completionRate}%</p>
-                <p className="text-xs text-muted-foreground">Completion</p>
+                <p className={cn('text-xs text-muted-foreground', isRTL && 'font-arabic-ui')}>{t('completion')}</p>
               </div>
               <div className="p-3 rounded-xl bg-secondary/50 text-center">
                 <p className="text-2xl font-bold">{stats.completedPrayers}</p>
-                <p className="text-xs text-muted-foreground">Prayers</p>
+                <p className={cn('text-xs text-muted-foreground', isRTL && 'font-arabic-ui')}>{t('prayers')}</p>
               </div>
               <div className="p-3 rounded-xl bg-secondary/50 text-center">
                 <p className="text-2xl font-bold">{stats.daysWithData}</p>
-                <p className="text-xs text-muted-foreground">Days</p>
+                <p className={cn('text-xs text-muted-foreground', isRTL && 'font-arabic-ui')}>{t('days')}</p>
               </div>
             </div>
           )}
@@ -468,7 +463,7 @@ export default function PrayerTimesPage() {
             {/* Day Headers */}
             <div className="grid grid-cols-7 bg-secondary/50">
               {DAYS.map((day) => (
-                <div key={day} className="p-2 text-center text-xs font-medium text-muted-foreground">
+                <div key={day} className={cn('p-2 text-center text-xs font-medium text-muted-foreground', isRTL && 'font-arabic-ui')}>
                   {day}
                 </div>
               ))}
@@ -489,7 +484,8 @@ export default function PrayerTimesPage() {
                   <div
                     key={day}
                     className={cn(
-                      'p-1 aspect-square flex flex-col items-center justify-center border-t border-l border-border',
+                      'p-1 aspect-square flex flex-col items-center justify-center border-t border-border',
+                      isRTL ? 'border-e' : 'border-s',
                       isToday && 'bg-primary/10'
                     )}
                   >
@@ -528,24 +524,24 @@ export default function PrayerTimesPage() {
           <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-primary" />
-              <span>Partial</span>
+              <span className={cn(isRTL && 'font-arabic-ui')}>{t('partial')}</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>Complete</span>
+              <span className={cn(isRTL && 'font-arabic-ui')}>{t('complete')}</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-destructive/30" />
-              <span>Missed</span>
+              <span className={cn(isRTL && 'font-arabic-ui')}>{t('missed')}</span>
             </div>
           </div>
 
           {/* Per-Prayer Stats */}
           {stats && (
             <div className="mt-6">
-              <h3 className="font-medium mb-3">Prayer Breakdown (Last 30 Days)</h3>
+              <h3 className={cn('font-medium mb-3', isRTL && 'font-arabic-ui')}>{t('prayerBreakdown')}</h3>
               <div className="space-y-2">
-                {prayerDetails.map(({ key, name }) => {
+                {prayerOrderForLate.map((key) => {
                   const prayerStats = stats.byPrayer[key];
                   const percentage = prayerStats.total > 0
                     ? Math.round((prayerStats.completed / prayerStats.total) * 100)
@@ -553,14 +549,14 @@ export default function PrayerTimesPage() {
 
                   return (
                     <div key={key} className="flex items-center gap-3">
-                      <span className="w-20 text-sm">{name}</span>
-                      <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
+                      <span className={cn('w-20 text-sm', isRTL && 'font-arabic-ui')}>{getPrayerName(key)}</span>
+                      <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden" dir="ltr">
                         <div
                           className="h-full bg-primary rounded-full transition-all"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
-                      <span className="text-sm text-muted-foreground w-12 text-right">
+                      <span className="text-sm text-muted-foreground w-12 text-end tabular-nums">
                         {percentage}%
                       </span>
                     </div>
@@ -574,23 +570,22 @@ export default function PrayerTimesPage() {
 
       {/* Info */}
       {viewMode === 'today' && (
-        <div className="px-4 py-6 text-center text-xs text-muted-foreground">
-          <p>Times calculated using ISNA method</p>
-          <p>Tap a prayer to mark it as completed</p>
+        <div className={cn('px-4 py-6 text-center text-xs text-muted-foreground', isRTL && 'font-arabic-ui')}>
+          <p>{t('timesMethod')}</p>
+          <p>{t('tapPrayerToMark')}</p>
         </div>
       )}
 
       {/* Late Prayer Confirmation Dialog */}
       <Dialog open={latePrayerDialog.isOpen} onOpenChange={(open) => !open && handleCancelLatePrayer()}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className={cn('flex items-center gap-2', isRTL && 'font-arabic-ui')}>
               <AlertCircle className="w-5 h-5 text-amber-500" />
-              Mark {latePrayerDialog.prayer} as Prayed
+              {t('markPrayerTitle')}
             </DialogTitle>
-            <DialogDescription>
-              The time for {latePrayerDialog.prayer} ({latePrayerDialog.prayerTime}) has passed.
-              Did you pray it on time?
+            <DialogDescription className={cn(isRTL && 'font-arabic-ui')}>
+              {t('prayerTimePassed')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -600,10 +595,10 @@ export default function PrayerTimesPage() {
                 className="w-full justify-start gap-3"
                 variant="outline"
               >
-                <Clock className="w-4 h-4 text-primary" />
-                <div className="text-left">
-                  <p className="font-medium">Yes, I prayed on time</p>
-                  <p className="text-xs text-muted-foreground">I prayed before the next prayer time</p>
+                <Clock className="w-4 h-4 text-primary shrink-0" />
+                <div className={cn(isRTL ? 'text-right' : 'text-left')}>
+                  <p className={cn('font-medium', isRTL && 'font-arabic-ui')}>{t('prayedOnTime')}</p>
+                  <p className={cn('text-xs text-muted-foreground', isRTL && 'font-arabic-ui')}>{t('prayedOnTimeDesc')}</p>
                 </div>
               </Button>
               <Button
@@ -611,17 +606,17 @@ export default function PrayerTimesPage() {
                 className="w-full justify-start gap-3"
                 variant="outline"
               >
-                <AlertCircle className="w-4 h-4 text-amber-500" />
-                <div className="text-left">
-                  <p className="font-medium">No, I prayed late (Qada)</p>
-                  <p className="text-xs text-muted-foreground">I'm making up a missed prayer</p>
+                <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                <div className={cn(isRTL ? 'text-right' : 'text-left')}>
+                  <p className={cn('font-medium', isRTL && 'font-arabic-ui')}>{t('prayedLate')}</p>
+                  <p className={cn('text-xs text-muted-foreground', isRTL && 'font-arabic-ui')}>{t('prayedLateDesc')}</p>
                 </div>
               </Button>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={handleCancelLatePrayer}>
-              Cancel
+            <Button variant="ghost" onClick={handleCancelLatePrayer} className={cn(isRTL && 'font-arabic-ui')}>
+              {t('cancel')}
             </Button>
           </DialogFooter>
         </DialogContent>
