@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { BookMarked, Play, Pause, BookOpen, Layers, CheckCircle2, Settings2, ArrowLeft } from 'lucide-react';
+import { BookMarked, Play, Pause, BookOpen, Layers, CheckCircle2, Settings2, ArrowLeft, Search, Menu, ChevronUp, FileText, Bookmark } from 'lucide-react';
 import { Button } from '@template/ui';
 import { toast } from 'sonner';
 import { useOfflineSettings, useOfflineReadingProgress, useIsBookmarked, useOfflineBookmarks, useOfflineMemorization, useSurahMemorization } from '@/lib/hooks';
@@ -11,6 +11,7 @@ import { ReadingSettingsSheet } from '@/components/reader/reading-settings-sheet
 import { MushafView } from '@/components/reader/mushaf-view';
 import type { Ayah, Translation } from '@/types/quran';
 import { cn } from '@/lib/utils';
+import { useSidebarContext } from '@/components/layout/app-layout';
 
 type ReadingMode = 'ayah' | 'mushaf';
 
@@ -137,6 +138,8 @@ export default function SurahReaderPage() {
     ? ayahs[currentPlayingAyahIndex]?.numberInSurah ?? null
     : null;
 
+  const sidebar = useSidebarContext();
+
   if (!surah) {
     return (
       <div className="page-container flex items-center justify-center">
@@ -146,63 +149,82 @@ export default function SurahReaderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Minimal top bar */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border safe-area-top">
-        <div className="flex items-center justify-between px-2 h-12">
-          {/* Left: Back + Surah info */}
-          <div className="flex items-center gap-1">
-            <Link
-              to="/quran"
-              className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-secondary transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div className="flex items-center gap-2">
-              <span className="arabic-text text-lg font-medium">{surah.name}</span>
-              <span className="text-muted-foreground text-xs">{surah.numberOfAyahs} ayahs</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Mode Toggle - pill style */}
-            <div className="flex items-center bg-secondary/80 rounded-full p-1">
-              <button
-                onClick={() => handleReadingModeChange('ayah')}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all',
-                  readingMode === 'ayah'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                Verse
-              </button>
-              <button
-                onClick={() => handleReadingModeChange('mushaf')}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all',
-                  readingMode === 'mushaf'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                Mushaf
-              </button>
-            </div>
-
-            {/* Settings button */}
+    <div className="min-h-screen bg-background pb-40 lg:pb-20">
+      {/* App Bar - Figma style */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm safe-area-top">
+        <div className="flex items-center justify-between px-5 py-3 md:px-8">
+          {/* Left: Search */}
+          <Link to="/search">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-full"
-              onClick={() => setShowSettings(true)}
+              className="h-9 w-9 text-primary hover:bg-primary/10"
             >
-              <Settings2 className="w-4 h-4" />
+              <Search className="w-5 h-5" />
             </Button>
+          </Link>
+
+          {/* Center: Surah name + juz info */}
+          <Link to="/quran" className="flex items-center gap-1.5">
+            <ChevronUp className="w-4 h-4 text-primary" />
+            <div className="text-center">
+              <p className="font-arabic-ui text-lg md:text-xl font-bold text-primary leading-tight" dir="rtl">
+                {surah.name}
+              </p>
+              <p className="font-arabic-ui text-xs text-primary/70" dir="rtl">
+                الجزء {surah.startJuz} - {surah.numberOfAyahs} آيات
+              </p>
+            </div>
+          </Link>
+
+          {/* Right: Menu (hidden on desktop) */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-primary hover:bg-primary/10 lg:hidden"
+            onClick={sidebar.open}
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+          <div className="hidden lg:block w-9" />
+        </div>
+
+        {/* Mode Toggle */}
+        <div className="flex items-center justify-center gap-2 px-5 pb-2">
+          <div className="flex items-center bg-secondary rounded-full p-1">
+            <button
+              onClick={() => handleReadingModeChange('ayah')}
+              className={cn(
+                'flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-arabic-ui font-bold transition-all',
+                readingMode === 'ayah'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-primary/60 hover:text-primary'
+              )}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              الآيات
+            </button>
+            <button
+              onClick={() => handleReadingModeChange('mushaf')}
+              className={cn(
+                'flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-arabic-ui font-bold transition-all',
+                readingMode === 'mushaf'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-primary/60 hover:text-primary'
+              )}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              المصحف
+            </button>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full text-primary"
+            onClick={() => setShowSettings(true)}
+          >
+            <Settings2 className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
@@ -260,6 +282,28 @@ export default function SurahReaderPage() {
         )
       )}
 
+
+      {/* Bottom Action Bar - Figma style */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-secondary border-t border-border safe-area-bottom lg:left-64">
+        <div className="flex items-center justify-between px-8 py-3 max-w-3xl mx-auto">
+          <button
+            type="button"
+            className="flex items-center gap-2 text-primary font-arabic-ui font-bold text-sm"
+            onClick={() => setShowSettings(true)}
+          >
+            <span dir="rtl">تفسير السورة</span>
+            <FileText className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            className="flex items-center gap-2 text-primary font-arabic-ui font-bold text-sm"
+            onClick={() => toast.info('Bookmark feature')}
+          >
+            <span dir="rtl">إضافة علامة</span>
+            <Bookmark className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
 
       {/* Reading Settings Sheet */}
       <ReadingSettingsSheet
@@ -367,15 +411,15 @@ function AyahCard({
     <div
       ref={cardRef}
       className={cn(
-        'px-4 py-5 transition-all duration-300',
-        isCurrentAyah && 'bg-primary/10 border-l-4 border-l-primary'
+        'px-5 py-5 md:px-8 md:py-6 transition-all duration-300',
+        isCurrentAyah && 'bg-secondary border-r-4 border-r-accent'
       )}
     >
       {/* Header row with ayah number and actions */}
       <div className="flex items-center justify-between mb-4">
         <span className={cn(
-          'inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold transition-colors',
-          isCurrentAyah ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
+          'inline-flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold font-arabic-ui transition-colors',
+          isCurrentAyah ? 'bg-accent text-white' : 'bg-secondary text-primary'
         )}>
           {ayah.numberInSurah}
         </span>

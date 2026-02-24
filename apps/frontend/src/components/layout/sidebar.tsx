@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@template/ui';
 import { Logo } from '@/components/brand/logo';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 interface SidebarProps {
@@ -13,16 +14,19 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const menuItems = [
-  { to: '/prayer-times', icon: Clock, label: 'Prayer Times' },
-  { to: '/bookmarks', icon: BookMarked, label: 'Bookmarks' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+type TranslationKey = 'prayerTimes' | 'bookmarks' | 'settings';
+
+const menuItems: { to: string; icon: typeof Clock; tKey: TranslationKey }[] = [
+  { to: '/prayer-times', icon: Clock, tKey: 'prayerTimes' },
+  { to: '/bookmarks', icon: BookMarked, tKey: 'bookmarks' },
+  { to: '/settings', icon: Settings, tKey: 'settings' },
 ];
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const { signOut } = useAuth();
   const { user } = useUser();
+  const { t, language, isRTL } = useTranslation();
   const prevPathRef = useRef(location.pathname);
 
   // Close on route change (but not on mount)
@@ -61,10 +65,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar Panel */}
       <div
+        dir={isRTL ? 'rtl' : 'ltr'}
         className={cn(
-          'fixed inset-y-0 left-0 z-[70] w-72 bg-background border-r border-border',
+          'fixed inset-y-0 z-[70] w-72 bg-background',
           'transform transition-transform duration-300 ease-in-out',
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          isRTL
+            ? 'right-0 border-l border-border'
+            : 'left-0 border-r border-border',
+          isRTL
+            ? (isOpen ? 'translate-x-0' : 'translate-x-full')
+            : (isOpen ? 'translate-x-0' : '-translate-x-full')
         )}
       >
         <div className="flex flex-col h-full">
@@ -72,7 +82,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="flex items-center justify-between p-4 border-b border-border">
             <div className="flex items-center gap-3">
               <Logo size="sm" />
-              <span className="font-semibold">Noor</span>
+              <span className="font-semibold font-arabic-ui">{t('noor')}</span>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
               <X className="w-4 h-4" />
@@ -113,8 +123,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   <LogIn className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">Sign In</p>
-                  <p className="text-xs text-muted-foreground">Sync across devices</p>
+                  <p className="font-medium">{t('signIn')}</p>
+                  <p className="text-xs text-muted-foreground">{t('syncDevices')}</p>
                 </div>
               </Link>
             </SignedOut>
@@ -122,7 +132,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           {/* Menu Items */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {menuItems.map(({ to, icon: Icon, label }) => {
+            {menuItems.map(({ to, icon: Icon, tKey }) => {
               const isActive = location.pathname === to;
               return (
                 <Link
@@ -136,7 +146,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   )}
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="font-medium">{label}</span>
+                  <span className="font-medium">{t(tKey)}</span>
                 </Link>
               );
             })}
@@ -149,7 +159,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
             >
               <HelpCircle className="w-5 h-5" />
-              <span className="font-medium">Help & Support</span>
+              <span className="font-medium">{t('helpSupport')}</span>
             </Link>
             <SignedIn>
               <button
@@ -157,14 +167,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors w-full"
               >
                 <LogOut className="w-5 h-5" />
-                <span className="font-medium">Sign Out</span>
+                <span className="font-medium">{t('signOut')}</span>
               </button>
             </SignedIn>
           </div>
 
           {/* Version */}
           <div className="px-4 py-3 text-center text-xs text-muted-foreground">
-            Noor v1.0.0
+            {t('noor')} v1.0.0
           </div>
         </div>
       </div>

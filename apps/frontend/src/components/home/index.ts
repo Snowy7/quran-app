@@ -5,3 +5,6 @@ export { PrayerTimesCards } from './prayer-times-cards';
 export { QuickActions } from './quick-actions';
 export { HifzWidget } from './hifz-widget';
 export { DailyStats } from './daily-stats';
+export { DailyVerse } from './daily-verse';
+export { FeatureGrid } from './feature-grid';
+export { CategoryTabs } from './category-tabs';

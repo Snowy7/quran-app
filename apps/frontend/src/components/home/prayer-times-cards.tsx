@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { Check } from 'lucide-react';
 import { usePrayerTimes, usePrayerTracking } from '@/lib/hooks';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { PrayerName } from '@/types/quran';
@@ -65,17 +66,20 @@ function IshaIcon({ className }: { className?: string }) {
   );
 }
 
-const prayerConfig = [
-  { key: 'Fajr' as PrayerName, label: 'Fajr', Icon: FajrIcon, gradient: 'from-sky-400 to-blue-500' },
-  { key: 'Dhuhr' as PrayerName, label: 'Dhuhr', Icon: DhuhrIcon, gradient: 'from-amber-400 to-yellow-500' },
-  { key: 'Asr' as PrayerName, label: 'Asr', Icon: AsrIcon, gradient: 'from-orange-400 to-amber-500' },
-  { key: 'Maghrib' as PrayerName, label: 'Maghrib', Icon: MaghribIcon, gradient: 'from-rose-400 to-orange-500' },
-  { key: 'Isha' as PrayerName, label: 'Isha', Icon: IshaIcon, gradient: 'from-indigo-500 to-purple-600' },
+type TranslationKey = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
+
+const prayerConfig: { key: PrayerName; tKey: TranslationKey; Icon: React.FC<{ className?: string }>; gradient: string }[] = [
+  { key: 'Fajr', tKey: 'fajr', Icon: FajrIcon, gradient: 'from-sky-400 to-blue-500' },
+  { key: 'Dhuhr', tKey: 'dhuhr', Icon: DhuhrIcon, gradient: 'from-amber-400 to-yellow-500' },
+  { key: 'Asr', tKey: 'asr', Icon: AsrIcon, gradient: 'from-orange-400 to-amber-500' },
+  { key: 'Maghrib', tKey: 'maghrib', Icon: MaghribIcon, gradient: 'from-rose-400 to-orange-500' },
+  { key: 'Isha', tKey: 'isha', Icon: IshaIcon, gradient: 'from-indigo-500 to-purple-600' },
 ];
 
 export function PrayerTimesCards() {
   const { times, nextPrayer, loading, error } = usePrayerTimes();
   const { todayPrayers, togglePrayer } = usePrayerTracking();
+  const { t } = useTranslation();
 
   const hasPrayerTimePassed = useCallback((prayerKey: string): boolean => {
     if (!times) return false;
@@ -94,13 +98,11 @@ export function PrayerTimesCards() {
 
     const isCompleted = todayPrayers[prayer]?.completed || false;
 
-    // Allow unmarking anytime
     if (isCompleted) {
       togglePrayer(prayer);
       return;
     }
 
-    // Only allow marking if prayer time has passed
     if (!hasPrayerTimePassed(prayer)) {
       toast.warning(`${prayer} time hasn't started yet`, {
         description: 'You can only mark a prayer as done after its time begins.',
@@ -114,7 +116,7 @@ export function PrayerTimesCards() {
 
   if (error) {
     return (
-      <div className="p-4 rounded-2xl bg-secondary/50 border border-border text-center">
+      <div className="p-4 md:p-6 rounded-2xl bg-secondary/50 border border-border text-center">
         <p className="text-sm text-muted-foreground">Enable location for prayer times</p>
       </div>
     );
@@ -122,11 +124,11 @@ export function PrayerTimesCards() {
 
   if (loading || !times) {
     return (
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+      <div className="grid grid-cols-5 gap-2 md:gap-3">
         {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
-            className="flex-shrink-0 w-[68px] h-[84px] rounded-2xl bg-secondary/50 animate-pulse"
+            className="h-[100px] md:h-[120px] rounded-2xl bg-secondary/50 animate-pulse"
           />
         ))}
       </div>
@@ -134,8 +136,8 @@ export function PrayerTimesCards() {
   }
 
   return (
-    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
-      {prayerConfig.map(({ key, label, Icon, gradient }) => {
+    <div className="grid grid-cols-5 gap-2 md:gap-3">
+      {prayerConfig.map(({ key, tKey, Icon, gradient }) => {
         const isNext = nextPrayer === key;
         const isCompleted = todayPrayers[key]?.completed || false;
         const time = times[key as keyof typeof times];
@@ -146,19 +148,20 @@ export function PrayerTimesCards() {
             key={key}
             onClick={(e) => hasPassed || isCompleted ? handlePrayerClick(key, e) : undefined}
             className={cn(
-              'flex-shrink-0 w-[68px] rounded-2xl p-2 flex flex-col items-center transition-all relative',
+              'rounded-2xl p-2.5 md:p-4 flex flex-col items-center justify-center transition-all relative',
+              'min-h-[100px] md:min-h-[120px]',
               (hasPassed || isCompleted) && 'cursor-pointer',
               isNext
                 ? `bg-gradient-to-br ${gradient} text-white shadow-lg`
                 : isCompleted
                   ? 'bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800'
-                  : 'bg-card border border-border'
+                  : 'bg-card border border-border hover:border-primary/20'
             )}
           >
             {/* Icon circle */}
             <div
               className={cn(
-                'w-8 h-8 rounded-full flex items-center justify-center mb-1 transition-colors',
+                'w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center mb-1.5 md:mb-2 transition-colors',
                 isNext
                   ? 'bg-white/20'
                   : isCompleted
@@ -168,7 +171,7 @@ export function PrayerTimesCards() {
             >
               <Icon
                 className={cn(
-                  'w-4 h-4',
+                  'w-4 h-4 md:w-5 md:h-5',
                   isNext
                     ? 'text-white'
                     : isCompleted
@@ -181,27 +184,27 @@ export function PrayerTimesCards() {
             {/* Prayer name */}
             <p
               className={cn(
-                'text-[10px] font-medium mb-0.5',
+                'text-[10px] md:text-xs font-medium mb-0.5 md:mb-1',
                 isNext ? 'text-white/90' : isCompleted ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground'
               )}
             >
-              {label}
+              {t(tKey)}
             </p>
 
             {/* Time */}
             <p
               className={cn(
-                'text-xs font-bold',
+                'text-xs md:text-sm font-bold',
                 isNext ? 'text-white' : isCompleted ? 'text-emerald-700 dark:text-emerald-400' : ''
               )}
             >
               {time}
             </p>
 
-            {/* Checkmark - only show if completed */}
+            {/* Checkmark */}
             {isCompleted && (
-              <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center">
-                <Check className="w-2.5 h-2.5" />
+              <div className="absolute top-1.5 right-1.5 md:top-2 md:right-2 w-4 h-4 md:w-5 md:h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                <Check className="w-2.5 h-2.5 md:w-3 md:h-3" />
               </div>
             )}
           </div>

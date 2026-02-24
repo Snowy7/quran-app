@@ -305,7 +305,7 @@ export function GlobalAudioPlayer() {
     };
 
     return (
-      <div className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom lg:left-64">
         {/* Progress bar */}
         {isPlayingThisSurah && (
           <div className="h-0.5 bg-secondary">

@@ -10,6 +10,8 @@ function QuranIcon({ active, className }: { active?: boolean; className?: string
       alt="Quran"
       className={cn(
         'w-6 h-6 object-contain',
+        // In dark mode, invert to white. When active (on primary bg), always invert to white.
+        active ? 'brightness-0 invert' : 'dark:brightness-0 dark:invert',
         className
       )}
     />
@@ -37,7 +39,7 @@ export function BottomNav() {
   }
 
   return (
-    <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-6 pointer-events-none safe-area-bottom">
+    <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-6 pointer-events-none safe-area-bottom lg:hidden">
       <nav className="pointer-events-auto bg-card/95 backdrop-blur-xl border border-border/50 rounded-full shadow-xl shadow-black/15 px-2 py-2">
         <div className="flex items-center gap-1">
           {navItems.map(({ to, icon: Icon }) => {

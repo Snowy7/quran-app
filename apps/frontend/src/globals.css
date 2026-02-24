@@ -4,8 +4,10 @@
 
 /* Arabic Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Scheherazade+New:wght@400;500;600;700&display=swap');
+/* Arabic UI Font (Figma design system) */
+@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
 /* UI Font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -16,70 +18,77 @@
      Light Theme - Warm Cream/Beige
      ===================================== */
   :root {
-    --background: 35 40% 97%;        /* warm cream */
-    --foreground: 25 25% 15%;        /* warm dark brown */
+    --background: 42 83% 98%;        /* #FEFBF4 warm cream */
+    --foreground: 17 26% 20%;        /* warm dark brown */
 
-    --card: 35 45% 99%;              /* lighter cream */
-    --card-foreground: 25 25% 15%;
+    --card: 40 50% 94%;              /* lighter beige */
+    --card-foreground: 17 26% 20%;
 
-    --popover: 35 45% 99%;
-    --popover-foreground: 25 25% 15%;
+    --popover: 40 50% 94%;
+    --popover-foreground: 17 26% 20%;
 
-    /* Primary - Warm Orange/Brown */
-    --primary: 28 75% 50%;           /* warm orange */
+    /* Primary - Brown (#795547) from Figma */
+    --primary: 17 26% 38%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 35 30% 92%;         /* soft beige */
-    --secondary-foreground: 25 25% 15%;
+    /* Secondary - Beige (#F0E6D2) from Figma */
+    --secondary: 40 50% 88%;
+    --secondary-foreground: 17 26% 20%;
 
-    --muted: 35 25% 90%;             /* muted beige */
-    --muted-foreground: 25 15% 45%;
+    --muted: 40 30% 85%;             /* muted beige */
+    --muted-foreground: 17 15% 45%;
 
-    --accent: 35 50% 90%;            /* golden accent */
-    --accent-foreground: 25 25% 15%;
+    /* Accent - Warm tan (#CC9B76) from Figma */
+    --accent: 26 46% 63%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 35 20% 88%;
-    --input: 35 20% 88%;
-    --ring: 28 75% 50%;              /* matches primary */
+    --border: 40 30% 88%;
+    --input: 40 30% 88%;
+    --ring: 17 26% 38%;
 
     --radius: 0.75rem;
+
+    /* Figma-specific tokens */
+    --card-content: 38 100% 88%;     /* #FFE9C2 gold */
   }
 
   /* =====================================
      Dark Theme - Softer Gray with Warm Accents
      ===================================== */
   .dark {
-    --background: 30 10% 12%;        /* warm dark gray, not pure black */
-    --foreground: 35 20% 95%;        /* warm off-white */
+    --background: 25 15% 10%;        /* warm dark brown-gray */
+    --foreground: 40 40% 92%;        /* warm off-white */
 
-    --card: 30 10% 15%;
-    --card-foreground: 35 20% 95%;
+    --card: 25 12% 14%;
+    --card-foreground: 40 40% 92%;
 
-    --popover: 30 10% 15%;
-    --popover-foreground: 35 20% 95%;
+    --popover: 25 12% 14%;
+    --popover-foreground: 40 40% 92%;
 
-    /* Primary - Lighter warm orange for dark mode */
-    --primary: 28 80% 58%;           /* brighter orange for contrast */
-    --primary-foreground: 30 10% 10%;
+    /* Primary - Lighter brown for dark mode */
+    --primary: 26 46% 63%;           /* #CC9B76 tan for contrast */
+    --primary-foreground: 25 15% 10%;
 
-    --secondary: 30 10% 20%;
-    --secondary-foreground: 35 20% 95%;
+    --secondary: 25 12% 18%;
+    --secondary-foreground: 40 40% 92%;
 
-    --muted: 30 10% 20%;
-    --muted-foreground: 35 15% 60%;
+    --muted: 25 10% 20%;
+    --muted-foreground: 35 15% 55%;
 
-    --accent: 30 15% 22%;
-    --accent-foreground: 35 20% 95%;
+    --accent: 17 26% 48%;
+    --accent-foreground: 40 40% 92%;
 
     --destructive: 0 72% 55%;
-    --destructive-foreground: 35 20% 95%;
+    --destructive-foreground: 40 40% 92%;
 
-    --border: 30 10% 22%;
-    --input: 30 10% 22%;
-    --ring: 28 80% 58%;
+    --border: 25 10% 20%;
+    --input: 25 10% 20%;
+    --ring: 26 46% 63%;
+
+    --card-content: 38 60% 25%;
   }
 
   * {
@@ -93,7 +102,12 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Arabic UI text uses Almarai */
+  .font-arabic-ui {
+    font-family: 'Almarai', 'Scheherazade New', sans-serif;
   }
 }
 
@@ -175,6 +189,12 @@
   /* Page Container */
   .page-container {
     @apply min-h-screen bg-background pb-nav;
+  }
+
+  @media (min-width: 1024px) {
+    .page-container {
+      @apply pb-6;
+    }
   }
 
   /* Ayah Highlight */

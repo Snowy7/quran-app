@@ -1,7 +1,7 @@
 import { useAuth, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { Link } from 'react-router-dom';
 import {
-  Moon, Sun, ChevronRight, LogIn, LogOut, Trash2, HardDrive, Cloud, RefreshCw, Bell, BellOff
+  Moon, Sun, ChevronRight, LogIn, LogOut, Trash2, HardDrive, Cloud, RefreshCw, Bell, BellOff, Globe
 } from 'lucide-react';
 import { Button, Switch, Slider, Label } from '@template/ui';
 import { useOfflineSettings, useConvexSync, usePrayerTimes, usePrayerNotifications } from '@/lib/hooks';
@@ -10,8 +10,10 @@ import { db } from '@/lib/db';
 import { InstallAppButton } from '@/components/pwa';
 import type { ThemeMode } from '@/types/quran';
 import { AppHeader } from '@/components/layout/app-header';
+import { useTranslation } from '@/lib/i18n';
 
 export default function SettingsPage() {
+  const { t, language, setLanguage } = useTranslation();
   const { settings, updateSettings } = useOfflineSettings();
   const { theme, setTheme } = useTheme();
   const { signOut } = useAuth();
@@ -44,12 +46,34 @@ export default function SettingsPage() {
 
   return (
     <div className="page-container">
-      <AppHeader title="Settings" showSearch={false} />
+      <AppHeader title={t('settings')} showSearch={false} />
 
-      <div className="px-4 py-6 space-y-8">
+      <div className="px-4 md:px-8 py-6 space-y-8">
+        {/* Language */}
+        <section>
+          <h2 className="text-sm font-medium text-muted-foreground mb-4">{t('language')}</h2>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { id: 'en' as const, label: 'English', sublabel: 'الإنجليزية' },
+              { id: 'ar' as const, label: 'العربية', sublabel: 'Arabic' },
+            ].map(({ id, label, sublabel }) => (
+              <Button
+                key={id}
+                variant={language === id ? 'default' : 'outline'}
+                className="flex-col h-auto py-4"
+                onClick={() => setLanguage(id)}
+              >
+                <Globe className="w-5 h-5 mb-2" />
+                <span className="text-sm font-bold">{label}</span>
+                <span className="text-xs opacity-60">{sublabel}</span>
+              </Button>
+            ))}
+          </div>
+        </section>
+
         {/* Theme */}
         <section>
-          <h2 className="text-sm font-medium text-muted-foreground mb-4">Theme</h2>
+          <h2 className="text-sm font-medium text-muted-foreground mb-4">{t('theme')}</h2>
           <div className="grid grid-cols-2 gap-2">
             {[
               { id: 'light', icon: Sun, label: 'Light' },

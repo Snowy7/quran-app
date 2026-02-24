@@ -1,122 +1,107 @@
 import { useState, useEffect } from 'react';
-import { MapPin } from 'lucide-react';
 import { usePrayerTimes } from '@/lib/hooks/use-prayer-times';
+import { useTranslation } from '@/lib/i18n';
 
-function formatCurrentTime(): string {
-  const now = new Date();
-  return now.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
+const PRAYER_NAMES_AR: Record<string, string> = {
+  Fajr: 'الفجر',
+  Sunrise: 'الشروق',
+  Dhuhr: 'الظهر',
+  Asr: 'العصر',
+  Maghrib: 'المغرب',
+  Isha: 'العشاء',
+};
+
+const PRAYER_NAMES_EN: Record<string, string> = {
+  Fajr: 'Fajr',
+  Sunrise: 'Sunrise',
+  Dhuhr: 'Dhuhr',
+  Asr: 'Asr',
+  Maghrib: 'Maghrib',
+  Isha: 'Isha',
+};
+
+function formatTime12h(time24: string): { time: string; period: string } {
+  const [hours, minutes] = time24.split(':').map(Number);
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const periodAr = hours >= 12 ? 'م' : 'ص';
+  const hours12 = hours % 12 || 12;
+  return {
+    time: `${hours12}:${minutes.toString().padStart(2, '0')}`,
+    period: periodAr,
+  };
 }
 
 export function PrayerHero() {
-  const { nextPrayer, countdown, location, hijriDate, loading } = usePrayerTimes();
-  const [currentTime, setCurrentTime] = useState(formatCurrentTime);
+  const { nextPrayer, times, countdown, loading } = usePrayerTimes();
+  const { t, language } = useTranslation();
+  const [currentTime, setCurrentTime] = useState(() => {
+    const now = new Date();
+    return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  });
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTime(formatCurrentTime());
+      const now = new Date();
+      setCurrentTime(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }));
     }, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const prayerNames: Record<string, string> = {
-    Fajr: 'Fajr',
-    Sunrise: 'Sunrise',
-    Dhuhr: 'Dhuhr',
-    Asr: 'Asr',
-    Maghrib: 'Maghrib',
-    Isha: 'Isha',
-  };
+  const prayerNameAr = nextPrayer ? PRAYER_NAMES_AR[nextPrayer] || nextPrayer : 'الظهر';
+  const prayerNameEn = nextPrayer ? PRAYER_NAMES_EN[nextPrayer] || nextPrayer : 'Dhuhr';
+  const nextPrayerTime = nextPrayer && times ? formatTime12h(times[nextPrayer as keyof typeof times] || '12:00') : null;
 
   return (
-    <div className="relative -mx-5 h-[350px] overflow-hidden">
-      {/* Sun/atmospheric gradient */}
-      <div className="absolute inset-0">
-        {/* Main circular sun gradient */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 -top-[0px] w-[120%] h-[450px] rounded-full"
-          style={{
-            background: 'radial-gradient(circle at 50% 60%, rgb(253 224 71 / 0.7) 0%, rgb(251 191 36 / 0.5) 20%, rgb(245 158 11 / 0.35) 40%, rgb(217 119 6 / 0.15) 60%, transparent 75%)',
-          }}
-        />
-        {/* Secondary warm glow */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 -top-[100px] w-[400px] h-[450px] rounded-full blur-2xl"
-          style={{
-            background: 'radial-gradient(circle, rgb(254 243 199 / 0.6) 0%, rgb(253 230 138 / 0.25) 40%, transparent 70%)',
-          }}
-        />
-      </div>
+    <div className="relative rounded-2xl overflow-hidden h-[160px] md:h-[200px] animate-fade-in">
+      {/* Background */}
+      <div className="absolute inset-0 bg-secondary" />
 
-      {/* Mosque silhouette - positioned at bottom, fades out */}
-      <div className="absolute -bottom-12 left-0 right-0 h-[120px] pointer-events-none">
+      {/* Background image */}
+      <div className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none">
         <img
           src="/images/hero.png"
           alt=""
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[100%] max-w-none h-auto opacity-25"
+          className="absolute right-0 top-1/2 -translate-y-1/2 h-[180%] w-auto opacity-20"
           style={{
-            filter: 'brightness(0.1)',
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%)',
+            filter: 'brightness(0.6) sepia(0.3)',
+            maskImage: 'linear-gradient(to left, black 20%, transparent 90%)',
+            WebkitMaskImage: 'linear-gradient(to left, black 20%, transparent 90%)',
           }}
         />
       </div>
 
-      {/* Bottom fade to background */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-[100px] pointer-events-none"
-        style={{
-          background: 'linear-gradient(to bottom, transparent 10%, hsl(var(--background)) 80%)',
-        }}
-      />
-
       {/* Content */}
-      <div className="relative z-10 h-full flex flex-col justify-between py-20">
-        {/* Current time */}
-        <div className="text-center mb-3">
-          <div className="text-7xl font-bold tracking-tight text-amber-950 dark:text-amber-50">
+      <div className="relative z-10 h-full flex flex-col justify-center px-5 md:px-7 text-primary">
+        {/* Prayer name */}
+        <p className="font-arabic-ui text-sm md:text-lg mb-1" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+          {language === 'ar' ? prayerNameAr : prayerNameEn}
+        </p>
+
+        {/* Time display */}
+        <div className="flex items-end gap-1.5" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+          {nextPrayerTime && (
+            <span className="font-arabic-ui text-xs md:text-sm mb-1.5">{nextPrayerTime.period}</span>
+          )}
+          <span className="font-['Poppins',sans-serif] text-4xl md:text-6xl font-semibold tracking-tight">
             {currentTime}
-          </div>
+          </span>
         </div>
 
-        {/* Info row */}
-        <div className="flex justify-center items-start gap-4 text-center px-4">
-          {/* Remaining time */}
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] uppercase tracking-widest text-amber-800/70 dark:text-amber-200/70 mb-0.5 font-medium">
-              Remaining Time
+        {/* Next prayer info */}
+        <div className="mt-2.5 flex items-center gap-2" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+          <div className="flex items-center gap-1.5 bg-primary/10 rounded-full px-3 py-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+            <p className="font-arabic-ui text-xs md:text-sm opacity-90">
+              {language === 'ar'
+                ? `الصلاة التالية: ${nextPrayer ? PRAYER_NAMES_AR[nextPrayer] : '--'}`
+                : `Next: ${nextPrayer ? PRAYER_NAMES_EN[nextPrayer] : '--'}`}
             </p>
-            {loading ? (
-              <div className="h-5 w-20 mx-auto bg-amber-900/10 rounded animate-pulse" />
-            ) : (
-              <p className="text-sm font-bold text-amber-900 dark:text-amber-100 truncate">
-                {nextPrayer ? `${prayerNames[nextPrayer]} ${countdown}` : '--:--:--'}
-              </p>
-            )}
           </div>
-
-          {/* Separator */}
-          <div className="w-px h-9 bg-amber-800/20 dark:bg-amber-200/20 flex-shrink-0" />
-
-          {/* Date & Location */}
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] uppercase tracking-widest text-amber-800/70 dark:text-amber-200/70 mb-0.5 font-medium truncate">
-              {hijriDate ? hijriDate.fullDate : 'Islamic Date'}
-            </p>
-            {loading ? (
-              <div className="h-5 w-24 mx-auto bg-amber-900/10 rounded animate-pulse" />
-            ) : location?.city ? (
-              <p className="text-sm font-bold text-amber-900 dark:text-amber-100 flex items-center gap-1 justify-center">
-                <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="truncate">{location.city}</span>
-              </p>
-            ) : (
-              <p className="text-sm text-amber-800/60 dark:text-amber-200/60">Enable location</p>
-            )}
-          </div>
+          {countdown && (
+            <span className="font-['Poppins',sans-serif] font-bold text-sm md:text-base">
+              {countdown}
+            </span>
+          )}
         </div>
       </div>
     </div>
