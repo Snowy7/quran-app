@@ -86,8 +86,6 @@ export default function QuranIndexPage() {
               </div>
             </>
           )}
-          {/* Spacer on desktop when menu is hidden */}
-          <div className="hidden lg:block w-9" />
         </div>
 
         {/* View mode toggle */}
