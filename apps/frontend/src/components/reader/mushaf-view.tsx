@@ -10,6 +10,7 @@ import {
   loadPageFont,
   getPageFontFamily,
   type UthmaniSurah,
+  type UthmaniAyah,
 } from '@/data/quran-uthmani-data';
 import type { Ayah } from '@/types/quran';
 
@@ -146,7 +147,7 @@ function MushafPage({
   const longPressFired = useRef(false);
 
   // Get this surah's ayahs on this page (from Uthmani data for metadata)
-  const pageAyahs = uthmaniSurah.ayahs.filter(a => a.page === pageNumber);
+  const pageAyahs = uthmaniSurah.ayahs.filter((a: UthmaniAyah) => a.page === pageNumber);
   if (pageAyahs.length === 0) return null;
 
   const firstAyahOnPage = pageAyahs[0];
@@ -205,7 +206,7 @@ function MushafPage({
                 overflowWrap: 'anywhere',
               }}
             >
-              {pageAyahs.map((ayah) => {
+              {pageAyahs.map((ayah: UthmaniAyah) => {
                 const isPlaying = currentPlayingAyah === ayah.numberInSurah;
                 // Use QCF v2 encoded text if available, fall back to Uthmani Unicode
                 const qcfVerse = qcfVerses?.find(v => v.k === `${surahId}:${ayah.numberInSurah}`);
@@ -335,7 +336,7 @@ export function MushafView({
 
   return (
     <div ref={containerRef} className="max-w-xl mx-auto px-2 py-4 md:px-4">
-      {pages.map((pageNumber) => (
+      {pages.map((pageNumber: number) => (
         <MushafPage
           key={pageNumber}
           pageNumber={pageNumber}
