@@ -1,5 +1,5 @@
 /* =====================================
-   Noor Quran App - Refined Islamic Design
+   Noor Quran App - Clean Minimal Design
    ===================================== */
 
 /* Arabic Fonts - Google Fonts (Scheherazade for fallback) */
@@ -41,10 +41,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
 /* UI Font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
-/* Arabic Fonts - High quality Quranic typography */
+/* Arabic Fonts - High quality Quranic typography (12 families) */
 @import url("https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Lateef:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=Aref+Ruqaa:wght@400;700&family=Reem+Kufi:wght@400;500;600;700&family=Marhey:wght@400;500;600;700&family=Alkalami&family=Cairo:wght@400;500;600;700&family=Tajawal:wght@400;500;700&display=swap");
-/* UI Font - Clean, modern */
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -52,7 +50,7 @@
 
 @layer base {
   /* =====================================
-     Light Theme - Warm Parchment
+     Light Theme - Warm Cream/Beige
      ===================================== */
   :root {
     --background: 42 83% 98%;        /* #FEFBF4 warm cream */
@@ -78,27 +76,6 @@
     /* Accent - Warm tan (#CC9B76) from Figma */
     --accent: 26 46% 63%;
     --accent-foreground: 0 0% 100%;
-    --background: 40 33% 96%; /* warm parchment */
-    --foreground: 20 20% 14%; /* deep warm black */
-
-    --card: 42 40% 98%; /* lighter parchment */
-    --card-foreground: 20 20% 14%;
-
-    --popover: 42 40% 98%;
-    --popover-foreground: 20 20% 14%;
-
-    /* Primary - Deep Gold / Warm Amber */
-    --primary: 32 80% 44%; /* deep gold */
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 38 25% 91%; /* soft warm beige */
-    --secondary-foreground: 20 20% 14%;
-
-    --muted: 38 18% 88%;
-    --muted-foreground: 20 12% 48%;
-
-    --accent: 38 40% 88%; /* golden accent */
-    --accent-foreground: 20 20% 14%;
 
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
@@ -111,13 +88,8 @@
 
     /* Figma-specific tokens */
     --card-content: 38 100% 88%;     /* #FFE9C2 gold */
-    --border: 38 18% 86%;
-    --input: 38 18% 86%;
-    --ring: 32 80% 44%;
 
-    --radius: 0.75rem;
-
-    /* Custom properties for Mushaf pages */
+    /* Mushaf CSS variables */
     --mushaf-bg: 42 40% 97%;
     --mushaf-border: 32 40% 82%;
     --mushaf-text: 20 25% 12%;
@@ -131,7 +103,7 @@
   }
 
   /* =====================================
-     Dark Theme - Rich Dark with Gold
+     Dark Theme - Softer Gray with Warm Accents
      ===================================== */
   .dark {
     --background: 25 15% 10%;        /* warm dark brown-gray */
@@ -164,34 +136,6 @@
     --ring: 26 46% 63%;
 
     --card-content: 38 60% 25%;
-    --background: 25 15% 10%; /* deep warm dark */
-    --foreground: 38 25% 93%; /* warm off-white */
-
-    --card: 25 15% 13%;
-    --card-foreground: 38 25% 93%;
-
-    --popover: 25 15% 13%;
-    --popover-foreground: 38 25% 93%;
-
-    /* Primary - Bright Gold for dark */
-    --primary: 36 85% 55%;
-    --primary-foreground: 25 15% 8%;
-
-    --secondary: 25 12% 18%;
-    --secondary-foreground: 38 25% 93%;
-
-    --muted: 25 10% 20%;
-    --muted-foreground: 38 15% 55%;
-
-    --accent: 25 15% 20%;
-    --accent-foreground: 38 25% 93%;
-
-    --destructive: 0 72% 55%;
-    --destructive-foreground: 38 25% 93%;
-
-    --border: 25 12% 20%;
-    --input: 25 12% 20%;
-    --ring: 36 85% 55%;
 
     /* Mushaf dark theme */
     --mushaf-bg: 25 15% 11%;
@@ -213,12 +157,11 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Plus Jakarta Sans', 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
   }
 
   /* Arabic UI text uses Almarai */
@@ -247,57 +190,52 @@
     font-family: 'Scheherazade New', 'Amiri Quran', serif;
   }
 
+  .arabic-amiri {
+    font-family: 'Amiri', serif;
+  }
+
+  .arabic-noto-naskh {
+    font-family: 'Noto Naskh Arabic', serif;
+  }
+
+  .arabic-lateef {
+    font-family: 'Lateef', serif;
+  }
+
+  .arabic-noto-nastaliq {
+    font-family: 'Noto Nastaliq Urdu', serif;
+  }
+
+  .arabic-aref-ruqaa {
+    font-family: 'Aref Ruqaa', serif;
+  }
+
+  .arabic-reem-kufi {
+    font-family: 'Reem Kufi', sans-serif;
+  }
+
+  .arabic-marhey {
+    font-family: 'Marhey', sans-serif;
+  }
+
+  .arabic-alkalami {
+    font-family: 'Alkalami', serif;
+  }
+
+  .arabic-cairo {
+    font-family: 'Cairo', sans-serif;
+  }
+
+  .arabic-tajawal {
+    font-family: 'Tajawal', sans-serif;
+  }
+
   /* Mushaf page text - authentic Uthmani font */
   .mushaf-text {
     font-family: 'UthmanTN', serif;
     direction: rtl;
     text-align: right;
     line-height: 2;
-    font-family: "Amiri Quran", serif;
-  }
-
-  .arabic-scheherazade {
-    font-family: "Scheherazade New", serif;
-  }
-
-  .arabic-amiri {
-    font-family: "Amiri", serif;
-  }
-
-  .arabic-noto-naskh {
-    font-family: "Noto Naskh Arabic", serif;
-  }
-
-  .arabic-lateef {
-    font-family: "Lateef", serif;
-  }
-
-  .arabic-noto-nastaliq {
-    font-family: "Noto Nastaliq Urdu", serif;
-  }
-
-  .arabic-aref-ruqaa {
-    font-family: "Aref Ruqaa", serif;
-  }
-
-  .arabic-reem-kufi {
-    font-family: "Reem Kufi", sans-serif;
-  }
-
-  .arabic-marhey {
-    font-family: "Marhey", sans-serif;
-  }
-
-  .arabic-alkalami {
-    font-family: "Alkalami", serif;
-  }
-
-  .arabic-cairo {
-    font-family: "Cairo", sans-serif;
-  }
-
-  .arabic-tajawal {
-    font-family: "Tajawal", sans-serif;
   }
 
   /* Ayah number - minimal */
@@ -305,7 +243,7 @@
     @apply inline-flex items-center justify-center;
     @apply text-xs font-medium text-muted-foreground;
     @apply min-w-[1.5rem] h-6;
-    font-family: "Plus Jakarta Sans", sans-serif;
+    font-family: 'Inter', sans-serif;
     direction: ltr;
   }
 
@@ -417,21 +355,13 @@
    ===================================== */
 
 @keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 @keyframes slide-up {
@@ -468,43 +398,18 @@
 }
 
 @keyframes bounce-subtle {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-2px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
 }
 
 @keyframes pulse-subtle {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-@keyframes page-turn {
-  0% {
-    transform: perspective(1200px) rotateY(0deg);
-    opacity: 1;
-  }
-  100% {
-    transform: perspective(1200px) rotateY(-15deg);
-    opacity: 0.5;
-  }
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 .animate-fade-in {
@@ -564,54 +469,6 @@
 }
 
 /* =====================================
-   Responsive Layout
-   ===================================== */
-
-/* Tablet (iPad mini / iPad) */
-@media (min-width: 768px) {
-  .mushaf-container {
-    max-width: 640px;
-    margin: 0 auto;
-  }
-
-  /* Larger bottom nav for tablet */
-  .page-container {
-    max-width: 768px;
-    margin: 0 auto;
-  }
-}
-
-/* iPad Pro / larger tablets */
-@media (min-width: 1024px) {
-  .mushaf-container {
-    max-width: 720px;
-  }
-
-  .page-container {
-    max-width: 860px;
-  }
-}
-
-/* Desktop */
-@media (min-width: 1280px) {
-  .mushaf-container {
-    max-width: 780px;
-  }
-
-  .mushaf-spread {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  .page-container {
-    max-width: 960px;
-  }
-}
-
-/* =====================================
    Print Styles
    ===================================== */
 
@@ -650,10 +507,5 @@
   .arabic-text {
     font-size: 20pt;
     line-height: 2.5;
-  }
-
-  /* page breaks for mushaf pages when printing */
-  [data-page] {
-    break-inside: avoid;
   }
 }
