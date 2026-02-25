@@ -41,8 +41,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
 /* UI Font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
-/* Arabic Fonts - High quality Quranic typography (12 families) */
-@import url("https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Lateef:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=Aref+Ruqaa:wght@400;700&family=Reem+Kufi:wght@400;500;600;700&family=Marhey:wght@400;500;600;700&family=Alkalami&family=Cairo:wght@400;500;600;700&family=Tajawal:wght@400;500;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -88,18 +86,6 @@
 
     /* Figma-specific tokens */
     --card-content: 38 100% 88%;     /* #FFE9C2 gold */
-
-    /* Mushaf CSS variables */
-    --mushaf-bg: 42 40% 97%;
-    --mushaf-border: 32 40% 82%;
-    --mushaf-text: 20 25% 12%;
-    --mushaf-ornament: 32 60% 55%;
-    --mushaf-highlight: 32 90% 92%;
-    --mushaf-active: 32 80% 44%;
-
-    /* Soft text color mode */
-    --text-soft: 20 15% 45%;
-    --mushaf-text-soft: 20 18% 42%;
   }
 
   /* =====================================
@@ -136,18 +122,6 @@
     --ring: 26 46% 63%;
 
     --card-content: 38 60% 25%;
-
-    /* Mushaf dark theme */
-    --mushaf-bg: 25 15% 11%;
-    --mushaf-border: 25 15% 22%;
-    --mushaf-text: 38 20% 88%;
-    --mushaf-ornament: 36 65% 48%;
-    --mushaf-highlight: 36 40% 18%;
-    --mushaf-active: 36 85% 55%;
-
-    /* Soft text color mode */
-    --text-soft: 38 15% 65%;
-    --mushaf-text-soft: 38 15% 65%;
   }
 
   * {
@@ -190,46 +164,6 @@
     font-family: 'Scheherazade New', 'Amiri Quran', serif;
   }
 
-  .arabic-amiri {
-    font-family: 'Amiri', serif;
-  }
-
-  .arabic-noto-naskh {
-    font-family: 'Noto Naskh Arabic', serif;
-  }
-
-  .arabic-lateef {
-    font-family: 'Lateef', serif;
-  }
-
-  .arabic-noto-nastaliq {
-    font-family: 'Noto Nastaliq Urdu', serif;
-  }
-
-  .arabic-aref-ruqaa {
-    font-family: 'Aref Ruqaa', serif;
-  }
-
-  .arabic-reem-kufi {
-    font-family: 'Reem Kufi', sans-serif;
-  }
-
-  .arabic-marhey {
-    font-family: 'Marhey', sans-serif;
-  }
-
-  .arabic-alkalami {
-    font-family: 'Alkalami', serif;
-  }
-
-  .arabic-cairo {
-    font-family: 'Cairo', sans-serif;
-  }
-
-  .arabic-tajawal {
-    font-family: 'Tajawal', sans-serif;
-  }
-
   /* Mushaf page text - authentic Uthmani font */
   .mushaf-text {
     font-family: 'UthmanTN', serif;
@@ -250,46 +184,6 @@
   /* Bismillah */
   .bismillah {
     @apply text-center text-2xl py-8 text-foreground/80;
-  }
-}
-
-/* =====================================
-   Mushaf Page Styles
-   ===================================== */
-
-@layer components {
-  .mushaf-ornament-line {
-    height: 1px;
-    background: linear-gradient(
-      to right,
-      transparent,
-      hsl(var(--mushaf-ornament) / 0.3) 20%,
-      hsl(var(--mushaf-ornament) / 0.5) 50%,
-      hsl(var(--mushaf-ornament) / 0.3) 80%,
-      transparent
-    );
-  }
-
-  .mushaf-verse-highlight {
-    background: hsl(var(--mushaf-highlight));
-    border-radius: 4px;
-  }
-
-  .mushaf-verse-active {
-    background: hsl(var(--mushaf-active) / 0.15);
-    border-radius: 4px;
-  }
-
-  /* Surah header ornament in mushaf */
-  .surah-header-ornament {
-    background: linear-gradient(
-      135deg,
-      hsl(var(--mushaf-ornament) / 0.08) 0%,
-      hsl(var(--mushaf-ornament) / 0.15) 50%,
-      hsl(var(--mushaf-ornament) / 0.08) 100%
-    );
-    border: 1px solid hsl(var(--mushaf-ornament) / 0.25);
-    border-radius: 12px;
   }
 }
 

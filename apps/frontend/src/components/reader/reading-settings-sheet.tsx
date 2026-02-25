@@ -1,27 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import {
-  X,
-  Type,
-  Languages,
-  Volume2,
-  SkipForward,
-  Eye,
-  ALargeSmall,
-  Palette,
-  MoveHorizontal,
-  BookText,
-} from 'lucide-react';
-import {
-  Button,
-  Slider,
-  Switch,
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@template/ui';
+import { X } from 'lucide-react';
+import { Button, Slider, Switch, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@template/ui';
 import { useOfflineSettings } from '@/lib/hooks';
 import { AVAILABLE_TAFSIRS } from '@/lib/api/quran-api';
 import { useTranslation } from '@/lib/i18n';
@@ -35,44 +14,9 @@ interface ReadingSettingsSheetProps {
 
 const fontFamilies: { id: ArabicFontFamily; name: string }[] = [
   { id: 'uthmani', name: 'Amiri Quran' },
-  { id: 'scheherazade', name: 'Scheherazade' },
+  { id: 'scheherazade', name: 'Scheherazade New' },
   { id: 'amiri', name: 'Amiri' },
-  { id: 'noto-naskh', name: 'Noto Naskh' },
-  { id: 'lateef', name: 'Lateef' },
-  { id: 'noto-nastaliq', name: 'Nastaliq' },
-  { id: 'aref-ruqaa', name: 'Aref Ruqaa' },
-  { id: 'reem-kufi', name: 'Reem Kufi' },
-  { id: 'marhey', name: 'Marhey' },
-  { id: 'alkalami', name: 'Alkalami' },
-  { id: 'cairo', name: 'Cairo' },
-  { id: 'tajawal', name: 'Tajawal' },
 ];
-
-/** Maps font family id to the actual CSS font-family value */
-export const FONT_FAMILY_MAP: Record<ArabicFontFamily, string> = {
-  uthmani: '"Amiri Quran", serif',
-  scheherazade: '"Scheherazade New", serif',
-  amiri: '"Amiri", serif',
-  'noto-naskh': '"Noto Naskh Arabic", serif',
-  lateef: '"Lateef", serif',
-  'noto-nastaliq': '"Noto Nastaliq Urdu", serif',
-  'aref-ruqaa': '"Aref Ruqaa", serif',
-  'reem-kufi': '"Reem Kufi", sans-serif',
-  marhey: '"Marhey", sans-serif',
-  alkalami: '"Alkalami", serif',
-  cairo: '"Cairo", sans-serif',
-  tajawal: '"Tajawal", sans-serif',
-};
-
-/** Returns the CSS class for a given font family id (kept for backward compat) */
-export function getFontClass(id: ArabicFontFamily): string {
-  return `arabic-${id}`;
-}
-
-/** Returns inline style object for a given font family */
-export function getFontStyle(id: ArabicFontFamily): React.CSSProperties {
-  return { fontFamily: FONT_FAMILY_MAP[id] };
-}
 
 export function ReadingSettingsSheet({ isOpen, onClose }: ReadingSettingsSheetProps) {
   const { settings, updateSettings } = useOfflineSettings();
@@ -223,192 +167,61 @@ export function ReadingSettingsSheet({ isOpen, onClose }: ReadingSettingsSheetPr
                 step={2}
                 dir="ltr"
               />
-              <div className="mt-3 p-3 rounded-xl bg-secondary/30 border border-border/30">
-                <p
-                  className="arabic-text text-center"
-                  style={{
-                    fontSize: settings.arabicFontSize,
-                    ...getFontStyle(settings.arabicFontFamily),
-                  }}
-                  dir="rtl"
-                >
-                  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-                </p>
-              </div>
+              <p
+                className={cn(
+                  'arabic-text text-center mt-4',
+                  settings.arabicFontFamily === 'scheherazade' && 'arabic-scheherazade',
+                  settings.arabicFontFamily === 'uthmani' && 'arabic-uthmani'
+                )}
+                style={{ fontSize: settings.arabicFontSize }}
+                dir="rtl"
+              >
+                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+              </p>
             </div>
 
-            {/* Arabic Font Family — 12 fonts with grid picker */}
+            {/* Arabic Font Family */}
             <div>
               <Label className={cn('mb-3 block', isRTL && 'font-arabic-ui')}>{t('arabicFont')}</Label>
-              <div className="grid grid-cols-3 gap-2 max-h-[200px] overflow-y-auto overscroll-contain pr-1">
-                {fontFamilies.map(({ id, name }) => (
-                  <button
-                    key={id}
-                    onClick={() => updateSettings({ arabicFontFamily: id })}
-                    className={cn(
-                      'px-2 py-2 rounded-xl text-center transition-all duration-200',
-                      'border',
-                      settings.arabicFontFamily === id
-                        ? 'bg-primary/10 border-primary/30 text-primary'
-                        : 'bg-secondary/30 border-border/30 text-muted-foreground hover:bg-secondary/60',
-                    )}
-                  >
-                    <span
-                      className="arabic-text block text-base leading-tight mb-0.5"
-                      style={getFontStyle(id)}
-                    >
-                      بسم
-                    </span>
-                    <span className="text-[10px] font-medium">{name}</span>
-                  </button>
-                ))}
-              </div>
+              <Select
+                value={settings.arabicFontFamily}
+                onValueChange={(value: ArabicFontFamily) => updateSettings({ arabicFontFamily: value })}
+              >
+                <SelectTrigger dir="ltr">
+                  <SelectValue placeholder="Select font" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fontFamilies.map(({ id, name }) => (
+                    <SelectItem key={id} value={id}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Text Color Mode */}
+            {/* Text Brightness */}
             <div>
-              <Label className={cn('mb-3 block', isRTL && 'font-arabic-ui')}>
-                {t('textBrightness')}
-              </Label>
+              <Label className={cn('mb-3 block', isRTL && 'font-arabic-ui')}>{t('textBrightness')}</Label>
               <div className="grid grid-cols-2 gap-2">
                 {([
-                  { id: 'default' as TextColorMode, label: 'Default', desc: 'Full brightness' },
-                  { id: 'soft' as TextColorMode, label: 'Soft', desc: 'Light grey, easier on eyes' },
-                ]).map(({ id, label, desc }) => (
+                  { id: 'default' as TextColorMode, label: isRTL ? 'عادي' : 'Default', desc: isRTL ? 'سطوع كامل' : 'Full brightness' },
+                  { id: 'soft' as TextColorMode, label: isRTL ? 'خافت' : 'Soft', desc: isRTL ? 'أسهل للقراءة' : 'Easier on eyes' },
+                ] as const).map(({ id, label, desc }) => (
                   <button
                     key={id}
                     onClick={() => updateSettings({ textColorMode: id })}
                     className={cn(
-                      'px-3 py-2.5 rounded-xl text-center transition-all duration-200',
-                      'border',
+                      'px-3 py-2.5 rounded-xl text-center transition-all border',
                       settings.textColorMode === id
                         ? 'bg-primary/10 border-primary/30 text-primary'
-                        : 'bg-secondary/30 border-border/30 text-muted-foreground hover:bg-secondary/60',
+                        : 'bg-secondary/30 border-border/30 text-muted-foreground hover:bg-secondary/60'
                     )}
                   >
                     <span className="text-xs font-medium block">{label}</span>
                     <span className="text-[10px] text-muted-foreground/60 block mt-0.5">{desc}</span>
                   </button>
                 ))}
-              </div>
-              {/* Preview */}
-              <div className="mt-3 p-3 rounded-xl bg-secondary/30 border border-border/30">
-                <p
-                  className={cn(
-                    'arabic-text text-center',
-                    settings.textColorMode === 'soft' && 'text-[hsl(var(--text-soft))]',
-                  )}
-                  style={{
-                    fontSize: Math.min(settings.arabicFontSize, 28),
-                    ...getFontStyle(settings.arabicFontFamily),
-                  }}
-                >
-                  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-                </p>
-              </div>
-            </div>
-
-            {/* Layout & Spacing controls */}
-            <div>
-              <Label className={cn('mb-3 block', isRTL && 'font-arabic-ui')}>
-                {t('layoutSpacing')}
-              </Label>
-              <div className="space-y-4">
-                {/* Reading Width */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] text-muted-foreground/70">
-                      {t('readingWidth')}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground/50 tabular-nums">
-                      {settings.readingWidth}%
-                    </span>
-                  </div>
-                  <Slider
-                    value={[settings.readingWidth]}
-                    onValueChange={(v: number[]) => updateSettings({ readingWidth: v[0] })}
-                    min={50}
-                    max={100}
-                    step={5}
-                    dir="ltr"
-                  />
-                </div>
-
-                {/* Line Height */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] text-muted-foreground/70">
-                      {t('lineHeight')}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground/50 tabular-nums">
-                      {settings.lineHeight.toFixed(1)}
-                    </span>
-                  </div>
-                  <Slider
-                    value={[settings.lineHeight * 10]}
-                    onValueChange={(v: number[]) => updateSettings({ lineHeight: v[0] / 10 })}
-                    min={16}
-                    max={34}
-                    step={1}
-                    dir="ltr"
-                  />
-                </div>
-
-                {/* Word Spacing */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] text-muted-foreground/70">
-                      {t('wordSpacing')}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground/50 tabular-nums">
-                      {settings.wordSpacing}px
-                    </span>
-                  </div>
-                  <Slider
-                    value={[settings.wordSpacing]}
-                    onValueChange={(v: number[]) => updateSettings({ wordSpacing: v[0] })}
-                    min={0}
-                    max={20}
-                    step={1}
-                    dir="ltr"
-                  />
-                </div>
-
-                {/* Letter Spacing */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] text-muted-foreground/70">
-                      {t('letterSpacing')}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground/50 tabular-nums">
-                      {settings.letterSpacing}px
-                    </span>
-                  </div>
-                  <Slider
-                    value={[settings.letterSpacing]}
-                    onValueChange={(v: number[]) => updateSettings({ letterSpacing: v[0] })}
-                    min={0}
-                    max={10}
-                    step={1}
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-
-              {/* Live preview */}
-              <div className="mt-3 p-3 rounded-xl bg-secondary/30 border border-border/30">
-                <p
-                  className="arabic-text text-center"
-                  style={{
-                    fontSize: Math.min(settings.arabicFontSize, 26),
-                    lineHeight: settings.lineHeight,
-                    wordSpacing: `${settings.wordSpacing}px`,
-                    letterSpacing: `${settings.letterSpacing}px`,
-                    ...getFontStyle(settings.arabicFontFamily),
-                  }}
-                >
-                  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-                </p>
               </div>
             </div>
 

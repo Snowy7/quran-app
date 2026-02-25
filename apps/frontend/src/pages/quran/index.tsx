@@ -1,19 +1,18 @@
-import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { BookOpen, Search } from "lucide-react";
-import { SURAHS } from "@/data/surahs";
-import { JUZ_DATA } from "@/data/juz";
-import { TOTAL_PAGES } from "@/data/quran-data";
-import { AppHeader } from "@/components/layout/app-header";
-import { useSidebarContext } from "@/components/layout/app-layout";
-import { useOfflineReadingProgress } from "@/lib/hooks";
-import { cn } from "@/lib/utils";
-import { useTranslation } from "@/lib/i18n";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Search, Menu, Book } from 'lucide-react';
+import { Button } from '@template/ui';
+import { SURAHS } from '@/data/surahs';
+import { JUZ_DATA } from '@/data/juz';
+import { useSidebarContext } from '@/components/layout/app-layout';
+import { useTranslation } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 
-type ViewMode = "surah" | "juz" | "page";
+type ViewMode = 'surah' | 'juz' | 'page';
 
-const PAGES = Array.from({ length: TOTAL_PAGES }, (_, i) => ({
+const PAGES = Array.from({ length: 604 }, (_, i) => ({
   id: i + 1,
+  label: `Page ${i + 1}`,
 }));
 
 const REVELATION_AR: Record<string, string> = {
@@ -26,232 +25,193 @@ function toArabicNumerals(n: number): string {
 }
 
 export default function QuranIndexPage() {
+  const [viewMode, setViewMode] = useState<ViewMode>('surah');
+  const sidebar = useSidebarContext();
   const { t, language, isRTL } = useTranslation();
-  const [viewMode, setViewMode] = useState<ViewMode>("surah");
-  const [searchQuery, setSearchQuery] = useState("");
-  const { progress } = useOfflineReadingProgress();
-
-  const lastSurah = progress?.lastSurahId
-    ? SURAHS.find((s) => s.id === progress.lastSurahId)
-    : null;
-
-  const filteredSurahs = useMemo(() => {
-    if (!searchQuery.trim()) return SURAHS;
-    const q = searchQuery.toLowerCase();
-    return SURAHS.filter(
-      (s) =>
-        s.englishName.toLowerCase().includes(q) ||
-        s.name.includes(q) ||
-        s.englishNameTranslation.toLowerCase().includes(q) ||
-        s.id.toString() === q,
-    );
-  }, [searchQuery]);
 
   return (
-    <div className="page-container">
-      <AppHeader title="Quran" />
-
-      {/* Continue Reading */}
-      <Link
-        to={lastSurah ? `/quran/${lastSurah.id}` : "/quran/1"}
-        className="block mx-4 mt-3 mb-4 animate-fade-in max-w-2xl lg:mx-auto"
-      >
-        <div className="relative rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-lg active:scale-[0.995]">
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(135deg, hsl(32 80% 44%) 0%, hsl(28 75% 38%) 50%, hsl(24 70% 32%) 100%)",
-            }}
-          />
-          <div
-            className="absolute inset-0 opacity-[0.04]"
-            style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-              backgroundSize: "16px 16px",
-            }}
-          />
-
-          <div className="relative z-10 flex items-center justify-between px-5 py-4">
-            <div className="min-w-0">
-              <p className="text-amber-200/60 text-[9px] font-semibold uppercase tracking-[0.15em] mb-1">
-                Continue Reading
-              </p>
-              <h2 className="text-white text-lg font-bold leading-tight mb-0.5">
-                {lastSurah?.englishName || "Al-Fatihah"}
-              </h2>
-              <div className="flex items-center gap-1.5 text-amber-100/70 text-[11px]">
-                <span className="arabic-text text-xs leading-none">
-                  {lastSurah?.name ||
-                    "\u0627\u0644\u0641\u0627\u062A\u062D\u0629"}
-                </span>
-                <span className="text-amber-200/30">&middot;</span>
-                <span>Ayah {progress?.lastAyahNumber || 1}</span>
+    <div className="page-container !pb-0 flex flex-col h-screen">
+      {/* Sticky top: header + tabs */}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm safe-area-top shrink-0">
+        {/* App Bar */}
+        <div className="flex items-center justify-between px-5 py-3 md:px-8">
+          {isRTL ? (
+            <>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-primary hover:bg-primary/10 lg:hidden"
+                  onClick={sidebar.open}
+                >
+                  <Menu className="w-5 h-5" />
+                </Button>
+                <h1 className="font-arabic-ui text-xl font-bold text-primary">
+                  {t('quran')}
+                </h1>
               </div>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center shrink-0 ml-3">
-              <BookOpen className="w-5 h-5 text-white/80" />
-            </div>
-          </div>
+              <Link to="/search">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-primary hover:bg-primary/10"
+                >
+                  <Search className="w-5 h-5" />
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/search">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-primary hover:bg-primary/10"
+                >
+                  <Search className="w-5 h-5" />
+                </Button>
+              </Link>
+              <div className="flex items-center gap-3">
+                <h1 className="font-arabic-ui text-xl font-bold text-primary">
+                  {t('quran')}
+                </h1>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-primary hover:bg-primary/10 lg:hidden"
+                  onClick={sidebar.open}
+                >
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </div>
+            </>
+          )}
+          {/* Spacer on desktop when menu is hidden */}
+          <div className="hidden lg:block w-9" />
         </div>
-      </Link>
 
-      {/* Filters + Search */}
-      <div className="px-4 mb-3 max-w-2xl lg:mx-auto">
-        <div className="flex items-center justify-between mb-2.5">
-          <h2 className="text-[13px] font-semibold text-foreground/70">
-            Browse
-          </h2>
-          <div className="flex gap-0.5 bg-secondary/50 rounded-full p-0.5">
-            {(["surah", "juz", "page"] as ViewMode[]).map((mode) => (
-              <button
+        {/* View mode toggle */}
+        <div className="px-5 md:px-8 pb-3">
+          <div className="flex gap-1 bg-secondary rounded-lg p-1">
+            {(['surah', 'juz', 'page'] as ViewMode[]).map((mode) => (
+              <Button
                 key={mode}
+                variant={viewMode === mode ? 'default' : 'ghost'}
+                size="sm"
                 className={cn(
-                  "px-3 py-1 rounded-full text-[11px] font-medium capitalize transition-all duration-200",
+                  'h-8 flex-1 text-xs capitalize font-arabic-ui',
                   viewMode === mode
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? 'bg-primary text-white hover:bg-primary/90'
+                    : 'text-primary/60 hover:bg-transparent hover:text-primary'
                 )}
                 onClick={() => setViewMode(mode)}
               >
-                {mode === "juz" ? "Juz" : mode === "page" ? "Page" : "Surah"}
-              </button>
+                {mode === 'juz' ? t('juz') : mode === 'page' ? t('page') : t('surah')}
+              </Button>
             ))}
           </div>
         </div>
-
-        {/* Search — surah view only */}
-        {viewMode === "surah" && (
-          <div className="relative mb-2">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40" />
-            <input
-              type="text"
-              placeholder="Search surahs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={cn(
-                "w-full pl-8 pr-4 py-2 text-[13px] rounded-xl",
-                "bg-secondary/30 border border-border/40",
-                "placeholder:text-muted-foreground/35",
-                "focus:outline-none focus:ring-2 focus:ring-primary/15 focus:bg-secondary/50",
-                "transition-all",
-              )}
-            />
-          </div>
-        )}
       </div>
 
-      {/* List */}
-      <div className="max-w-2xl lg:mx-auto">
-        {viewMode === "surah" && (
-          <div>
-            {filteredSurahs.map((surah) => (
+      {/* Scrollable list area */}
+      <div className="flex-1 overflow-y-auto pb-nav lg:pb-6">
+        {/* Surah List */}
+        {viewMode === 'surah' && (
+          <div className="px-5 md:px-8 flex flex-col gap-3">
+            {SURAHS.map((surah, index) => (
               <Link
                 key={surah.id}
                 to={`/quran/${surah.id}`}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-2.5",
-                  "transition-colors duration-100",
-                  "hover:bg-secondary/30 active:bg-secondary/50",
+                  'flex items-center gap-3 py-2',
+                  'transition-all duration-200',
+                  'hover:bg-secondary/50 active:scale-[0.99]',
+                  'rounded-lg px-2 -mx-2',
+                  'animate-fade-in'
                 )}
-                style={{ animationDelay: `${Math.min(surah.id * 20, 300)}ms`, animationFillMode: 'both' }}
+                style={{ animationDelay: `${Math.min(index * 20, 300)}ms`, animationFillMode: 'both' }}
               >
-                {/* Number */}
-                <div className="w-8 h-8 rounded-lg bg-secondary/50 flex items-center justify-center text-[11px] font-semibold text-muted-foreground/70 shrink-0 tabular-nums">
-                  {surah.id}
+                {/* Number badge */}
+                <div className={cn(
+                  'w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shrink-0',
+                  'text-xl md:text-2xl font-bold font-arabic-ui',
+                  'bg-secondary text-primary'
+                )}>
+                  {language === 'ar' ? toArabicNumerals(surah.id) : surah.id}
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[13px] leading-tight">
-                    {surah.englishName}
+                {/* Surah name + info */}
+                <div className="flex-1 flex flex-col px-2" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+                  <p className="font-arabic-ui text-xl md:text-2xl font-bold text-primary leading-tight">
+                    {language === 'ar' ? surah.name : surah.englishName}
                   </p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span
-                      className={cn(
-                        "text-[9px] px-1.5 py-px rounded font-medium",
-                        surah.revelationType === "Meccan"
-                          ? "bg-amber-500/8 text-amber-600 dark:text-amber-400"
-                          : "bg-emerald-500/8 text-emerald-600 dark:text-emerald-400",
-                      )}
-                    >
-                      {surah.revelationType === "Meccan" ? "Makkah" : "Madinah"}
-                    </span>
-                    <span className="text-[9px] text-muted-foreground/40">
-                      &middot;
-                    </span>
-                    <span className="text-[9px] text-muted-foreground/60">
-                      {surah.numberOfAyahs} Ayahs
-                    </span>
-                  </div>
+                  <p className="text-sm text-accent">
+                    {language === 'ar' ? (
+                      <>آياتها {toArabicNumerals(surah.numberOfAyahs)} - {REVELATION_AR[surah.revelationType] || surah.revelationType}</>
+                    ) : (
+                      <>{surah.numberOfAyahs} {t('ayahs')} · {surah.revelationType === 'Meccan' ? t('meccan') : t('medinan')}</>
+                    )}
+                  </p>
                 </div>
 
-                {/* Arabic name */}
-                <span className="arabic-text text-[15px] text-foreground/70 shrink-0">
-                  {surah.name}
-                </span>
+                {/* Arabic name (shown in English mode for reference) */}
+                {language === 'en' && (
+                  <span className="arabic-text text-lg text-primary/60 shrink-0">
+                    {surah.name}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
         )}
 
-        {viewMode === "juz" && (
-          <div>
+        {/* Juz List */}
+        {viewMode === 'juz' && (
+          <div className="px-5 md:px-8 flex flex-col gap-3">
             {JUZ_DATA.map((juz) => {
-              const startSurah = SURAHS.find((s) => s.id === juz.startSurah);
+              const startSurah = SURAHS.find(s => s.id === juz.startSurah);
               return (
                 <Link
                   key={juz.id}
                   to={`/quran/juz/${juz.id}`}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors"
+                  className="flex items-center gap-3 py-2 rounded-lg px-2 -mx-2 hover:bg-secondary/50 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-secondary/50 flex items-center justify-center text-[11px] font-semibold text-muted-foreground/70 shrink-0 tabular-nums">
-                    {juz.id}
+                  {/* Number badge */}
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-secondary flex items-center justify-center text-xl md:text-2xl font-bold font-arabic-ui text-primary shrink-0">
+                    {language === 'ar' ? toArabicNumerals(juz.id) : juz.id}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-[13px] leading-tight">
-                      {juz.name}
+
+                  {/* Juz name + info */}
+                  <div className="flex-1 flex flex-col px-2" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+                    <p className="font-arabic-ui text-xl md:text-2xl font-bold text-primary leading-tight">
+                      {juz.arabicName}
                     </p>
-                    <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-                      Starts: {startSurah?.englishName} {juz.startAyah}
+                    <p className="font-arabic-ui text-sm text-accent">
+                      {startSurah?.name} - {language === 'ar' ? `آية ${toArabicNumerals(juz.startAyah)}` : `Ayah ${juz.startAyah}`}
                     </p>
                   </div>
-                  <span className="arabic-text text-[15px] text-foreground/70 shrink-0">
-                    {juz.arabicName}
-                  </span>
                 </Link>
               );
             })}
           </div>
         )}
 
-        {viewMode === "page" && (
-          <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1 p-4">
+        {/* Page Grid */}
+        {viewMode === 'page' && (
+          <div className="grid grid-cols-5 md:grid-cols-8 lg:grid-cols-10 gap-2 px-5 md:px-8">
             {PAGES.map((page) => (
               <Link
                 key={page.id}
                 to={`/quran/page/${page.id}`}
-                className={cn(
-                  "aspect-[3/4] flex items-center justify-center rounded-lg",
-                  "bg-secondary/30 hover:bg-secondary/60 border border-border/20",
-                  "transition-all duration-100 active:scale-95",
-                  "text-[10px] font-medium tabular-nums text-muted-foreground/70",
-                )}
+                className="aspect-square flex flex-col items-center justify-center rounded-xl bg-secondary hover:bg-secondary/70 transition-colors"
               >
-                {page.id}
+                <Book className="w-4 h-4 text-primary/40 mb-1" />
+                <span className="text-xs font-medium text-primary">{toArabicNumerals(page.id)}</span>
               </Link>
             ))}
           </div>
         )}
       </div>
-
-      {filteredSurahs.length === 0 && viewMode === "surah" && (
-        <div className="text-center py-16">
-          <p className="text-muted-foreground/60 text-sm">
-            No surahs match "{searchQuery}"
-          </p>
-        </div>
-      )}
     </div>
   );
 }
