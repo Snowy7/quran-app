@@ -5,6 +5,7 @@ A modern full-stack monorepo template with React, Convex, and Clerk authenticati
 ## Features
 
 - **React 19 + Vite** - Fast, modern frontend with React Router v7
+- **Expo Mobile App** - Native mobile app in `apps/mobile`
 - **Convex Backend** - Real-time database with serverless functions
 - **Clerk Authentication** - Complete auth with sign-in, sign-up, and user management
 - **Shared UI Library** - Reusable shadcn/ui components in `@template/ui`
@@ -44,6 +45,7 @@ Fill in your values:
 |----------|-------------|-----------------|
 | `CONVEX_DEPLOYMENT` | Convex deployment ID | [Convex Dashboard](https://dashboard.convex.dev) |
 | `VITE_CONVEX_URL` | Convex deployment URL | [Convex Dashboard](https://dashboard.convex.dev) |
+| `EXPO_PUBLIC_CONVEX_URL` | Convex URL for Expo mobile | [Convex Dashboard](https://dashboard.convex.dev) |
 | `VITE_CLERK_PUBLISHABLE_KEY` | Clerk publishable key | [Clerk Dashboard](https://dashboard.clerk.com) |
 | `CLERK_SECRET_KEY` | Clerk secret key | [Clerk Dashboard](https://dashboard.clerk.com) |
 
@@ -101,11 +103,16 @@ monorepo-template/
 └── tsconfig.json
 ```
 
+Mobile app source lives in `apps/mobile` (Expo + React Native).
+
 ## Development Commands
 
 ```bash
 # Run all dev servers (uses Turborepo)
 pnpm dev
+
+# Run only mobile app
+pnpm --filter @template/mobile dev
 
 # Build all packages
 pnpm build

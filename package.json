@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "turbo dev",
+    "dev:mobile": "pnpm --filter @template/mobile dev",
     "build": "turbo build",
     "lint": "turbo lint",
     "clean": "turbo clean && rm -rf node_modules"
