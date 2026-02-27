@@ -1,43 +1,28 @@
-/* Google Fonts - must be first */
-@import url('https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+/* Fonts are self-hosted via @fontsource (imported in main.tsx) */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* =====================================
-   Noor Quran App - Clean Minimal Design
+   Noor Quran App - Clean Modern Design
    ===================================== */
 
-/* quran.com fonts — used for mushaf view and Arabic text */
-
-/* Common Quran font — fallback for Arabic text and mushaf loading states */
+/* quran.com fonts */
 @font-face {
-  font-family: 'quran_common';
-  src: url('/fonts/quran/common/quran_common.ttf') format('truetype');
+  font-family: "quran_common";
+  src: url("/fonts/quran/common/quran_common.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
-/* Surah Names — decorative mushaf surah title font */
 @font-face {
-  font-family: 'surah_names';
+  font-family: "surah_names";
   src:
-    url('/fonts/quran/surah-names/v1/sura_names.woff2') format('woff2'),
-    url('/fonts/quran/surah-names/v1/sura_names.woff') format('woff'),
-    url('/fonts/quran/surah-names/v1/sura_names.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Bismillah — decorative font for بسم الله الرحمن الرحيم */
-@font-face {
-  font-family: 'bismillah';
-  src: url('/fonts/quran/bismillah/bismillah.ttf') format('truetype');
+    url("/fonts/quran/surah-names/v1/sura_names.woff2") format("woff2"),
+    url("/fonts/quran/surah-names/v1/sura_names.woff") format("woff"),
+    url("/fonts/quran/surah-names/v1/sura_names.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -46,85 +31,83 @@
 /*
  * Per-page QCF V2 mushaf fonts (p1-v2 through p604-v2) are loaded
  * dynamically via the FontFace API in mushaf-font-loader.ts.
- * They are NOT declared here.
  */
 
 @layer base {
   /* =====================================
-     Light Theme - Warm Cream/Beige
+     Light Theme - Warm Cream & Brown
      ===================================== */
   :root {
-    --background: 42 83% 98%;        /* #FEFBF4 warm cream */
-    --foreground: 17 26% 20%;        /* warm dark brown */
+    --background: 42 83% 98%; /* #FEFBF4 warm cream */
+    --foreground: 17 26% 18%; /* warm dark brown */
 
-    --card: 40 50% 94%;              /* lighter beige */
-    --card-foreground: 17 26% 20%;
+    --card: 40 45% 96%; /* warm off-white */
+    --card-foreground: 17 26% 18%;
 
-    --popover: 40 50% 94%;
-    --popover-foreground: 17 26% 20%;
+    --popover: 40 45% 96%;
+    --popover-foreground: 17 26% 18%;
 
-    /* Primary - Brown (#795547) from Figma */
-    --primary: 17 26% 38%;
+    /* Primary - Rich Brown */
+    --primary: 17 30% 34%; /* #6B4A3A deep warm brown */
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Beige (#F0E6D2) from Figma */
-    --secondary: 40 50% 88%;
-    --secondary-foreground: 17 26% 20%;
+    /* Secondary - Warm Beige */
+    --secondary: 38 35% 92%; /* soft beige */
+    --secondary-foreground: 17 26% 18%;
 
-    --muted: 40 30% 85%;             /* muted beige */
-    --muted-foreground: 17 15% 45%;
+    --muted: 38 25% 88%;
+    --muted-foreground: 17 12% 48%;
 
-    /* Accent - Warm tan (#CC9B76) from Figma */
-    --accent: 26 46% 63%;
+    /* Accent - Warm Tan/Gold */
+    --accent: 26 46% 58%; /* #CC9B76 warm tan */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 30% 88%;
-    --input: 40 30% 88%;
-    --ring: 17 26% 38%;
+    --border: 38 25% 88%;
+    --input: 38 25% 88%;
+    --ring: 17 30% 34%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Figma-specific tokens */
-    --card-content: 38 100% 88%;     /* #FFE9C2 gold */
+    --card-content: 38 50% 92%;
   }
 
   /* =====================================
-     Dark Theme - Softer Gray with Warm Accents
+     Dark Theme - Warm Dark Brown
      ===================================== */
   .dark {
-    --background: 25 15% 10%;        /* warm dark brown-gray */
-    --foreground: 40 40% 92%;        /* warm off-white */
+    --background: 25 18% 9%; /* warm dark brown */
+    --foreground: 38 30% 90%; /* warm off-white */
 
-    --card: 25 12% 14%;
-    --card-foreground: 40 40% 92%;
+    --card: 25 14% 12%;
+    --card-foreground: 38 30% 90%;
 
-    --popover: 25 12% 14%;
-    --popover-foreground: 40 40% 92%;
+    --popover: 25 14% 12%;
+    --popover-foreground: 38 30% 90%;
 
-    /* Primary - Lighter brown for dark mode */
-    --primary: 26 46% 63%;           /* #CC9B76 tan for contrast */
-    --primary-foreground: 25 15% 10%;
+    /* Primary - Warm tan for dark mode contrast */
+    --primary: 26 46% 60%; /* lighter warm tan */
+    --primary-foreground: 25 18% 9%;
 
-    --secondary: 25 12% 18%;
-    --secondary-foreground: 40 40% 92%;
+    --secondary: 25 12% 16%;
+    --secondary-foreground: 38 30% 90%;
 
     --muted: 25 10% 20%;
     --muted-foreground: 35 15% 55%;
 
     --accent: 17 26% 48%;
-    --accent-foreground: 40 40% 92%;
+    --accent-foreground: 38 30% 90%;
 
     --destructive: 0 72% 55%;
-    --destructive-foreground: 40 40% 92%;
+    --destructive-foreground: 38 30% 90%;
 
     --border: 25 10% 20%;
     --input: 25 10% 20%;
-    --ring: 26 46% 63%;
+    --ring: 26 46% 60%;
 
-    --card-content: 38 60% 25%;
+    --card-content: 30 20% 15%;
   }
 
   * {
@@ -134,16 +117,20 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
+    font-family:
+      "Inter",
+      system-ui,
+      -apple-system,
+      sans-serif;
   }
 
-  /* Arabic UI text uses Almarai */
   .font-arabic-ui {
-    font-family: 'Almarai', 'Scheherazade New', sans-serif;
+    font-family: "Almarai", "Scheherazade New", sans-serif;
   }
 }
 
@@ -157,28 +144,27 @@
     text-align: right;
   }
 
-  .quran-reader-flow [dir='ltr'] {
+  .quran-reader-flow [dir="ltr"] {
     text-align: left;
   }
 
   .arabic-text {
-    font-family: 'Scheherazade New', 'quran_common', serif;
+    font-family: "Scheherazade New", "quran_common", serif;
     direction: rtl;
     text-align: right;
     line-height: 2.2;
   }
 
   .arabic-uthmani {
-    font-family: 'Scheherazade New', 'quran_common', serif;
+    font-family: "Scheherazade New", "quran_common", serif;
   }
 
   .arabic-scheherazade {
-    font-family: 'Scheherazade New', 'quran_common', serif;
+    font-family: "Scheherazade New", "quran_common", serif;
   }
 
-  /* Mushaf page text - per-page QCF font (set dynamically) */
   .mushaf-text {
-    font-family: 'quran_common', serif;
+    font-family: "quran_common", serif;
     direction: rtl;
     text-align: right;
     line-height: 2;
@@ -186,8 +172,16 @@
 
   .mushaf-view {
     background:
-      radial-gradient(140% 85% at 50% -10%, hsl(var(--primary) / 0.13), transparent 60%),
-      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.96) 100%);
+      radial-gradient(
+        140% 85% at 50% -10%,
+        hsl(var(--primary) / 0.08),
+        transparent 60%
+      ),
+      linear-gradient(
+        180deg,
+        hsl(var(--background)) 0%,
+        hsl(var(--background) / 0.96) 100%
+      );
   }
 
   .mushaf-page-lines {
@@ -206,18 +200,12 @@
     overflow: visible;
   }
 
-  /* Ayah number - minimal */
   .ayah-number {
     @apply inline-flex items-center justify-center;
     @apply text-xs font-medium text-muted-foreground;
     @apply min-w-[1.5rem] h-6;
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
     direction: ltr;
-  }
-
-  /* Bismillah */
-  .bismillah {
-    @apply text-center text-2xl py-8 text-foreground/80;
   }
 }
 
@@ -235,7 +223,7 @@
   }
 
   .pb-nav {
-    padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0));
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0));
   }
 
   .pb-audio {
@@ -261,7 +249,6 @@
    ===================================== */
 
 @layer components {
-  /* Page Container */
   .page-container {
     @apply min-h-screen bg-background pb-nav;
   }
@@ -272,9 +259,13 @@
     }
   }
 
-  /* Ayah Highlight */
   .ayah-highlight {
     @apply bg-primary/5;
+  }
+
+  /* Glass card effect */
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-md border border-border/50;
   }
 }
 
@@ -283,19 +274,27 @@
    ===================================== */
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes slide-up {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -306,7 +305,7 @@
 @keyframes slide-down {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-12px);
   }
   to {
     opacity: 1;
@@ -317,7 +316,7 @@
 @keyframes scale-in {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.96);
   }
   to {
     opacity: 1;
@@ -325,23 +324,67 @@
   }
 }
 
+@keyframes pop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
 @keyframes bounce-subtle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-2px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
 }
 
 @keyframes pulse-subtle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 .animate-fade-in {
-  animation: fade-in 0.2s ease-out;
+  animation: fade-in 0.3s ease-out;
 }
 
 .animate-fade-out {
@@ -358,7 +401,7 @@
 }
 
 .animate-slide-up {
-  animation: slide-up 0.3s ease-out;
+  animation: slide-up 0.4s ease-out;
 }
 
 .animate-slide-down {
@@ -366,7 +409,15 @@
 }
 
 .animate-scale-in {
-  animation: scale-in 0.2s ease-out;
+  animation: scale-in 0.3s ease-out;
+}
+
+.animate-pop-in {
+  animation: pop-in 0.15s ease-out;
+}
+
+.animate-dropdown-in {
+  animation: dropdown-in 0.18s ease-out forwards;
 }
 
 .animate-bounce-subtle {
@@ -377,30 +428,31 @@
   animation: pulse-subtle 2s ease-in-out infinite;
 }
 
-/* Smooth transitions for interactive elements */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Smooth transitions */
 .transition-smooth {
   @apply transition-all duration-300 ease-out;
 }
 
-/* Press effect for buttons */
 .press-effect {
-  @apply transition-transform duration-150 active:scale-95;
+  @apply transition-transform duration-150 active:scale-[0.97];
 }
 
-/* Hover lift effect */
 .hover-lift {
   @apply transition-all duration-200;
 }
 .hover-lift:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 /* =====================================
-   Print Styles
+   Tafsir Content
    ===================================== */
 
-/* Tafsir content styling - sanitized HTML from API */
 .tafsir-content h1,
 .tafsir-content h2,
 .tafsir-content h3 {
@@ -421,9 +473,13 @@
 }
 
 .tafsir-content[dir="rtl"] {
-  font-family: 'Almarai', 'Scheherazade New', sans-serif;
+  font-family: "Almarai", "Scheherazade New", sans-serif;
   line-height: 1.9;
 }
+
+/* =====================================
+   Print Styles
+   ===================================== */
 
 @media print {
   .bottom-nav,

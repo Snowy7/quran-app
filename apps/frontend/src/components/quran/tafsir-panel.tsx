@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import DOMPurify from 'dompurify';
-import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
-import { Skeleton } from '@template/ui';
-import { useTafsirForVerse } from '@/lib/api/tafsirs';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import DOMPurify from "dompurify";
+import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { Skeleton } from "@template/ui";
+import { useTafsirForVerse, getDefaultTafsirId } from "@/lib/api/tafsirs";
+import { useTranslation } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 interface TafsirPanelProps {
   verseKey: string;
@@ -11,12 +12,15 @@ interface TafsirPanelProps {
   onToggle: () => void;
 }
 
-// Default tafsir: Ibn Kathir (English) = 169
-const DEFAULT_TAFSIR_ID = 169;
-
 export function TafsirPanel({ verseKey, isOpen, onToggle }: TafsirPanelProps) {
-  const { data: tafsir, isLoading, isError } = useTafsirForVerse(
-    isOpen ? DEFAULT_TAFSIR_ID : undefined,
+  const { t, language } = useTranslation();
+  const tafsirId = getDefaultTafsirId(language);
+  const {
+    data: tafsir,
+    isLoading,
+    isError,
+  } = useTafsirForVerse(
+    isOpen ? tafsirId : undefined,
     isOpen ? verseKey : undefined,
   );
 
@@ -26,7 +30,7 @@ export function TafsirPanel({ verseKey, isOpen, onToggle }: TafsirPanelProps) {
         onClick={onToggle}
         className="flex items-center gap-2 w-full px-5 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
       >
-        <span>Tafsir</span>
+        <span>{t("tafseer")}</span>
         {isOpen ? (
           <ChevronUp className="h-3 w-3" />
         ) : (
@@ -46,13 +50,14 @@ export function TafsirPanel({ verseKey, isOpen, onToggle }: TafsirPanelProps) {
 
           {isError && (
             <p className="text-xs text-muted-foreground">
-              Failed to load tafsir.
+              {t("failedToLoadTafsir")}
             </p>
           )}
 
           {tafsir && (
             <div
               className="tafsir-content text-sm leading-relaxed text-muted-foreground prose prose-sm max-w-none"
+              dir={language === "ar" ? "rtl" : "ltr"}
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(tafsir.text),
               }}

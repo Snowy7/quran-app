@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import DOMPurify from 'dompurify';
+import { useState, useCallback } from "react";
+import DOMPurify from "dompurify";
 import {
   Bookmark,
   Copy,
@@ -8,24 +8,28 @@ import {
   BookOpen,
   Play,
   Brain,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   Button,
-  Separator,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@template/ui';
-import { cn } from '@/lib/utils';
-import type { Verse } from '@/lib/api/types';
-import { SaveToCollection } from './save-to-collection';
-import { TafsirPanel } from './tafsir-panel';
-import { HifzMarkDialog } from './hifz-mark-dialog';
-import { useAudioStore } from '@/lib/stores/audio-store';
-import { useReaderSettings } from '@/lib/hooks/use-settings';
-import { toast } from 'sonner';
+} from "@template/ui";
+import { cn } from "@/lib/utils";
+import type { Verse } from "@/lib/api/types";
+import { SaveToCollection } from "./save-to-collection";
+import { TafsirPanel } from "./tafsir-panel";
+import { HifzMarkDialog } from "./hifz-mark-dialog";
+import { useAudioStore } from "@/lib/stores/audio-store";
+import {
+  useReaderSettings,
+  useContentWidth,
+  getContentFontScale,
+} from "@/lib/hooks/use-settings";
+import { useTranslation } from "@/lib/i18n";
+import { toast } from "sonner";
 
 interface VerseCardProps {
   verse: Verse;
@@ -40,6 +44,7 @@ export function VerseCard({
   totalVerses,
   isHighlighted,
 }: VerseCardProps) {
+  const { t } = useTranslation();
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [hifzDialogOpen, setHifzDialogOpen] = useState(false);
   const [tafsirOpen, setTafsirOpen] = useState(false);
@@ -48,6 +53,10 @@ export function VerseCard({
 
   const { play, currentVerseKey, isPlaying } = useAudioStore();
   const { arabicFontSize, translationFontSize } = useReaderSettings();
+  const cw = useContentWidth();
+  const scale = getContentFontScale(cw);
+  const scaledArabic = Math.round(arabicFontSize * scale);
+  const scaledTranslation = Math.round(translationFontSize * scale);
   const isCurrentlyPlaying = currentVerseKey === verseKey && isPlaying;
 
   const handlePlay = useCallback(() => {
@@ -55,26 +64,26 @@ export function VerseCard({
   }, [play, verseKey, totalVerses]);
 
   const handleCopy = useCallback(async () => {
-    const parts = [verse.text_uthmani || ''];
+    const parts = [verse.text_uthmani || ""];
     if (translationText) {
-      const el = document.createElement('div');
+      const el = document.createElement("div");
       el.innerHTML = DOMPurify.sanitize(translationText);
-      parts.push(el.textContent || '');
+      parts.push(el.textContent || "");
     }
     parts.push(`- Quran ${verseKey}`);
-    await navigator.clipboard.writeText(parts.join('\n\n'));
-    toast.success('Verse copied');
-  }, [verse.text_uthmani, translationText, verseKey]);
+    await navigator.clipboard.writeText(parts.join("\n\n"));
+    toast.success(t("verseCopied"));
+  }, [verse.text_uthmani, translationText, verseKey, t]);
 
   const handleShare = useCallback(async () => {
-    const parts = [verse.text_uthmani || ''];
+    const parts = [verse.text_uthmani || ""];
     if (translationText) {
-      const el = document.createElement('div');
+      const el = document.createElement("div");
       el.innerHTML = DOMPurify.sanitize(translationText);
-      parts.push(el.textContent || '');
+      parts.push(el.textContent || "");
     }
     parts.push(`- Quran ${verseKey}`);
-    const text = parts.join('\n\n');
+    const text = parts.join("\n\n");
 
     if (navigator.share) {
       try {
@@ -84,55 +93,60 @@ export function VerseCard({
       }
     } else {
       await navigator.clipboard.writeText(text);
-      toast.success('Verse copied');
+      toast.success(t("verseCopied"));
     }
-  }, [verse.text_uthmani, translationText, verseKey]);
+  }, [verse.text_uthmani, translationText, verseKey, t]);
 
   return (
     <>
       <div
         className={cn(
-          'transition-colors duration-500',
-          isHighlighted && 'bg-primary/5',
-          isCurrentlyPlaying && 'bg-primary/[0.04]',
+          "transition-colors duration-500",
+          isHighlighted && "bg-primary/[0.04]",
+          isCurrentlyPlaying && "bg-primary/[0.03]",
         )}
         id={`verse-${verseKey}`}
       >
-        <div className="px-5 py-5 md:px-8">
-          {/* Quran-first RTL row: ayah marker on the right, actions on the left */}
-          <div className="mb-4 flex flex-row-reverse items-center justify-between">
+        <div className="px-6 py-6">
+          {/* Action row */}
+          <div className="mb-5 flex flex-row-reverse items-center justify-between">
+            {/* Verse number badge */}
             <div
               className={cn(
-                'flex h-9 w-9 items-center justify-center rounded-xl text-sm font-semibold tabular-nums transition-colors',
+                "flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-bold tabular-nums transition-all",
                 isCurrentlyPlaying
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-primary/8 text-primary',
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-primary/8 text-primary",
               )}
             >
               {verse.verse_number}
             </div>
 
-            <div className="flex items-center gap-0.5">
+            {/* Action buttons */}
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-primary"
+                className="h-9 w-9 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/8"
                 onClick={handlePlay}
               >
                 <Play
-                  className={cn('h-3.5 w-3.5', isCurrentlyPlaying && 'text-primary')}
+                  className={cn(
+                    "h-4 w-4",
+                    isCurrentlyPlaying && "text-primary",
+                  )}
                 />
-                <span className="sr-only">Play verse</span>
+                <span className="sr-only">{t("playVerse")}</span>
               </Button>
 
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-primary"
+                className="h-9 w-9 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/8"
                 onClick={() => setSaveDialogOpen(true)}
               >
-                <Bookmark className="h-3.5 w-3.5" />
-                <span className="sr-only">Save verse</span>
+                <Bookmark className="h-4 w-4" />
+                <span className="sr-only">{t("saveVerse")}</span>
               </Button>
 
               <DropdownMenu>
@@ -140,60 +154,74 @@ export function VerseCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    className="h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary"
                   >
                     <MoreHorizontal className="h-4 w-4" />
-                    <span className="sr-only">More actions</span>
+                    <span className="sr-only">{t("moreActions")}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => setSaveDialogOpen(true)}>
+                <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                  <DropdownMenuItem
+                    onClick={() => setSaveDialogOpen(true)}
+                    className="rounded-lg"
+                  >
                     <Bookmark className="mr-2 h-4 w-4" />
-                    Save to Collection
+                    {t("saveToCollection")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setHifzDialogOpen(true)}>
+                  <DropdownMenuItem
+                    onClick={() => setHifzDialogOpen(true)}
+                    className="rounded-lg"
+                  >
                     <Brain className="mr-2 h-4 w-4" />
-                    Mark as Memorized
+                    {t("markAsMemorized")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handlePlay}>
+                  <DropdownMenuItem onClick={handlePlay} className="rounded-lg">
                     <Play className="mr-2 h-4 w-4" />
-                    Play Audio
+                    {t("playAudio")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTafsirOpen(!tafsirOpen)}>
+                  <DropdownMenuItem
+                    onClick={() => setTafsirOpen(!tafsirOpen)}
+                    className="rounded-lg"
+                  >
                     <BookOpen className="mr-2 h-4 w-4" />
-                    {tafsirOpen ? 'Hide' : 'View'} Tafsir
+                    {tafsirOpen ? t("hideTafsir") : t("viewTafsir")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleCopy}>
+                  <DropdownMenuItem onClick={handleCopy} className="rounded-lg">
                     <Copy className="mr-2 h-4 w-4" />
-                    Copy Verse
+                    {t("copyVerse")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleShare}>
+                  <DropdownMenuItem
+                    onClick={handleShare}
+                    className="rounded-lg"
+                  >
                     <Share2 className="mr-2 h-4 w-4" />
-                    Share
+                    {t("share")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
 
+          {/* Arabic text */}
           <p
-            className="mb-4 text-right leading-[2.3] text-foreground"
+            className="mb-5 text-right leading-[2.3] text-foreground"
             dir="rtl"
             lang="ar"
             style={{
               fontFamily: "'Scheherazade New', 'quran_common', serif",
-              fontSize: `${arabicFontSize}px`,
+              fontSize: `${scaledArabic}px`,
             }}
           >
             {verse.text_uthmani}
           </p>
 
+          {/* Translation */}
           {translationText && (
             <p
-              className="text-left leading-[1.85] text-muted-foreground"
+              className="text-left leading-[1.9] text-muted-foreground"
               dir="ltr"
-              style={{ fontSize: `${translationFontSize}px` }}
+              style={{ fontSize: `${scaledTranslation}px` }}
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(translationText),
               }}
@@ -201,6 +229,7 @@ export function VerseCard({
           )}
         </div>
 
+        {/* Tafsir */}
         {tafsirOpen && (
           <TafsirPanel
             verseKey={verseKey}
@@ -209,7 +238,8 @@ export function VerseCard({
           />
         )}
 
-        <Separator className="opacity-50" />
+        {/* Divider */}
+        <div className="mx-6 border-b border-border/30" />
       </div>
 
       <SaveToCollection
@@ -230,4 +260,3 @@ export function VerseCard({
     </>
   );
 }
-

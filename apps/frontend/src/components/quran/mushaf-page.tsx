@@ -1,34 +1,34 @@
-import { Fragment, useMemo } from 'react';
-import { Skeleton } from '@template/ui';
-import { useVersesByPage } from '@/lib/api/verses';
-import { usePageFont } from '@/lib/fonts/mushaf-font-loader';
-import { groupWordsByLine } from '@/lib/fonts/group-lines';
-import { MushafLine } from './mushaf-line';
-import type { Chapter } from '@/lib/api/types';
+import { Fragment, useMemo } from "react";
+import { Skeleton } from "@template/ui";
+import { useVersesByPage } from "@/lib/api/verses";
+import { usePageFont } from "@/lib/fonts/mushaf-font-loader";
+import { groupWordsByLine } from "@/lib/fonts/group-lines";
+import { MushafLine } from "./mushaf-line";
+import { BismillahSvg } from "./bismillah";
+import type { AnnotatedWord } from "@/lib/fonts/group-lines";
 
 interface MushafPageProps {
   pageNumber: number;
-  chapters?: Chapter[];
+  onWordTap?: (word: AnnotatedWord, rect: DOMRect) => void;
+  selectedWordId?: number | null;
 }
 
-const BISMILLAH_TEXT =
-  '\u0628\u0650\u0633\u0652\u0645\u0650 \u0671\u0644\u0644\u0651\u064e\u0647\u0650 \u0671\u0644\u0631\u064e\u0651\u062d\u0652\u0645\u064e\u0670\u0646\u0650 \u0671\u0644\u0631\u064e\u0651\u062d\u0650\u064a\u0645\u0650';
-
-const PAGE_STYLES = {
-  container:
-    'relative mx-auto rounded-2xl border border-primary/20 bg-card/90 shadow-[0_10px_40px_-18px_rgba(0,0,0,0.55)]',
-  content: 'flex h-full w-full flex-col justify-between px-4 py-5 sm:px-8 sm:py-8',
-  lines: 'mushaf-page-lines flex flex-1 flex-col items-end justify-start gap-1 overflow-visible',
-} as const;
-
-export function MushafPage({ pageNumber, chapters }: MushafPageProps) {
+export function MushafPage({
+  pageNumber,
+  onWordTap,
+  selectedWordId,
+}: MushafPageProps) {
   const { data: verses, isLoading } = useVersesByPage(pageNumber, {
     words: true,
-    wordFields: 'code_v2,code_v1,text_uthmani,v2_page,page_number,line_number,position',
+    wordFields:
+      "code_v2,code_v1,text_uthmani,v2_page,page_number,line_number,position,translation,transliteration",
   });
   const fontLoaded = usePageFont(pageNumber);
 
-  const lines = useMemo(() => (verses ? groupWordsByLine(verses) : []), [verses]);
+  const lines = useMemo(
+    () => (verses ? groupWordsByLine(verses) : []),
+    [verses],
+  );
 
   if (isLoading || !verses) {
     return <MushafPageSkeleton pageNumber={pageNumber} />;
@@ -40,23 +40,25 @@ export function MushafPage({ pageNumber, chapters }: MushafPageProps) {
 
   return (
     <article
-      className={PAGE_STYLES.container}
+      className="mx-auto"
       style={{
-        width: 'var(--mushaf-page-width, fit-content)',
-        maxWidth: 'min(98vw, 980px)',
+        width: "var(--mushaf-page-width, fit-content)",
+        maxWidth: "min(98vw, 980px)",
       }}
       data-page={pageNumber}
       aria-label={`Mushaf page ${pageNumber}`}
     >
-      <div className={PAGE_STYLES.content}>
-        <div className={PAGE_STYLES.lines}>
+      <div className="flex h-full w-full flex-col justify-between px-3 py-4 sm:px-6 sm:py-6">
+        {/* Lines */}
+        <div className="mushaf-page-lines flex flex-1 flex-col items-end justify-start gap-1 overflow-visible">
           {lines.map((line) => (
             <Fragment key={line.lineNumber}>
               {line.startsNewChapter && line.newChapterId && (
                 <MushafChapterHeader
                   chapterId={line.newChapterId}
-                  chapters={chapters}
-                  showBismillah={line.newChapterId !== 1 && line.newChapterId !== 9}
+                  showBismillah={
+                    line.newChapterId !== 1 && line.newChapterId !== 9
+                  }
                 />
               )}
 
@@ -65,14 +67,17 @@ export function MushafPage({ pageNumber, chapters }: MushafPageProps) {
                 pageNumber={pageNumber}
                 lineNumber={line.lineNumber}
                 fontLoaded={fontLoaded}
+                onWordTap={onWordTap}
+                selectedWordId={selectedWordId}
               />
             </Fragment>
           ))}
         </div>
 
-        <footer className="mt-2 border-t border-primary/15 pt-2 text-center">
-          <span className="text-[10px] tabular-nums tracking-[0.12em] text-muted-foreground/80">
-            PAGE {pageNumber}
+        {/* Page number */}
+        <footer className="mt-4 pt-3 border-t border-border/30 text-center">
+          <span className="text-[10px] tabular-nums tracking-[0.15em] font-medium text-muted-foreground/50">
+            {pageNumber}
           </span>
         </footer>
       </div>
@@ -82,48 +87,38 @@ export function MushafPage({ pageNumber, chapters }: MushafPageProps) {
 
 function MushafChapterHeader({
   chapterId,
-  chapters,
   showBismillah,
 }: {
   chapterId: number;
-  chapters?: Chapter[];
   showBismillah: boolean;
 }) {
-  const chapter = chapters?.find((c) => c.id === chapterId);
-  const surahName = chapter?.name_arabic ?? `Surah ${chapterId}`;
-
   return (
-    <div className="mushaf-surah-header my-1">
-      <div className="relative flex items-center justify-center py-2">
+    <div className="w-full my-4">
+      {/* Surah name with decorative lines */}
+      <div className="relative flex items-center justify-center py-3">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-primary/25" />
+          <div className="w-full border-t border-primary/20" />
         </div>
-        <div className="relative bg-card/95 px-5">
+        <div className="relative bg-background px-6">
           <span
-            className="text-xl font-medium text-primary/95"
+            className="text-2xl text-primary"
             dir="rtl"
             style={{
-              fontFamily: "'surah_names', 'Scheherazade New', 'quran_common', serif",
-              lineHeight: 'normal',
+              fontFamily:
+                "'surah_names', 'Scheherazade New', 'quran_common', serif",
+              lineHeight: "1.6",
             }}
           >
-            {surahName}
+            {String(chapterId).padStart(3, "0")}
           </span>
         </div>
       </div>
 
+      {/* Bismillah */}
       {showBismillah && (
-        <p
-          className="py-1 text-center text-foreground/80"
-          dir="rtl"
-          style={{
-            fontFamily: "'bismillah', 'Scheherazade New', 'quran_common', serif",
-            fontSize: 'clamp(28px, 2.4vw, 40px)',
-            lineHeight: 'normal',
-          }}
-        >
-          {BISMILLAH_TEXT}
-        </p>
+        <div className="py-3 flex justify-center">
+          <BismillahSvg className="h-[24px] w-auto text-foreground/80" />
+        </div>
       )}
     </div>
   );
@@ -132,24 +127,26 @@ function MushafChapterHeader({
 function MushafPageSkeleton({ pageNumber }: { pageNumber: number }) {
   return (
     <div
-      className={`${PAGE_STYLES.container} mx-auto`}
+      className="mx-auto"
       style={{
-        width: 'min(98vw, 980px)',
-        minHeight: '60vh',
+        width: "min(98vw, 980px)",
+        minHeight: "60vh",
       }}
     >
-      <div className={PAGE_STYLES.content}>
+      <div className="flex h-full flex-col justify-between px-3 py-4 sm:px-6 sm:py-6">
         <div className="flex-1 flex flex-col justify-center gap-3">
           {Array.from({ length: 12 }).map((_, i) => (
             <Skeleton
               key={i}
               className="h-5 w-full rounded"
-              style={{ opacity: 0.35 + (i % 3) * 0.07 }}
+              style={{ opacity: 0.2 + (i % 3) * 0.05 }}
             />
           ))}
         </div>
         <footer className="text-center mt-3 pt-3 border-t border-border/20">
-          <span className="text-[11px] text-muted-foreground tabular-nums">Page {pageNumber}</span>
+          <span className="text-[10px] text-muted-foreground/40 tabular-nums">
+            {pageNumber}
+          </span>
         </footer>
       </div>
     </div>

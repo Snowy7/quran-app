@@ -1,14 +1,16 @@
-import { useRef, useEffect, useCallback } from 'react';
-import { Skeleton } from '@template/ui';
-import { useVersesByChapter } from '@/lib/api/verses';
-import { Bismillah } from './bismillah';
-import type { Word, Verse } from '@/lib/api/types';
+import { useRef, useEffect, useCallback } from "react";
+import { Skeleton } from "@template/ui";
+import { useVersesByChapter } from "@/lib/api/verses";
+import { useTranslation } from "@/lib/i18n";
+import { Bismillah } from "./bismillah";
+import type { Word, Verse } from "@/lib/api/types";
 
 interface WordByWordViewProps {
   chapterId: number;
 }
 
 export function WordByWordView({ chapterId }: WordByWordViewProps) {
+  const { t } = useTranslation();
   const {
     data,
     isLoading,
@@ -34,7 +36,7 @@ export function WordByWordView({ chapterId }: WordByWordViewProps) {
     const el = loadMoreRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(handleIntersect, {
-      rootMargin: '200px',
+      rootMargin: "200px",
     });
     observer.observe(el);
     return () => observer.disconnect();
@@ -45,7 +47,7 @@ export function WordByWordView({ chapterId }: WordByWordViewProps) {
   if (isError) {
     return (
       <div className="px-5 py-12 text-center text-muted-foreground text-sm">
-        Failed to load verses. Please try again.
+        {t("failedToLoadVerses")}
       </div>
     );
   }
@@ -69,7 +71,9 @@ export function WordByWordView({ chapterId }: WordByWordViewProps) {
 
 function VerseWordsRow({ verse }: { verse: Verse }) {
   const words = verse.words ?? [];
-  const contentWords = words.filter((w) => w.char_type_name === 'word' || w.char_type_name === 'end');
+  const contentWords = words.filter(
+    (w) => w.char_type_name === "word" || w.char_type_name === "end",
+  );
 
   return (
     <div className="border-b border-border/40 px-5 py-5 md:px-8" dir="rtl">

@@ -1,13 +1,14 @@
-import { Check } from 'lucide-react';
+import { Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@template/ui';
-import { useAudioStore, RECITERS } from '@/lib/stores/audio-store';
-import { cn } from '@/lib/utils';
+} from "@template/ui";
+import { useAudioStore, RECITERS } from "@/lib/stores/audio-store";
+import { useTranslation } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 interface ReciterPickerProps {
   open: boolean;
@@ -15,15 +16,16 @@ interface ReciterPickerProps {
 }
 
 export function ReciterPicker({ open, onOpenChange }: ReciterPickerProps) {
+  const { t } = useTranslation();
   const { reciterId, setReciter } = useAudioStore();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[340px]">
         <DialogHeader>
-          <DialogTitle className="text-base">Choose Reciter</DialogTitle>
+          <DialogTitle className="text-base">{t("chooseReciter")}</DialogTitle>
           <DialogDescription className="text-xs">
-            Select a Quran reciter
+            {t("selectAReciter")}
           </DialogDescription>
         </DialogHeader>
 
@@ -38,13 +40,15 @@ export function ReciterPicker({ open, onOpenChange }: ReciterPickerProps) {
                   onOpenChange(false);
                 }}
                 className={cn(
-                  'flex items-center gap-3 w-full px-3 py-3 rounded-lg text-left transition-all',
+                  "flex items-center gap-3 w-full px-3 py-3 rounded-lg text-left transition-all",
                   isSelected
-                    ? 'bg-primary/10 ring-1 ring-primary/20'
-                    : 'hover:bg-secondary/80',
+                    ? "bg-primary/10 ring-1 ring-primary/20"
+                    : "hover:bg-secondary/80",
                 )}
               >
-                <span className="flex-1 text-sm font-medium truncate">{reciter.name}</span>
+                <span className="flex-1 text-sm font-medium truncate">
+                  {reciter.name}
+                </span>
                 {isSelected && (
                   <Check className="h-4 w-4 text-primary shrink-0" />
                 )}

@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Skeleton } from '@template/ui';
-import { useVersesByChapter } from '@/lib/api/verses';
-import { saveReadingPosition } from '@/lib/db/reading-history';
-import { Bismillah } from './bismillah';
-import { VerseCard } from './verse-card';
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Skeleton } from "@template/ui";
+import { useVersesByChapter } from "@/lib/api/verses";
+import { saveReadingPosition } from "@/lib/db/reading-history";
+import { useTranslation } from "@/lib/i18n";
+import { Bismillah } from "./bismillah";
+import { VerseCard } from "./verse-card";
 
 interface TranslationViewProps {
   chapterId: number;
@@ -11,7 +12,12 @@ interface TranslationViewProps {
   initialVerse?: number;
 }
 
-export function TranslationView({ chapterId, totalVerses, initialVerse }: TranslationViewProps) {
+export function TranslationView({
+  chapterId,
+  totalVerses,
+  initialVerse,
+}: TranslationViewProps) {
+  const { t } = useTranslation();
   const {
     data,
     isLoading,
@@ -22,7 +28,9 @@ export function TranslationView({ chapterId, totalVerses, initialVerse }: Transl
   } = useVersesByChapter(chapterId);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const [highlightedVerse, setHighlightedVerse] = useState<number | undefined>(initialVerse);
+  const [highlightedVerse, setHighlightedVerse] = useState<number | undefined>(
+    initialVerse,
+  );
   const hasScrolled = useRef(false);
   const lastSavedVerse = useRef(0);
 
@@ -42,7 +50,7 @@ export function TranslationView({ chapterId, totalVerses, initialVerse }: Transl
     if (!el) return;
 
     const observer = new IntersectionObserver(handleIntersect, {
-      rootMargin: '200px',
+      rootMargin: "200px",
     });
 
     observer.observe(el);
@@ -59,7 +67,7 @@ export function TranslationView({ chapterId, totalVerses, initialVerse }: Transl
       hasScrolled.current = true;
       // Small delay to ensure layout is settled
       requestAnimationFrame(() => {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
         // Clear highlight after 3 seconds
         setTimeout(() => setHighlightedVerse(undefined), 3000);
       });
@@ -89,7 +97,7 @@ export function TranslationView({ chapterId, totalVerses, initialVerse }: Transl
         for (const entry of entries) {
           if (entry.isIntersecting) {
             const verseNum = parseInt(
-              entry.target.id.replace(`verse-${chapterId}:`, ''),
+              entry.target.id.replace(`verse-${chapterId}:`, ""),
               10,
             );
             if (verseNum > maxVisible) maxVisible = verseNum;
@@ -101,7 +109,9 @@ export function TranslationView({ chapterId, totalVerses, initialVerse }: Transl
           // Debounce: save after 2 seconds of no further scroll
           clearTimeout(saveTimeout);
           saveTimeout = setTimeout(() => {
-            saveReadingPosition(chapterId, maxVisible, 'translation').catch(() => {});
+            saveReadingPosition(chapterId, maxVisible, "translation").catch(
+              () => {},
+            );
           }, 2000);
         }
       },
@@ -125,7 +135,7 @@ export function TranslationView({ chapterId, totalVerses, initialVerse }: Transl
   if (isError) {
     return (
       <div className="px-5 py-12 text-center text-muted-foreground text-sm">
-        Failed to load verses. Please try again.
+        {t("failedToLoadVerses")}
       </div>
     );
   }

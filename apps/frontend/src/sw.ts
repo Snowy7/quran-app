@@ -46,22 +46,6 @@ registerRoute(
   }),
 );
 
-// Google Fonts — cache-first
-registerRoute(
-  ({ url }) =>
-    url.origin === "https://fonts.googleapis.com" ||
-    url.origin === "https://fonts.gstatic.com",
-  new CacheFirst({
-    cacheName: "google-fonts",
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 30,
-        maxAgeSeconds: 60 * 60 * 24 * 365,
-      }),
-    ],
-  }),
-);
-
 // Prayer Times API — network-first
 registerRoute(
   ({ url }) => url.origin === "https://api.aladhan.com",

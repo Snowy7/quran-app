@@ -32,7 +32,7 @@ export interface Word {
   id: number;
   position: number;
   audio_url: string | null;
-  char_type_name: 'word' | 'end' | 'pause_mark' | 'sajdah';
+  char_type_name: "word" | "end" | "pause_mark" | "sajdah";
   code_v1?: string;
   code_v2: string;
   text_uthmani?: string;
@@ -144,6 +144,11 @@ export interface TafsirResponse {
   tafsir: Tafsir;
 }
 
+export interface TafsirsByChapterResponse {
+  tafsirs: Tafsir[];
+  pagination: PaginationMeta;
+}
+
 export interface RecitersResponse {
   reciters: Reciter[];
 }
@@ -177,7 +182,7 @@ export interface SearchResult {
 // Query parameter types
 export interface VersesParams {
   page?: number;
-  perPage?: number | 'all';
+  perPage?: number | "all";
   translations?: string;
   words?: boolean;
   wordFields?: string;
