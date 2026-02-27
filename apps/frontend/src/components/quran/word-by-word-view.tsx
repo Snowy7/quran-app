@@ -53,7 +53,7 @@ export function WordByWordView({ chapterId }: WordByWordViewProps) {
   const allVerses = data?.pages.flatMap((page) => page.verses) ?? [];
 
   return (
-    <div>
+    <div className="quran-reader-flow" dir="rtl">
       <Bismillah chapterId={chapterId} />
 
       {allVerses.map((verse) => (
@@ -72,9 +72,9 @@ function VerseWordsRow({ verse }: { verse: Verse }) {
   const contentWords = words.filter((w) => w.char_type_name === 'word' || w.char_type_name === 'end');
 
   return (
-    <div className="px-5 py-5 md:px-8 border-b border-border/40">
+    <div className="border-b border-border/40 px-5 py-5 md:px-8" dir="rtl">
       {/* Verse number */}
-      <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-primary/8 text-primary text-xs font-semibold mb-4 tabular-nums">
+      <div className="mb-4 flex h-7 w-7 items-center justify-center rounded-lg bg-primary/8 text-xs font-semibold tabular-nums text-primary">
         {verse.verse_number}
       </div>
 
@@ -94,6 +94,8 @@ function WordCard({ word }: { word: Word }) {
       {/* Arabic word */}
       <span
         className="text-xl leading-relaxed text-foreground"
+        dir="rtl"
+        lang="ar"
         style={{ fontFamily: "'Scheherazade New', 'quran_common', serif" }}
       >
         {word.text_uthmani || word.text || word.code_v2}
@@ -101,14 +103,20 @@ function WordCard({ word }: { word: Word }) {
 
       {/* Translation */}
       {word.translation?.text && (
-        <span className="text-[10px] leading-tight text-muted-foreground text-center max-w-[80px]">
+        <span
+          className="max-w-[80px] text-center text-[10px] leading-tight text-muted-foreground"
+          dir="ltr"
+        >
           {word.translation.text}
         </span>
       )}
 
       {/* Transliteration */}
       {word.transliteration?.text && (
-        <span className="text-[10px] leading-tight text-primary/60 text-center italic max-w-[80px]">
+        <span
+          className="max-w-[80px] text-center text-[10px] italic leading-tight text-primary/60"
+          dir="ltr"
+        >
           {word.transliteration.text}
         </span>
       )}

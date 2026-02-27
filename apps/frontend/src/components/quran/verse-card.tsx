@@ -34,7 +34,12 @@ interface VerseCardProps {
   isHighlighted?: boolean;
 }
 
-export function VerseCard({ verse, chapterNumber, totalVerses, isHighlighted }: VerseCardProps) {
+export function VerseCard({
+  verse,
+  chapterNumber,
+  totalVerses,
+  isHighlighted,
+}: VerseCardProps) {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [hifzDialogOpen, setHifzDialogOpen] = useState(false);
   const [tafsirOpen, setTafsirOpen] = useState(false);
@@ -56,7 +61,7 @@ export function VerseCard({ verse, chapterNumber, totalVerses, isHighlighted }: 
       el.innerHTML = DOMPurify.sanitize(translationText);
       parts.push(el.textContent || '');
     }
-    parts.push(`— Quran ${verseKey}`);
+    parts.push(`- Quran ${verseKey}`);
     await navigator.clipboard.writeText(parts.join('\n\n'));
     toast.success('Verse copied');
   }, [verse.text_uthmani, translationText, verseKey]);
@@ -68,7 +73,7 @@ export function VerseCard({ verse, chapterNumber, totalVerses, isHighlighted }: 
       el.innerHTML = DOMPurify.sanitize(translationText);
       parts.push(el.textContent || '');
     }
-    parts.push(`— Quran ${verseKey}`);
+    parts.push(`- Quran ${verseKey}`);
     const text = parts.join('\n\n');
 
     if (navigator.share) {
@@ -94,19 +99,19 @@ export function VerseCard({ verse, chapterNumber, totalVerses, isHighlighted }: 
         id={`verse-${verseKey}`}
       >
         <div className="px-5 py-5 md:px-8">
-          {/* Top row: verse number + actions */}
-          <div className="flex items-center justify-between mb-4">
-            {/* Ayah number badge */}
-            <div className={cn(
-              'flex items-center justify-center h-9 w-9 rounded-xl text-sm font-semibold tabular-nums transition-colors',
-              isCurrentlyPlaying
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-primary/8 text-primary',
-            )}>
+          {/* Quran-first RTL row: ayah marker on the right, actions on the left */}
+          <div className="mb-4 flex flex-row-reverse items-center justify-between">
+            <div
+              className={cn(
+                'flex h-9 w-9 items-center justify-center rounded-xl text-sm font-semibold tabular-nums transition-colors',
+                isCurrentlyPlaying
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-primary/8 text-primary',
+              )}
+            >
               {verse.verse_number}
             </div>
 
-            {/* Actions */}
             <div className="flex items-center gap-0.5">
               <Button
                 variant="ghost"
@@ -114,7 +119,9 @@ export function VerseCard({ verse, chapterNumber, totalVerses, isHighlighted }: 
                 className="h-8 w-8 text-muted-foreground hover:text-primary"
                 onClick={handlePlay}
               >
-                <Play className={cn('h-3.5 w-3.5', isCurrentlyPlaying && 'text-primary')} />
+                <Play
+                  className={cn('h-3.5 w-3.5', isCurrentlyPlaying && 'text-primary')}
+                />
                 <span className="sr-only">Play verse</span>
               </Button>
 
@@ -141,28 +148,28 @@ export function VerseCard({ verse, chapterNumber, totalVerses, isHighlighted }: 
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem onClick={() => setSaveDialogOpen(true)}>
-                    <Bookmark className="h-4 w-4 mr-2" />
+                    <Bookmark className="mr-2 h-4 w-4" />
                     Save to Collection
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setHifzDialogOpen(true)}>
-                    <Brain className="h-4 w-4 mr-2" />
+                    <Brain className="mr-2 h-4 w-4" />
                     Mark as Memorized
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handlePlay}>
-                    <Play className="h-4 w-4 mr-2" />
+                    <Play className="mr-2 h-4 w-4" />
                     Play Audio
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setTafsirOpen(!tafsirOpen)}>
-                    <BookOpen className="h-4 w-4 mr-2" />
+                    <BookOpen className="mr-2 h-4 w-4" />
                     {tafsirOpen ? 'Hide' : 'View'} Tafsir
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleCopy}>
-                    <Copy className="h-4 w-4 mr-2" />
+                    <Copy className="mr-2 h-4 w-4" />
                     Copy Verse
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleShare}>
-                    <Share2 className="h-4 w-4 mr-2" />
+                    <Share2 className="mr-2 h-4 w-4" />
                     Share
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -170,10 +177,10 @@ export function VerseCard({ verse, chapterNumber, totalVerses, isHighlighted }: 
             </div>
           </div>
 
-          {/* Arabic text */}
           <p
-            className="leading-[2.3] text-foreground mb-4"
+            className="mb-4 text-right leading-[2.3] text-foreground"
             dir="rtl"
+            lang="ar"
             style={{
               fontFamily: "'Scheherazade New', 'quran_common', serif",
               fontSize: `${arabicFontSize}px`,
@@ -182,10 +189,10 @@ export function VerseCard({ verse, chapterNumber, totalVerses, isHighlighted }: 
             {verse.text_uthmani}
           </p>
 
-          {/* Translation */}
           {translationText && (
             <p
-              className="leading-[1.85] text-muted-foreground"
+              className="text-left leading-[1.85] text-muted-foreground"
+              dir="ltr"
               style={{ fontSize: `${translationFontSize}px` }}
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(translationText),
@@ -194,7 +201,6 @@ export function VerseCard({ verse, chapterNumber, totalVerses, isHighlighted }: 
           )}
         </div>
 
-        {/* Tafsir panel */}
         {tafsirOpen && (
           <TafsirPanel
             verseKey={verseKey}
@@ -224,3 +230,4 @@ export function VerseCard({ verse, chapterNumber, totalVerses, isHighlighted }: 
     </>
   );
 }
+

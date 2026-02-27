@@ -152,6 +152,15 @@
    ===================================== */
 
 @layer components {
+  .quran-reader-flow {
+    direction: rtl;
+    text-align: right;
+  }
+
+  .quran-reader-flow [dir='ltr'] {
+    text-align: left;
+  }
+
   .arabic-text {
     font-family: 'Scheherazade New', 'quran_common', serif;
     direction: rtl;

@@ -133,7 +133,7 @@ export function TranslationView({ chapterId, totalVerses, initialVerse }: Transl
   const allVerses = data?.pages.flatMap((page) => page.verses) ?? [];
 
   return (
-    <div>
+    <div className="quran-reader-flow">
       <Bismillah chapterId={chapterId} />
 
       {allVerses.map((verse) => (
