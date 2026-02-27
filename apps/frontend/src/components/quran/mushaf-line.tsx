@@ -43,7 +43,7 @@ export function MushafLine({
       }
 
       const rawScale = available / content;
-      const nextScale = rawScale >= 0.995 ? 1 : Math.max(0.82, rawScale);
+      const nextScale = rawScale >= 0.99 ? 1 : Math.max(0.93, rawScale);
       setLineScale((prev) => (Math.abs(prev - nextScale) > 0.003 ? nextScale : prev));
     };
 
@@ -70,7 +70,7 @@ export function MushafLine({
         fontFamily,
         fontSize: 'var(--mushaf-font-size, 42px)',
         lineHeight: 'var(--mushaf-line-height, 1.88)',
-        width: centerAligned ? 'fit-content' : 'var(--mushaf-line-width, 100%)',
+        width: 'var(--mushaf-line-width, 100%)',
         maxWidth: '100%',
         justifyContent: centerAligned ? 'center' : 'flex-start',
         columnGap: '0.08em',
