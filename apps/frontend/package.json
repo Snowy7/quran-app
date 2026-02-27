@@ -16,6 +16,7 @@
     "@fontsource/scheherazade-new": "^5.2.8",
     "@tanstack/react-query": "^5.62.0",
     "@template/ui": "workspace:*",
+    "adhan": "^4.4.3",
     "clsx": "^2.1.0",
     "date-fns": "^4.1.0",
     "dexie": "^4.2.1",

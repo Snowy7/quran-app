@@ -47,11 +47,11 @@ export interface ReadingHistoryEntry {
 
 export interface SettingEntry {
   key: string;
-  value: any;
+  value: string | number | boolean;
 }
 
 export interface ApiCacheEntry {
   key: string;
-  data: any;
+  data: unknown;
   expiresAt: number;
 }

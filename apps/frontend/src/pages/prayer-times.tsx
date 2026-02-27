@@ -9,11 +9,11 @@ import {
 } from "lucide-react";
 import { Button, Card, CardContent, Skeleton } from "@template/ui";
 import { AppHeader } from "@/components/layout/app-header";
-import { usePrayerTimes } from "@/lib/hooks/use-prayer-times";
+import { usePrayerTimes, type PrayerName } from "@/lib/hooks/use-prayer-times";
 import { cn } from "@/lib/utils";
 import { useTranslation, type TranslationKey } from "@/lib/i18n";
 
-const PRAYER_ICONS: Record<string, React.ElementType> = {
+const PRAYER_ICONS: Record<PrayerName, React.ElementType> = {
   Fajr: Sunrise,
   Sunrise: Sun,
   Dhuhr: Sun,
@@ -22,7 +22,7 @@ const PRAYER_ICONS: Record<string, React.ElementType> = {
   Isha: Moon,
 };
 
-const PRAYER_LABEL_KEYS: Record<string, TranslationKey> = {
+const PRAYER_LABEL_KEYS: Record<PrayerName, TranslationKey> = {
   Fajr: "fajr",
   Sunrise: "sunrise",
   Dhuhr: "dhuhr",
@@ -31,11 +31,16 @@ const PRAYER_LABEL_KEYS: Record<string, TranslationKey> = {
   Isha: "isha",
 };
 
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
 export default function PrayerTimesPage() {
   const { t } = useTranslation();
   const {
-    times,
+    prayers,
     nextPrayer,
+    nextPrayerTime,
     countdown,
     loading,
     error,
@@ -76,10 +81,10 @@ export default function PrayerTimesPage() {
         )}
 
         {/* Hijri Date */}
-        {hijriDate && (
+        {hijriDate && hijriDate.fullDate && (
           <div className="text-center py-1">
             <p className="text-xl font-bold text-foreground">
-              {hijriDate.fullDate} {hijriDate.designation}
+              {hijriDate.fullDate}
             </p>
             {gregorianDate && (
               <p className="text-sm text-muted-foreground mt-1">
@@ -90,7 +95,7 @@ export default function PrayerTimesPage() {
         )}
 
         {/* Next Prayer */}
-        {nextPrayer && times && (
+        {nextPrayer && nextPrayerTime && (
           <Card className="overflow-hidden border-0 shadow-card rounded-2xl">
             <CardContent className="p-0">
               <div className="relative px-6 py-6">
@@ -103,7 +108,7 @@ export default function PrayerTimesPage() {
                     {t(PRAYER_LABEL_KEYS[nextPrayer])}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {times[nextPrayer]}
+                    {formatTime(nextPrayerTime)}
                   </p>
                   {countdown && (
                     <p className="text-xl font-bold text-primary mt-3 tabular-nums font-mono">
@@ -117,7 +122,7 @@ export default function PrayerTimesPage() {
         )}
 
         {/* Loading */}
-        {loading && !times && (
+        {loading && prayers.length === 0 && (
           <div className="space-y-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div
@@ -135,7 +140,7 @@ export default function PrayerTimesPage() {
         )}
 
         {/* Error */}
-        {error && !times && (
+        {error && prayers.length === 0 && (
           <Card className="border-0 shadow-card rounded-2xl">
             <CardContent className="p-6 text-center">
               <p className="text-sm text-muted-foreground">{error}</p>
@@ -151,15 +156,16 @@ export default function PrayerTimesPage() {
         )}
 
         {/* All Prayer Times */}
-        {times && (
+        {prayers.length > 0 && (
           <Card className="border-0 shadow-card rounded-2xl overflow-hidden">
             <CardContent className="p-0">
-              {Object.entries(times).map(([prayer, time]) => {
-                const Icon = PRAYER_ICONS[prayer] || Clock;
-                const isNext = prayer === nextPrayer;
+              {prayers.map((entry) => {
+                const Icon = PRAYER_ICONS[entry.name] || Clock;
+                const isNext = entry.name === nextPrayer;
+                const isPast = entry.time < new Date() && !isNext;
                 return (
                   <div
-                    key={prayer}
+                    key={entry.name}
                     className={cn(
                       "flex items-center justify-between px-5 py-4 transition-colors border-b border-border/20 last:border-0",
                       isNext && "bg-primary/[0.04]",
@@ -181,12 +187,12 @@ export default function PrayerTimesPage() {
                           "text-sm",
                           isNext
                             ? "font-bold text-foreground"
-                            : "font-medium text-foreground",
+                            : isPast
+                              ? "font-medium text-muted-foreground/60"
+                              : "font-medium text-foreground",
                         )}
                       >
-                        {PRAYER_LABEL_KEYS[prayer]
-                          ? t(PRAYER_LABEL_KEYS[prayer])
-                          : prayer}
+                        {t(PRAYER_LABEL_KEYS[entry.name])}
                       </span>
                     </div>
                     <span
@@ -194,10 +200,12 @@ export default function PrayerTimesPage() {
                         "text-sm tabular-nums",
                         isNext
                           ? "font-bold text-primary"
-                          : "font-medium text-muted-foreground",
+                          : isPast
+                            ? "font-medium text-muted-foreground/60"
+                            : "font-medium text-muted-foreground",
                       )}
                     >
-                      {time}
+                      {formatTime(entry.time)}
                     </span>
                   </div>
                 );

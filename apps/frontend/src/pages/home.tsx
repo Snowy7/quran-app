@@ -8,61 +8,85 @@ import {
   Bookmark,
   Flame,
   Settings,
-  Clock,
   Sparkles,
   Sunrise,
+  Clock,
 } from "lucide-react";
 import { Button, Card, CardContent } from "@template/ui";
 import { cn } from "@/lib/utils";
 import { useChapters } from "@/lib/api/chapters";
 import { getLastRead, type ReadingHistoryEntry } from "@/lib/db";
 import { getDueReviews, getTotalProgress, getStreak } from "@/lib/db/hifz";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, type TranslationKey } from "@/lib/i18n";
+import { usePrayerTimes, type PrayerName } from "@/lib/hooks/use-prayer-times";
 
-function getGreetingKey(): string {
+const GREETING_KEYS: Record<string, TranslationKey> = {
+  peace: "greetingPeace",
+  morning: "greetingMorning",
+  afternoon: "greetingAfternoon",
+  evening: "greetingEvening",
+};
+
+function getGreetingKey(): TranslationKey {
   const hour = new Date().getHours();
-  if (hour < 5) return "greetingPeace";
-  if (hour < 12) return "greetingMorning";
-  if (hour < 17) return "greetingAfternoon";
-  if (hour < 21) return "greetingEvening";
-  return "greetingPeace";
+  if (hour < 5) return GREETING_KEYS.peace;
+  if (hour < 12) return GREETING_KEYS.morning;
+  if (hour < 17) return GREETING_KEYS.afternoon;
+  if (hour < 21) return GREETING_KEYS.evening;
+  return GREETING_KEYS.peace;
 }
+
+const PRAYER_LABEL_KEYS: Record<PrayerName, TranslationKey> = {
+  Fajr: "fajr",
+  Sunrise: "sunrise",
+  Dhuhr: "dhuhr",
+  Asr: "asr",
+  Maghrib: "maghrib",
+  Isha: "isha",
+};
 
 const DAILY_VERSES = [
   {
     key: "2:286",
-    arabic: "لَا يُكَلِّفُ ٱللَّهُ نَفْسًا إِلَّا وُسْعَهَا",
+    arabic:
+      "\u0644\u0627 \u064A\u0643\u0644\u0641 \u0627\u0644\u0644\u0647 \u0646\u0641\u0633\u064B\u0627 \u0625\u0644\u0627 \u0648\u0633\u0639\u0647\u0627",
     translation: "Allah does not burden a soul beyond that it can bear.",
   },
   {
     key: "94:5",
-    arabic: "فَإِنَّ مَعَ ٱلْعُسْرِ يُسْرًا",
+    arabic:
+      "\u0641\u0625\u0646 \u0645\u0639 \u0627\u0644\u0639\u0633\u0631 \u064A\u0633\u0631\u064B\u0627",
     translation: "For indeed, with hardship comes ease.",
   },
   {
     key: "2:152",
-    arabic: "فَٱذْكُرُونِىٓ أَذْكُرْكُمْ",
+    arabic:
+      "\u0641\u0627\u0630\u0643\u0631\u0648\u0646\u064A \u0623\u0630\u0643\u0631\u0643\u0645",
     translation: "So remember Me; I will remember you.",
   },
   {
     key: "3:139",
-    arabic: "وَلَا تَهِنُوا۟ وَلَا تَحْزَنُوا۟ وَأَنتُمُ ٱلْأَعْلَوْنَ",
+    arabic:
+      "\u0648\u0644\u0627 \u062A\u0647\u0646\u0648\u0627 \u0648\u0644\u0627 \u062A\u062D\u0632\u0646\u0648\u0627 \u0648\u0623\u0646\u062A\u0645 \u0627\u0644\u0623\u0639\u0644\u0648\u0646",
     translation: "Do not weaken and do not grieve, for you are superior.",
   },
   {
     key: "13:28",
-    arabic: "أَلَا بِذِكْرِ ٱللَّهِ تَطْمَئِنُّ ٱلْقُلُوبُ",
+    arabic:
+      "\u0623\u0644\u0627 \u0628\u0630\u0643\u0631 \u0627\u0644\u0644\u0647 \u062A\u0637\u0645\u0626\u0646 \u0627\u0644\u0642\u0644\u0648\u0628",
     translation: "Verily, in the remembrance of Allah do hearts find rest.",
   },
   {
     key: "65:3",
-    arabic: "وَمَن يَتَوَكَّلْ عَلَى ٱللَّهِ فَهُوَ حَسْبُهُ",
+    arabic:
+      "\u0648\u0645\u0646 \u064A\u062A\u0648\u0643\u0644 \u0639\u0644\u0649 \u0627\u0644\u0644\u0647 \u0641\u0647\u0648 \u062D\u0633\u0628\u0647",
     translation:
-      "And whoever relies upon Allah — then He is sufficient for him.",
+      "And whoever relies upon Allah \u2014 then He is sufficient for him.",
   },
   {
     key: "39:53",
-    arabic: "لَا تَقْنَطُوا۟ مِن رَّحْمَةِ ٱللَّهِ",
+    arabic:
+      "\u0644\u0627 \u062A\u0642\u0646\u0637\u0648\u0627 \u0645\u0646 \u0631\u062D\u0645\u0629 \u0627\u0644\u0644\u0647",
     translation: "Do not despair of the mercy of Allah.",
   },
 ];
@@ -73,6 +97,10 @@ function getDailyVerse() {
       86400000,
   );
   return DAILY_VERSES[dayOfYear % DAILY_VERSES.length];
+}
+
+function formatPrayerTime(date: Date): string {
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
 export default function HomePage() {
@@ -86,6 +114,15 @@ export default function HomePage() {
     total: 6236,
     memorized: 0,
   });
+
+  const {
+    prayers,
+    nextPrayer,
+    nextPrayerTime,
+    countdown,
+    loading: prayerLoading,
+    error: prayerError,
+  } = usePrayerTimes();
 
   useEffect(() => {
     getLastRead().then((r) => setLastRead(r ?? null));
@@ -138,7 +175,7 @@ export default function HomePage() {
         {/* Greeting */}
         <div>
           <p className="text-lg font-semibold text-foreground">
-            {t(greetingKey as any)}
+            {t(greetingKey)}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
             {t("mayDayBeBlessed")}
@@ -247,56 +284,128 @@ export default function HomePage() {
           </Link>
         </div>
 
-        {/* Hifz + Prayer Times row */}
-        <div className="grid grid-cols-2 gap-2.5">
-          {/* Hifz Review */}
-          <Link to="/hifz">
-            <Card className="border-0 shadow-card hover:shadow-soft transition-shadow h-full">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 shrink-0">
-                    <Brain className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+        {/* Prayer Times Card */}
+        <Link to="/prayer-times">
+          <Card className="border-0 shadow-card hover:shadow-soft transition-shadow overflow-hidden">
+            <CardContent className="p-0">
+              <div className="relative px-5 py-4">
+                <div className="absolute inset-0 bg-gradient-to-br from-sky-500/[0.04] via-transparent to-blue-500/[0.04]" />
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 shrink-0">
+                        <Sunrise className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm text-foreground">
+                          {t("prayerTimes")}
+                        </p>
+                        {nextPrayer && !prayerLoading && !prayerError ? (
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            {t("nextPrayerLabel")}:{" "}
+                            {t(PRAYER_LABEL_KEYS[nextPrayer])}
+                          </p>
+                        ) : prayerLoading ? (
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            {t("viewSchedule")}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {nextPrayerTime && !prayerLoading && !prayerError && (
+                      <div className="text-right">
+                        <p className="text-sm font-bold tabular-nums text-foreground">
+                          {formatPrayerTime(nextPrayerTime)}
+                        </p>
+                        {countdown && (
+                          <p className="text-[11px] font-medium tabular-nums text-primary mt-0.5 font-mono">
+                            {countdown}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {streak > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
-                      <Flame className="h-2.5 w-2.5" />
-                      {streak}
-                    </span>
+
+                  {/* Mini prayer timeline */}
+                  {prayers.length > 0 && !prayerLoading && !prayerError && (
+                    <div className="flex items-center gap-1">
+                      {prayers
+                        .filter((p) => p.name !== "Sunrise")
+                        .map((p) => {
+                          const isPast = p.time < new Date();
+                          const isNext = p.name === nextPrayer;
+                          return (
+                            <div
+                              key={p.name}
+                              className="flex-1 flex flex-col items-center gap-1"
+                            >
+                              <div
+                                className={cn(
+                                  "h-1 w-full rounded-full transition-colors",
+                                  isNext
+                                    ? "bg-primary"
+                                    : isPast
+                                      ? "bg-primary/25"
+                                      : "bg-muted-foreground/10",
+                                )}
+                              />
+                              <span
+                                className={cn(
+                                  "text-[9px] font-medium",
+                                  isNext
+                                    ? "text-primary font-bold"
+                                    : isPast
+                                      ? "text-muted-foreground/50"
+                                      : "text-muted-foreground/70",
+                                )}
+                              >
+                                {t(PRAYER_LABEL_KEYS[p.name]).slice(0, 3)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                    </div>
                   )}
                 </div>
-                <p className="font-semibold text-sm text-foreground">
-                  {t("memorization")}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                  {dueCount > 0
-                    ? `${dueCount} ${dueCount !== 1 ? t("verses") : t("verse")} due`
-                    : totalProgress.memorized > 0
-                      ? `${totalProgress.memorized} ${t("versesMemorized")}`
-                      : t("startTracking")}
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
-          {/* Prayer Times */}
-          <Link to="/prayer-times">
-            <Card className="border-0 shadow-card hover:shadow-soft transition-shadow h-full">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 shrink-0">
-                    <Sunrise className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-                  </div>
+        {/* Hifz Card */}
+        <Link to="/hifz">
+          <Card className="border-0 shadow-card hover:shadow-soft transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 shrink-0">
+                  <Brain className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                 </div>
-                <p className="font-semibold text-sm text-foreground">
-                  {t("prayerTimes")}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {t("viewSchedule")}
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-sm text-foreground">
+                      {t("memorization")}
+                    </p>
+                    {streak > 0 && (
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
+                        <Flame className="h-2.5 w-2.5" />
+                        {streak}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                    {dueCount > 0
+                      ? `${dueCount} ${dueCount !== 1 ? t("verses") : t("verse")} due`
+                      : totalProgress.memorized > 0
+                        ? `${totalProgress.memorized} ${t("versesMemorized")}`
+                        : t("startTracking")}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
         {/* Verse of the Day */}
         <div>

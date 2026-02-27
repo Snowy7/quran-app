@@ -102,7 +102,12 @@ export function useContentWidth(): ContentWidthOption {
   useEffect(() => {
     if (!cachedWidth) {
       getSetting<string>("contentWidth", "100").then((v) => {
-        notifyWidth((v as ContentWidthOption) || "100");
+        const valid: ContentWidthOption[] = ["100", "90", "80", "70"];
+        notifyWidth(
+          valid.includes(v as ContentWidthOption)
+            ? (v as ContentWidthOption)
+            : "100",
+        );
       });
     }
 

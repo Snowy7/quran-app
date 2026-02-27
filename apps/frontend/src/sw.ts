@@ -1,11 +1,7 @@
 /// <reference lib="webworker" />
 import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
 import { registerRoute } from "workbox-routing";
-import {
-  CacheFirst,
-  StaleWhileRevalidate,
-  NetworkFirst,
-} from "workbox-strategies";
+import { CacheFirst, StaleWhileRevalidate } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 
 declare let self: ServiceWorkerGlobalScope;
@@ -41,20 +37,6 @@ registerRoute(
       new ExpirationPlugin({
         maxEntries: 500,
         maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-      }),
-    ],
-  }),
-);
-
-// Prayer Times API — network-first
-registerRoute(
-  ({ url }) => url.origin === "https://api.aladhan.com",
-  new NetworkFirst({
-    cacheName: "prayer-times",
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 10,
-        maxAgeSeconds: 60 * 60 * 24,
       }),
     ],
   }),

@@ -1,21 +1,24 @@
-import { useState, useEffect } from 'react';
-import { X, Download, Share, Plus } from 'lucide-react';
-import { Button } from '@template/ui';
-import { useUIStore, triggerPWAInstall } from '@/lib/stores/ui-store';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from "react";
+import { X, Download, Share, Plus } from "lucide-react";
+import { Button } from "@template/ui";
+import { useUIStore, triggerPWAInstall } from "@/lib/stores/ui-store";
+import { cn } from "@/lib/utils";
 
 // Detect iOS
 function isIOS(): boolean {
-  if (typeof window === 'undefined') return false;
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  if (typeof window === "undefined") return false;
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) && !("MSStream" in window)
+  );
 }
 
 // Detect if running as standalone PWA
 function isStandalone(): boolean {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === "undefined") return false;
+  const nav = window.navigator as Navigator & { standalone?: boolean };
   return (
-    window.matchMedia('(display-mode: standalone)').matches ||
-    (window.navigator as any).standalone === true
+    window.matchMedia("(display-mode: standalone)").matches ||
+    nav.standalone === true
   );
 }
 
@@ -96,7 +99,9 @@ export function InstallPrompt() {
   // Show iOS instructions prompt
   if (ios && !showIOSInstructions) {
     // Check localStorage to see if user dismissed before
-    const dismissedBefore = typeof localStorage !== 'undefined' && localStorage.getItem('pwa-ios-dismissed');
+    const dismissedBefore =
+      typeof localStorage !== "undefined" &&
+      localStorage.getItem("pwa-ios-dismissed");
     if (dismissedBefore) return null;
 
     return (
@@ -114,7 +119,7 @@ export function InstallPrompt() {
             </div>
             <button
               onClick={() => {
-                localStorage.setItem('pwa-ios-dismissed', 'true');
+                localStorage.setItem("pwa-ios-dismissed", "true");
                 setDismissed(true);
               }}
               className="p-1 rounded-lg hover:bg-secondary"
@@ -128,7 +133,7 @@ export function InstallPrompt() {
               size="sm"
               className="flex-1"
               onClick={() => {
-                localStorage.setItem('pwa-ios-dismissed', 'true');
+                localStorage.setItem("pwa-ios-dismissed", "true");
                 setDismissed(true);
               }}
             >
@@ -157,7 +162,7 @@ export function InstallPrompt() {
             <button
               onClick={() => {
                 setShowIOSInstructions(false);
-                localStorage.setItem('pwa-ios-dismissed', 'true');
+                localStorage.setItem("pwa-ios-dismissed", "true");
                 setDismissed(true);
               }}
               className="p-1 rounded-lg hover:bg-secondary"
@@ -210,7 +215,7 @@ export function InstallPrompt() {
             className="w-full mt-6"
             onClick={() => {
               setShowIOSInstructions(false);
-              localStorage.setItem('pwa-ios-dismissed', 'true');
+              localStorage.setItem("pwa-ios-dismissed", "true");
               setDismissed(true);
             }}
           >
@@ -240,7 +245,9 @@ export function InstallAppButton() {
         <Download className="w-5 h-5 text-primary" />
         <div>
           <p className="font-medium text-primary">App Installed</p>
-          <p className="text-xs text-muted-foreground">You're using the installed version</p>
+          <p className="text-xs text-muted-foreground">
+            You're using the installed version
+          </p>
         </div>
       </div>
     );
@@ -325,12 +332,17 @@ export function InstallAppButton() {
                   </div>
                   <div>
                     <p className="font-medium">Tap Add</p>
-                    <p className="text-sm text-muted-foreground">Confirm installation</p>
+                    <p className="text-sm text-muted-foreground">
+                      Confirm installation
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <Button className="w-full mt-6" onClick={() => setShowIOSModal(false)}>
+              <Button
+                className="w-full mt-6"
+                onClick={() => setShowIOSModal(false)}
+              >
                 Got it
               </Button>
             </div>

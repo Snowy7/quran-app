@@ -43,6 +43,9 @@ importers:
       '@template/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      adhan:
+        specifier: ^4.4.3
+        version: 4.4.3
       clsx:
         specifier: ^2.1.0
         version: 2.1.1
@@ -1888,6 +1891,9 @@ packages:
     resolution: {integrity: sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
+
+  adhan@4.4.3:
+    resolution: {integrity: sha512-568KkQd8OMLUj7o7+d2FDcm6vZHWQrE7vsm/Evssh8sfUDpPyaboj3PVsScZAr7L7sNRgPrtLMmDZZfM7VeAYw==}
 
   ajv@8.17.1:
     resolution: {integrity: sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==}
@@ -5206,6 +5212,8 @@ snapshots:
       - supports-color
 
   acorn@8.15.0: {}
+
+  adhan@4.4.3: {}
 
   ajv@8.17.1:
     dependencies:

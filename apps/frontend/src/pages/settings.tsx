@@ -53,12 +53,20 @@ export default function SettingsPage() {
     getSetting<number>("arabicFontSize", 28).then(setArabicFontSize);
     getSetting<number>("translationFontSize", 16).then(setTranslationFontSize);
     getSetting<boolean>("autoPlayNext", true).then(setAutoPlayNext);
-    getSetting<string>("contentWidth", "100").then((v) =>
-      setContentWidth((v as ContentWidthOption) || "100"),
-    );
+    getSetting<string>("contentWidth", "100").then((v) => {
+      const valid: ContentWidthOption[] = ["100", "90", "80", "70"];
+      setContentWidth(
+        valid.includes(v as ContentWidthOption)
+          ? (v as ContentWidthOption)
+          : "100",
+      );
+    });
   }, []);
 
-  const updateSetting = async (key: string, value: unknown) => {
+  const updateSetting = async (
+    key: string,
+    value: string | number | boolean,
+  ) => {
     await setSetting(key, value);
   };
 
