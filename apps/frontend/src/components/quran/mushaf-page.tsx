@@ -16,9 +16,9 @@ const BISMILLAH_TEXT =
 
 const PAGE_STYLES = {
   container:
-    'relative bg-card border border-border/40 rounded-xl mx-auto overflow-hidden shadow-sm',
-  content: 'flex h-full w-full flex-col justify-between px-4 py-5 sm:px-6 sm:py-7',
-  lines: 'flex-1 flex flex-col justify-center gap-1',
+    'relative mx-auto rounded-2xl border border-primary/20 bg-card/90 shadow-[0_10px_40px_-18px_rgba(0,0,0,0.55)]',
+  content: 'flex h-full w-full flex-col justify-between px-4 py-5 sm:px-8 sm:py-8',
+  lines: 'mushaf-page-lines flex flex-1 flex-col justify-between overflow-visible',
 } as const;
 
 export function MushafPage({ pageNumber, chapters }: MushafPageProps) {
@@ -42,7 +42,7 @@ export function MushafPage({ pageNumber, chapters }: MushafPageProps) {
     <article
       className={PAGE_STYLES.container}
       style={{
-        width: 'var(--mushaf-page-width, min(95vw, 720px))',
+        width: 'var(--mushaf-page-width, min(96vw, 980px))',
         aspectRatio: '3 / 4.5',
       }}
       data-page={pageNumber}
@@ -70,8 +70,10 @@ export function MushafPage({ pageNumber, chapters }: MushafPageProps) {
           ))}
         </div>
 
-        <footer className="text-center mt-3 pt-3 border-t border-border/20">
-          <span className="text-[11px] text-muted-foreground tabular-nums">Page {pageNumber}</span>
+        <footer className="mt-2 border-t border-primary/15 pt-2 text-center">
+          <span className="text-[10px] tabular-nums tracking-[0.12em] text-muted-foreground/80">
+            PAGE {pageNumber}
+          </span>
         </footer>
       </div>
     </article>
@@ -91,14 +93,14 @@ function MushafChapterHeader({
   const surahName = chapter?.name_arabic ?? `Surah ${chapterId}`;
 
   return (
-    <div className="mushaf-surah-header my-2">
+    <div className="mushaf-surah-header my-1">
       <div className="relative flex items-center justify-center py-2">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-primary/20" />
+          <div className="w-full border-t border-primary/25" />
         </div>
-        <div className="relative bg-card px-4">
+        <div className="relative bg-card/95 px-5">
           <span
-            className="text-lg font-medium text-primary"
+            className="text-xl font-medium text-primary/95"
             dir="rtl"
             style={{
               fontFamily: "'surah_names', 'Scheherazade New', 'quran_common', serif",
@@ -112,11 +114,11 @@ function MushafChapterHeader({
 
       {showBismillah && (
         <p
-          className="text-center py-1 text-foreground/80"
+          className="py-1 text-center text-foreground/80"
           dir="rtl"
           style={{
-            fontFamily: "'Scheherazade New', 'quran_common', serif",
-            fontSize: '28px',
+            fontFamily: "'bismillah', 'Scheherazade New', 'quran_common', serif",
+            fontSize: 'clamp(28px, 2.4vw, 40px)',
             lineHeight: 'normal',
           }}
         >
@@ -132,7 +134,7 @@ function MushafPageSkeleton({ pageNumber }: { pageNumber: number }) {
     <div
       className={`${PAGE_STYLES.container} mx-auto`}
       style={{
-        width: 'var(--mushaf-page-width, min(95vw, 720px))',
+        width: 'var(--mushaf-page-width, min(96vw, 980px))',
         aspectRatio: '3 / 4.5',
       }}
     >

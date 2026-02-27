@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { getPageFontFamily } from '@/lib/fonts/mushaf-font-loader';
+import { isCenterAlignedLine } from '@/lib/fonts/page-alignment';
 import type { AnnotatedWord } from '@/lib/fonts/group-lines';
 import { useAudioStore } from '@/lib/stores/audio-store';
 
@@ -24,22 +25,25 @@ export function MushafLine({
     : "'quran_common', serif";
 
   const lineWords = words;
+  const centerAligned = isCenterAlignedLine(pageNumber, lineNumber);
 
   return (
     <div
       className={cn(
-        'mushaf-line mx-auto flex flex-nowrap items-baseline overflow-hidden px-1 py-0.5 text-center',
+        'mushaf-line mx-auto flex w-full flex-nowrap items-end px-1 py-0.5',
+        centerAligned && 'justify-center',
       )}
       dir="rtl"
       data-line={lineNumber}
       data-page={pageNumber}
       style={{
         fontFamily,
-        fontSize: 'var(--mushaf-font-size, 28px)',
-        lineHeight: 'var(--mushaf-line-height, normal)',
-        width: 'var(--mushaf-line-width, 100%)',
-        justifyContent: 'flex-start',
-        columnGap: '0.42em',
+        fontSize: 'var(--mushaf-font-size, 42px)',
+        lineHeight: 'var(--mushaf-line-height, 1.88)',
+        width: centerAligned ? 'fit-content' : 'var(--mushaf-line-width, 100%)',
+        maxWidth: '100%',
+        justifyContent: centerAligned ? 'center' : 'flex-start',
+        columnGap: '0.08em',
       }}
     >
       {lineWords.map((word) => {
@@ -52,7 +56,7 @@ export function MushafLine({
           <span
             key={`${word.id}-${word.position}-${word.verseKey}`}
             className={cn(
-              'mushaf-word inline-block whitespace-nowrap leading-none transition-colors duration-200',
+              'mushaf-word inline-block whitespace-nowrap align-baseline transition-colors duration-200',
               isAudioHighlighted && 'text-primary',
               !fontLoaded && 'opacity-40',
             )}

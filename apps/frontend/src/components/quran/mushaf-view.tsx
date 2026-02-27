@@ -48,13 +48,13 @@ export function MushafView({ chapterId, startPage, endPage }: MushafViewProps) {
 
   return (
     <div
-      className="mushaf-view quran-reader-flow min-h-[calc(100vh-120px)] space-y-4 px-3 py-5 sm:px-4"
+      className="mushaf-view quran-reader-flow min-h-[calc(100vh-120px)] space-y-5 px-2 py-4 sm:px-4"
       dir="rtl"
       style={{
-        '--mushaf-font-size': 'clamp(20px, 1.6vw, 24px)',
-        '--mushaf-line-height': 'normal',
-        '--mushaf-line-width': '90%',
-        '--mushaf-page-width': 'min(95vw, 720px)',
+        '--mushaf-font-size': 'clamp(32px, 2.35vw, 46px)',
+        '--mushaf-line-height': '1.9',
+        '--mushaf-line-width': '100%',
+        '--mushaf-page-width': 'min(96vw, 980px)',
       } as Record<string, string>}
     >
       {pageNumbers.map((pageNumber) => (
@@ -88,7 +88,7 @@ function MushafPagePlaceholder({ pageNumber }: { pageNumber: number }) {
   return (
     <div
       className="mx-auto flex h-full items-center justify-center rounded-xl border border-border/20 bg-card/50"
-      style={{ width: 'var(--mushaf-page-width, min(95vw, 720px))', aspectRatio: '3 / 4.5' }}
+      style={{ width: 'var(--mushaf-page-width, min(96vw, 980px))', aspectRatio: '3 / 4.5' }}
     >
       <span className="text-xs text-muted-foreground/60 tabular-nums">Page {pageNumber}</span>
     </div>

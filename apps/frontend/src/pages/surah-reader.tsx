@@ -63,6 +63,7 @@ export default function SurahReaderPage() {
 
   const headerSubtitle =
     !isJuzView && !isPageView && chapter ? `${chapter.translated_name.name}` : undefined;
+  const isMushafMode = readingMode === 'mushaf';
 
   const handleModeChange = (mode: string) => {
     setReadingMode(mode);
@@ -77,6 +78,7 @@ export default function SurahReaderPage() {
         title={headerTitle}
         subtitle={headerSubtitle}
         showBack
+        className={isMushafMode ? 'border-b border-primary/15 bg-background/90' : undefined}
         rightContent={
           <Button
             variant="ghost"
@@ -90,8 +92,8 @@ export default function SurahReaderPage() {
         }
       />
 
-      <div className="px-5 md:px-8">
-        <div className="py-3">
+      <div className={isMushafMode ? 'px-3 md:px-5' : 'px-5 md:px-8'}>
+        <div className={isMushafMode ? 'mx-auto max-w-[980px] py-3' : 'py-3'}>
           <ReadingModeToggle mode={readingMode} onModeChange={handleModeChange} />
         </div>
 
@@ -103,7 +105,7 @@ export default function SurahReaderPage() {
           </div>
         )}
 
-        {chapter && !isPageView && <SurahHeader chapter={chapter} />}
+        {chapter && !isPageView && !isMushafMode && <SurahHeader chapter={chapter} />}
       </div>
 
       {/* Translation mode */}

@@ -184,6 +184,28 @@
     line-height: 2;
   }
 
+  .mushaf-view {
+    background:
+      radial-gradient(140% 85% at 50% -10%, hsl(var(--primary) / 0.13), transparent 60%),
+      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.96) 100%);
+  }
+
+  .mushaf-page-lines {
+    min-height: 0;
+  }
+
+  .mushaf-line {
+    overflow: visible;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mushaf-word {
+    line-height: inherit;
+    padding-inline: 0.01em;
+    overflow: visible;
+  }
+
   /* Ayah number - minimal */
   .ayah-number {
     @apply inline-flex items-center justify-center;
