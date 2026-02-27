@@ -38,7 +38,8 @@ export function MushafLine({
         fontSize: 'var(--mushaf-font-size, 28px)',
         lineHeight: 'var(--mushaf-line-height, normal)',
         width: 'var(--mushaf-line-width, 100%)',
-        justifyContent: lineWords.length > 1 ? 'space-between' : 'center',
+        justifyContent: 'flex-start',
+        columnGap: '0.42em',
       }}
     >
       {lineWords.map((word) => {
