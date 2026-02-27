@@ -59,8 +59,8 @@ export function MushafView({ chapterId, startPage, endPage }: MushafViewProps) {
       className="mushaf-view quran-reader-flow min-h-[calc(100vh-120px)] space-y-5 px-2 py-4 sm:px-4"
       dir="rtl"
       style={{
-        '--mushaf-font-size': 'clamp(32px, 2.35vw, 46px)',
-        '--mushaf-line-height': '1.9',
+        '--mushaf-font-size': 'clamp(24px, 4.9vw, 42px)',
+        '--mushaf-line-height': '1.72',
         '--mushaf-line-width': '100%',
         '--mushaf-page-width': 'min(96vw, 980px)',
       } as Record<string, string>}

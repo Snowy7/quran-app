@@ -18,7 +18,7 @@ const PAGE_STYLES = {
   container:
     'relative mx-auto rounded-2xl border border-primary/20 bg-card/90 shadow-[0_10px_40px_-18px_rgba(0,0,0,0.55)]',
   content: 'flex h-full w-full flex-col justify-between px-4 py-5 sm:px-8 sm:py-8',
-  lines: 'mushaf-page-lines flex flex-1 flex-col justify-between overflow-visible',
+  lines: 'mushaf-page-lines flex flex-1 flex-col justify-start gap-1 overflow-visible',
 } as const;
 
 export function MushafPage({ pageNumber, chapters }: MushafPageProps) {

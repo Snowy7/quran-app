@@ -1,4 +1,3 @@
-import { useLayoutEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { getPageFontFamily } from '@/lib/fonts/mushaf-font-loader';
 import { isCenterAlignedLine } from '@/lib/fonts/page-alignment';
@@ -18,8 +17,6 @@ export function MushafLine({
   lineNumber,
   fontLoaded,
 }: MushafLineProps) {
-  const lineRef = useRef<HTMLDivElement>(null);
-  const [lineScale, setLineScale] = useState(1);
   const currentVerseKey = useAudioStore((s) => s.currentVerseKey);
   const isPlaying = useAudioStore((s) => s.isPlaying);
 
@@ -30,37 +27,10 @@ export function MushafLine({
   const lineWords = words;
   const centerAligned = isCenterAlignedLine(pageNumber, lineNumber);
 
-  useLayoutEffect(() => {
-    const node = lineRef.current;
-    if (!node) return;
-
-    const fitLine = () => {
-      const available = node.clientWidth;
-      const content = node.scrollWidth;
-      if (!available || !content) {
-        setLineScale(1);
-        return;
-      }
-
-      const rawScale = available / content;
-      const nextScale = rawScale >= 0.99 ? 1 : Math.max(0.93, rawScale);
-      setLineScale((prev) => (Math.abs(prev - nextScale) > 0.003 ? nextScale : prev));
-    };
-
-    fitLine();
-    const observer = new ResizeObserver(fitLine);
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [centerAligned, fontLoaded, lineNumber, pageNumber, words]);
-
   return (
     <div
-      ref={lineRef}
       className={cn(
-        'mushaf-line mx-auto flex w-full flex-nowrap items-end px-1 py-0.5',
+        'mushaf-line mx-auto flex w-full shrink-0 flex-nowrap items-end px-1 py-0.5',
         centerAligned && 'justify-center',
       )}
       dir="rtl"
@@ -74,8 +44,6 @@ export function MushafLine({
         maxWidth: '100%',
         justifyContent: centerAligned ? 'center' : 'flex-start',
         columnGap: '0.08em',
-        transform: lineScale < 1 ? `scaleX(${lineScale})` : undefined,
-        transformOrigin: centerAligned ? 'center center' : 'right center',
       }}
     >
       {lineWords.map((word) => {
