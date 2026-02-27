@@ -23,9 +23,7 @@ export function MushafLine({
     ? `'${getPageFontFamily(pageNumber)}'`
     : "'quran_common', serif";
 
-  const sortedWords = words
-    .slice()
-    .sort((a, b) => (a.position || 0) - (b.position || 0));
+  const lineWords = words;
 
   return (
     <div
@@ -40,10 +38,10 @@ export function MushafLine({
         fontSize: 'var(--mushaf-font-size, 28px)',
         lineHeight: 'var(--mushaf-line-height, normal)',
         width: 'var(--mushaf-line-width, 100%)',
-        justifyContent: sortedWords.length > 1 ? 'space-between' : 'center',
+        justifyContent: lineWords.length > 1 ? 'space-between' : 'center',
       }}
     >
-      {sortedWords.map((word) => {
+      {lineWords.map((word) => {
         const isAudioHighlighted = isPlaying && currentVerseKey === word.verseKey;
         const displayText = fontLoaded
           ? word.code_v2 || word.text_uthmani || word.text

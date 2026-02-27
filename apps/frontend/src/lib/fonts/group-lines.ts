@@ -26,50 +26,46 @@ export interface MushafLineData {
 export function groupWordsByLine(verses: Verse[]): MushafLineData[] {
   const lineMap = new Map<number, MushafLineData>();
 
-  const allWords = verses.flatMap((verse) => {
-    if (!verse.words) return [];
+  for (const verse of verses) {
+    if (!verse.words) continue;
 
     const chapterId = parseInt(verse.verse_key.split(':')[0], 10);
 
-    return verse.words.map((word) => ({
-      ...word,
-      verseKey: verse.verse_key,
-      verseNumber: verse.verse_number,
-      chapterId,
-    } as EnrichedWord));
-  });
+    for (const word of verse.words) {
+      let lineData = lineMap.get(word.line_number);
+      if (!lineData) {
+        lineData = {
+          lineNumber: word.line_number,
+          words: [],
+          verseKeys: new Set(),
+          startsNewChapter: false,
+        };
+        lineMap.set(word.line_number, lineData);
+      }
 
-  const sortedWords = allWords.sort((a, b) =>
-    a.line_number === b.line_number ? a.position - b.position : a.line_number - b.line_number,
-  );
+      const enrichedWord = {
+        ...word,
+        verseKey: verse.verse_key,
+        verseNumber: verse.verse_number,
+        chapterId,
+      } as EnrichedWord;
 
-  for (const word of sortedWords) {
-    let lineData = lineMap.get(word.line_number);
-    if (!lineData) {
-      lineData = {
-        lineNumber: word.line_number,
-        words: [],
-        verseKeys: new Set(),
-        startsNewChapter: false,
+      const annotated: AnnotatedWord = {
+        ...enrichedWord,
+        verseKey: enrichedWord.verseKey,
       };
-      lineMap.set(word.line_number, lineData);
-    }
+      lineData.words.push(annotated);
+      lineData.verseKeys.add(enrichedWord.verseKey);
 
-    const annotated: AnnotatedWord = {
-      ...word,
-      verseKey: word.verseKey,
-    };
-    lineData.words.push(annotated);
-    lineData.verseKeys.add(word.verseKey);
-
-    if (
-      word.verseNumber === 1 &&
-      word.position === 1 &&
-      word.char_type_name === 'word' &&
-      !lineData.startsNewChapter
-    ) {
-      lineData.startsNewChapter = true;
-      lineData.newChapterId = word.chapterId;
+      if (
+        enrichedWord.verseNumber === 1 &&
+        enrichedWord.position === 1 &&
+        enrichedWord.char_type_name === 'word' &&
+        !lineData.startsNewChapter
+      ) {
+        lineData.startsNewChapter = true;
+        lineData.newChapterId = enrichedWord.chapterId;
+      }
     }
   }
 
