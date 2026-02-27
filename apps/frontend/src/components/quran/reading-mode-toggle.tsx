@@ -8,15 +8,15 @@ interface ReadingModeToggleProps {
 export function ReadingModeToggle({ mode, onModeChange }: ReadingModeToggleProps) {
   return (
     <Tabs value={mode} onValueChange={onModeChange}>
-      <TabsList className="w-full">
-        <TabsTrigger value="translation" className="flex-1 text-xs">
+      <TabsList className="w-full bg-secondary/60 p-1 h-auto">
+        <TabsTrigger value="translation" className="flex-1 text-xs py-2">
           Translation
         </TabsTrigger>
-        <TabsTrigger value="mushaf" className="flex-1 text-xs" disabled>
-          Mushaf
-        </TabsTrigger>
-        <TabsTrigger value="word-by-word" className="flex-1 text-xs" disabled>
+        <TabsTrigger value="word-by-word" className="flex-1 text-xs py-2">
           Word by Word
+        </TabsTrigger>
+        <TabsTrigger value="mushaf" className="flex-1 text-xs py-2" disabled>
+          Mushaf
         </TabsTrigger>
       </TabsList>
     </Tabs>

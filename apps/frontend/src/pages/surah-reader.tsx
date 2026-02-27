@@ -1,27 +1,57 @@
-import { useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
-import { Skeleton } from '@template/ui';
+import { useState, useEffect } from 'react';
+import { useParams, useLocation, useSearchParams } from 'react-router-dom';
+import { Mic } from 'lucide-react';
+import { Button, Skeleton } from '@template/ui';
 import { AppHeader } from '@/components/layout/app-header';
 import { useChapters } from '@/lib/api/chapters';
 import { SurahHeader } from '@/components/quran/surah-header';
 import { ReadingModeToggle } from '@/components/quran/reading-mode-toggle';
 import { TranslationView } from '@/components/quran/translation-view';
+import { WordByWordView } from '@/components/quran/word-by-word-view';
+import { ReciterPicker } from '@/components/audio/reciter-picker';
+import { saveReadingPosition } from '@/lib/db/reading-history';
+import { getSetting } from '@/lib/db/settings';
 
 export default function SurahReaderPage() {
   const { surahId, juzId, pageId } = useParams();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [readingMode, setReadingMode] = useState('translation');
+  const [reciterPickerOpen, setReciterPickerOpen] = useState(false);
 
   const { data: chapters, isLoading: chaptersLoading } = useChapters();
 
-  // Determine what we're reading
   const isJuzView = location.pathname.includes('/juz/');
   const isPageView = location.pathname.includes('/page/');
 
   const chapterId = surahId ? parseInt(surahId, 10) : undefined;
   const chapter = chapters?.find((c) => c.id === chapterId);
 
-  // Header title
+  // Parse initial verse from query param (for scroll-to-verse from bookmarks)
+  const initialVerse = searchParams.get('verse')
+    ? parseInt(searchParams.get('verse')!, 10)
+    : undefined;
+
+  // Load persisted reading mode
+  useEffect(() => {
+    getSetting<string>('readingMode', 'translation').then((mode) => {
+      if (mode === 'translation' || mode === 'word-by-word') {
+        setReadingMode(mode);
+      }
+    });
+  }, []);
+
+  // Save reading position on mount (uses initial verse or 1)
+  useEffect(() => {
+    if (chapterId) {
+      saveReadingPosition(
+        chapterId,
+        initialVerse || 1,
+        readingMode as 'translation' | 'mushaf' | 'word-by-word',
+      ).catch(() => {});
+    }
+  }, [chapterId, readingMode, initialVerse]);
+
   const headerTitle = isJuzView
     ? `Juz ${juzId}`
     : isPageView
@@ -33,18 +63,36 @@ export default function SurahReaderPage() {
       ? `${chapter.translated_name.name}`
       : undefined;
 
+  const handleModeChange = (mode: string) => {
+    setReadingMode(mode);
+    import('@/lib/db/settings').then(({ setSetting }) => {
+      setSetting('readingMode', mode);
+    });
+  };
+
   return (
     <div className="page-container">
       <AppHeader
         title={headerTitle}
         subtitle={headerSubtitle}
         showBack
+        rightContent={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-muted-foreground hover:text-foreground"
+            onClick={() => setReciterPickerOpen(true)}
+          >
+            <Mic className="h-4 w-4" />
+            <span className="sr-only">Choose reciter</span>
+          </Button>
+        }
       />
 
       <div className="px-5 md:px-8">
         {/* Reading mode toggle */}
         <div className="py-3">
-          <ReadingModeToggle mode={readingMode} onModeChange={setReadingMode} />
+          <ReadingModeToggle mode={readingMode} onModeChange={handleModeChange} />
         </div>
 
         {/* Surah header card */}
@@ -59,12 +107,27 @@ export default function SurahReaderPage() {
         {chapter && <SurahHeader chapter={chapter} />}
       </div>
 
-      {/* Content area */}
+      {/* Translation mode */}
       {readingMode === 'translation' && chapterId && (
-        <TranslationView chapterId={chapterId} />
+        <TranslationView chapterId={chapterId} totalVerses={chapter?.verses_count} initialVerse={initialVerse} />
       )}
 
-      {readingMode === 'translation' && !chapterId && !chaptersLoading && (
+      {/* Word-by-word mode */}
+      {readingMode === 'word-by-word' && chapterId && (
+        <WordByWordView chapterId={chapterId} />
+      )}
+
+      {/* Mushaf mode placeholder */}
+      {readingMode === 'mushaf' && (
+        <div className="px-5 py-16 text-center">
+          <p className="text-muted-foreground text-sm">
+            Mushaf view coming soon
+          </p>
+        </div>
+      )}
+
+      {/* Error states */}
+      {readingMode !== 'mushaf' && !chapterId && !chaptersLoading && (
         <div className="px-5 py-12 text-center text-muted-foreground text-sm">
           {isJuzView
             ? 'Juz view is not yet available.'
@@ -73,6 +136,8 @@ export default function SurahReaderPage() {
               : 'Invalid surah ID.'}
         </div>
       )}
+
+      <ReciterPicker open={reciterPickerOpen} onOpenChange={setReciterPickerOpen} />
     </div>
   );
 }

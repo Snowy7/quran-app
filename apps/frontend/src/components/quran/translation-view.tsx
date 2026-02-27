@@ -1,14 +1,17 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Skeleton } from '@template/ui';
 import { useVersesByChapter } from '@/lib/api/verses';
+import { saveReadingPosition } from '@/lib/db/reading-history';
 import { Bismillah } from './bismillah';
 import { VerseCard } from './verse-card';
 
 interface TranslationViewProps {
   chapterId: number;
+  totalVerses?: number;
+  initialVerse?: number;
 }
 
-export function TranslationView({ chapterId }: TranslationViewProps) {
+export function TranslationView({ chapterId, totalVerses, initialVerse }: TranslationViewProps) {
   const {
     data,
     isLoading,
@@ -19,7 +22,11 @@ export function TranslationView({ chapterId }: TranslationViewProps) {
   } = useVersesByChapter(chapterId);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [highlightedVerse, setHighlightedVerse] = useState<number | undefined>(initialVerse);
+  const hasScrolled = useRef(false);
+  const lastSavedVerse = useRef(0);
 
+  // Infinite scroll observer
   const handleIntersect = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const [entry] = entries;
@@ -41,6 +48,75 @@ export function TranslationView({ chapterId }: TranslationViewProps) {
     observer.observe(el);
     return () => observer.disconnect();
   }, [handleIntersect]);
+
+  // Scroll to initial verse once data is loaded
+  useEffect(() => {
+    if (!initialVerse || hasScrolled.current || isLoading) return;
+
+    const verseKey = `${chapterId}:${initialVerse}`;
+    const el = document.getElementById(`verse-${verseKey}`);
+    if (el) {
+      hasScrolled.current = true;
+      // Small delay to ensure layout is settled
+      requestAnimationFrame(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Clear highlight after 3 seconds
+        setTimeout(() => setHighlightedVerse(undefined), 3000);
+      });
+    }
+  }, [initialVerse, chapterId, isLoading, data]);
+
+  // Track visible verse for reading position (debounced)
+  useEffect(() => {
+    const allVerses = data?.pages.flatMap((page) => page.verses) ?? [];
+    if (allVerses.length === 0) return;
+
+    const verseElements = allVerses
+      .map((v) => ({
+        verseNumber: v.verse_number,
+        el: document.getElementById(`verse-${chapterId}:${v.verse_number}`),
+      }))
+      .filter((v) => v.el !== null);
+
+    if (verseElements.length === 0) return;
+
+    let saveTimeout: ReturnType<typeof setTimeout>;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find the highest verse number that's currently visible
+        let maxVisible = 0;
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const verseNum = parseInt(
+              entry.target.id.replace(`verse-${chapterId}:`, ''),
+              10,
+            );
+            if (verseNum > maxVisible) maxVisible = verseNum;
+          }
+        }
+
+        if (maxVisible > 0 && maxVisible !== lastSavedVerse.current) {
+          lastSavedVerse.current = maxVisible;
+          // Debounce: save after 2 seconds of no further scroll
+          clearTimeout(saveTimeout);
+          saveTimeout = setTimeout(() => {
+            saveReadingPosition(chapterId, maxVisible, 'translation').catch(() => {});
+          }, 2000);
+        }
+      },
+      { threshold: 0.5 },
+    );
+
+    for (const { el } of verseElements) {
+      if (el) observer.observe(el);
+    }
+
+    return () => {
+      clearTimeout(saveTimeout);
+      observer.disconnect();
+    };
+  }, [chapterId, data]);
 
   if (isLoading) {
     return <TranslationViewSkeleton />;
@@ -65,6 +141,8 @@ export function TranslationView({ chapterId }: TranslationViewProps) {
           key={verse.id}
           verse={verse}
           chapterNumber={chapterId}
+          totalVerses={totalVerses}
+          isHighlighted={highlightedVerse === verse.verse_number}
         />
       ))}
 

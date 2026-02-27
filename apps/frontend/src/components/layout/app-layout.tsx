@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { BottomNav } from './bottom-nav';
+import { AudioPlayer } from '@/components/audio/audio-player';
 import { InstallPrompt, ReloadPrompt } from '@/components/pwa';
 import { initializeDatabase } from '@/lib/db';
 import { initializeNetworkListener, initializePWAInstallListener } from '@/lib/stores/ui-store';
@@ -21,10 +22,11 @@ export function AppLayout() {
   return (
     <div className="min-h-screen bg-background">
       <main className="flex-1 min-w-0">
-        <div className="mx-auto max-w-3xl pb-24">
+        <div className="mx-auto max-w-3xl pb-[72px] lg:pb-6">
           <Outlet />
         </div>
       </main>
+      <AudioPlayer />
       <BottomNav />
       <InstallPrompt />
       <ReloadPrompt />
