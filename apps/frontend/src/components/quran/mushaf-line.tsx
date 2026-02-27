@@ -1,5 +1,4 @@
 import { cn } from '@/lib/utils';
-import { getPageFontFamily } from '@/lib/fonts/mushaf-font-loader';
 import type { AnnotatedWord } from '@/lib/fonts/group-lines';
 import { useAudioStore } from '@/lib/stores/audio-store';
 
@@ -12,16 +11,16 @@ interface MushafLineProps {
 
 export function MushafLine({
   words,
-  pageNumber,
+  pageNumber: _pageNumber,
   lineNumber,
-  fontLoaded,
+  fontLoaded: _fontLoaded,
 }: MushafLineProps) {
   const currentVerseKey = useAudioStore((s) => s.currentVerseKey);
   const isPlaying = useAudioStore((s) => s.isPlaying);
 
-  const fontFamily = fontLoaded
-    ? `'${getPageFontFamily(pageNumber)}'`
-    : "'quran_common', serif";
+  // Temporary safety: always render readable Uthmani text until
+  // per-page glyph font mapping is fully aligned with quran.com assets.
+  const fontFamily = "'Scheherazade New', 'quran_common', serif";
 
   const sortedWords = words
     .slice()
@@ -35,7 +34,6 @@ export function MushafLine({
       )}
       dir="rtl"
       data-line={lineNumber}
-      data-page={pageNumber}
       style={{
         fontFamily,
         fontSize: 'var(--mushaf-font-size, 28px)',
@@ -46,10 +44,7 @@ export function MushafLine({
       {sortedWords.map((word) => {
         const isAudioHighlighted =
           isPlaying && currentVerseKey === word.verseKey;
-        const displayText =
-          fontLoaded
-            ? word.code_v2 || word.text_uthmani || word.text
-            : word.text_uthmani || word.code_v2 || word.text;
+        const displayText = word.text_uthmani || word.text || word.code_v2;
 
         return (
           <span
@@ -57,7 +52,6 @@ export function MushafLine({
             className={cn(
               'mushaf-word inline-block transition-colors duration-200',
               isAudioHighlighted && 'text-primary',
-              !fontLoaded && 'opacity-40',
             )}
             data-word-position={word.position}
             data-verse-key={word.verseKey}
