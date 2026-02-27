@@ -14,7 +14,7 @@ export function Bismillah({ chapterId }: BismillahProps) {
         <p
           className="arabic-text text-2xl text-foreground/80 leading-loose"
           dir="rtl"
-          style={{ fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', serif" }}
+          style={{ fontFamily: "'Scheherazade New', 'quran_common', serif" }}
         >
           بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
         </p>

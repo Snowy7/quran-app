@@ -11,38 +11,40 @@
    Noor Quran App - Clean Minimal Design
    ===================================== */
 
-/* Amiri Quran - local, offline-ready (primary Quran text font) */
+/* quran.com fonts — used for mushaf view and Arabic text */
+
+/* Common Quran font — fallback for Arabic text and mushaf loading states */
 @font-face {
-  font-family: 'Amiri Quran';
-  src: url('/fonts/AmiriQuranColored.ttf') format('truetype');
+  font-family: 'quran_common';
+  src: url('/fonts/quran/common/quran_common.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
-/* Amiri - local, offline-ready (general Arabic text) */
+
+/* Surah Names — decorative mushaf surah title font */
 @font-face {
-  font-family: 'Amiri';
-  src: url('/fonts/Amiri-Regular.ttf') format('truetype');
+  font-family: 'surah_names';
+  src: url('/fonts/quran/surah-names/surah_names.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
-/* UthmanTN - authentic Mushaf Uthmani font (used by mushaf per-page view) */
+
+/* Bismillah — decorative font for بسم الله الرحمن الرحيم */
 @font-face {
-  font-family: 'UthmanTN';
-  src: url('/fonts/UthmanTN_v2-0.ttf') format('truetype');
+  font-family: 'bismillah';
+  src: url('/fonts/quran/bismillah/bismillah.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
-/* Surah Names - decorative mushaf surah title font */
-@font-face {
-  font-family: 'SurahNames';
-  src: url('/fonts/SurahNames.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+
+/*
+ * Per-page QCF V2 mushaf fonts (p1-v2 through p604-v2) are loaded
+ * dynamically via the FontFace API in mushaf-font-loader.ts.
+ * They are NOT declared here.
+ */
 
 @layer base {
   /* =====================================
@@ -148,23 +150,23 @@
 
 @layer components {
   .arabic-text {
-    font-family: 'Amiri Quran', 'Amiri', 'Scheherazade New', serif;
+    font-family: 'Scheherazade New', 'quran_common', serif;
     direction: rtl;
     text-align: right;
     line-height: 2.2;
   }
 
   .arabic-uthmani {
-    font-family: 'Amiri Quran', 'Amiri', 'Scheherazade New', serif;
+    font-family: 'Scheherazade New', 'quran_common', serif;
   }
 
   .arabic-scheherazade {
-    font-family: 'Scheherazade New', 'Amiri Quran', serif;
+    font-family: 'Scheherazade New', 'quran_common', serif;
   }
 
-  /* Mushaf page text - authentic Uthmani font */
+  /* Mushaf page text - per-page QCF font (set dynamically) */
   .mushaf-text {
-    font-family: 'UthmanTN', serif;
+    font-family: 'quran_common', serif;
     direction: rtl;
     text-align: right;
     line-height: 2;
@@ -385,7 +387,7 @@
 }
 
 .tafsir-content[dir="rtl"] {
-  font-family: 'Almarai', 'Amiri', sans-serif;
+  font-family: 'Almarai', 'Scheherazade New', sans-serif;
   line-height: 1.9;
 }
 

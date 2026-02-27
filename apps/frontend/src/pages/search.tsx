@@ -159,7 +159,7 @@ export default function SearchPage() {
                     <p
                       className="text-base leading-[2] text-foreground line-clamp-2"
                       dir="rtl"
-                      style={{ fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', serif" }}
+                      style={{ fontFamily: "'Scheherazade New', 'quran_common', serif" }}
                     >
                       {result.text}
                     </p>

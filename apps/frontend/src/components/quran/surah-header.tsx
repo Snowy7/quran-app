@@ -18,7 +18,7 @@ export function SurahHeader({ chapter, className }: SurahHeaderProps) {
       <h2
         className="text-3xl leading-relaxed text-foreground mb-2"
         dir="rtl"
-        style={{ fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', serif" }}
+        style={{ fontFamily: "'Scheherazade New', 'quran_common', serif" }}
       >
         {chapter.name_arabic}
       </h2>

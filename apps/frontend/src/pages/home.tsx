@@ -218,7 +218,7 @@ export default function HomePage() {
                 <p
                   className="text-[1.35rem] leading-[2.2] text-foreground text-center mb-3"
                   dir="rtl"
-                  style={{ fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', serif" }}
+                  style={{ fontFamily: "'Scheherazade New', 'quran_common', serif" }}
                 >
                   {dailyVerse.arabic}
                 </p>

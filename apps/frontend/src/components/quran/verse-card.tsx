@@ -175,7 +175,7 @@ export function VerseCard({ verse, chapterNumber, totalVerses, isHighlighted }: 
             className="leading-[2.3] text-foreground mb-4"
             dir="rtl"
             style={{
-              fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', serif",
+              fontFamily: "'Scheherazade New', 'quran_common', serif",
               fontSize: `${arabicFontSize}px`,
             }}
           >

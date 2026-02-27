@@ -8,6 +8,7 @@ import { SurahHeader } from '@/components/quran/surah-header';
 import { ReadingModeToggle } from '@/components/quran/reading-mode-toggle';
 import { TranslationView } from '@/components/quran/translation-view';
 import { WordByWordView } from '@/components/quran/word-by-word-view';
+import { MushafView } from '@/components/quran/mushaf-view';
 import { ReciterPicker } from '@/components/audio/reciter-picker';
 import { saveReadingPosition } from '@/lib/db/reading-history';
 import { getSetting } from '@/lib/db/settings';
@@ -35,7 +36,7 @@ export default function SurahReaderPage() {
   // Load persisted reading mode
   useEffect(() => {
     getSetting<string>('readingMode', 'translation').then((mode) => {
-      if (mode === 'translation' || mode === 'word-by-word') {
+      if (mode === 'translation' || mode === 'word-by-word' || mode === 'mushaf') {
         setReadingMode(mode);
       }
     });
@@ -117,17 +118,13 @@ export default function SurahReaderPage() {
         <WordByWordView chapterId={chapterId} />
       )}
 
-      {/* Mushaf mode placeholder */}
-      {readingMode === 'mushaf' && (
-        <div className="px-5 py-16 text-center">
-          <p className="text-muted-foreground text-sm">
-            Mushaf view coming soon
-          </p>
-        </div>
+      {/* Mushaf mode */}
+      {readingMode === 'mushaf' && chapterId && (
+        <MushafView chapterId={chapterId} />
       )}
 
       {/* Error states */}
-      {readingMode !== 'mushaf' && !chapterId && !chaptersLoading && (
+      {!chapterId && !chaptersLoading && (
         <div className="px-5 py-12 text-center text-muted-foreground text-sm">
           {isJuzView
             ? 'Juz view is not yet available.'

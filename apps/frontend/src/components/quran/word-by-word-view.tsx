@@ -94,7 +94,7 @@ function WordCard({ word }: { word: Word }) {
       {/* Arabic word */}
       <span
         className="text-xl leading-relaxed text-foreground"
-        style={{ fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', serif" }}
+        style={{ fontFamily: "'Scheherazade New', 'quran_common', serif" }}
       >
         {word.text || word.code_v2}
       </span>

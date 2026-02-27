@@ -89,7 +89,7 @@ export function SurahList({ chapters, isLoading, searchQuery }: SurahListProps) 
           <span
             className="text-lg font-arabic text-foreground/80"
             dir="rtl"
-            style={{ fontFamily: "'Amiri', 'Noto Naskh Arabic', serif" }}
+            style={{ fontFamily: "'Scheherazade New', 'quran_common', serif" }}
           >
             {chapter.name_arabic}
           </span>

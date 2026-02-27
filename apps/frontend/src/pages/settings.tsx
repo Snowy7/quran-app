@@ -131,7 +131,7 @@ export default function SettingsPage() {
               className="mt-3 text-center text-foreground leading-loose"
               dir="rtl"
               style={{
-                fontFamily: "'Amiri Quran', 'Amiri', serif",
+                fontFamily: "'Scheherazade New', 'quran_common', serif",
                 fontSize: `${arabicFontSize}px`,
               }}
             >

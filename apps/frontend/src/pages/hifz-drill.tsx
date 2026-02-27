@@ -212,7 +212,7 @@ export default function HifzDrillPage() {
               <p
                 className="text-xl leading-[2.3] text-foreground text-center"
                 dir="rtl"
-                style={{ fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', serif" }}
+                style={{ fontFamily: "'Scheherazade New', 'quran_common', serif" }}
               >
                 {currentVerseText || current.verseKey}
               </p>
