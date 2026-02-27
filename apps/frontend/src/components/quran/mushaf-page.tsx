@@ -18,7 +18,7 @@ const PAGE_STYLES = {
   container:
     'relative mx-auto rounded-2xl border border-primary/20 bg-card/90 shadow-[0_10px_40px_-18px_rgba(0,0,0,0.55)]',
   content: 'flex h-full w-full flex-col justify-between px-4 py-5 sm:px-8 sm:py-8',
-  lines: 'mushaf-page-lines flex flex-1 flex-col justify-start gap-1 overflow-visible',
+  lines: 'mushaf-page-lines flex flex-1 flex-col items-end justify-start gap-1 overflow-visible',
 } as const;
 
 export function MushafPage({ pageNumber, chapters }: MushafPageProps) {
@@ -42,8 +42,8 @@ export function MushafPage({ pageNumber, chapters }: MushafPageProps) {
     <article
       className={PAGE_STYLES.container}
       style={{
-        width: 'var(--mushaf-page-width, min(96vw, 980px))',
-        aspectRatio: 'var(--mushaf-page-ratio, 3 / 5.1)',
+        width: 'var(--mushaf-page-width, fit-content)',
+        maxWidth: 'min(98vw, 980px)',
       }}
       data-page={pageNumber}
       aria-label={`Mushaf page ${pageNumber}`}
@@ -134,8 +134,8 @@ function MushafPageSkeleton({ pageNumber }: { pageNumber: number }) {
     <div
       className={`${PAGE_STYLES.container} mx-auto`}
       style={{
-        width: 'var(--mushaf-page-width, min(96vw, 980px))',
-        aspectRatio: 'var(--mushaf-page-ratio, 3 / 5.1)',
+        width: 'min(98vw, 980px)',
+        minHeight: '60vh',
       }}
     >
       <div className={PAGE_STYLES.content}>

@@ -30,20 +30,20 @@ export function MushafLine({
   return (
     <div
       className={cn(
-        'mushaf-line mx-auto flex w-full shrink-0 flex-nowrap items-end px-1 py-0.5',
-        centerAligned && 'justify-center',
+        'mushaf-line flex max-w-full shrink-0 flex-nowrap items-end px-1 py-0.5',
+        centerAligned ? 'self-center justify-center' : 'self-end justify-start',
       )}
       dir="rtl"
       data-line={lineNumber}
       data-page={pageNumber}
       style={{
         fontFamily,
-        fontSize: 'var(--mushaf-font-size, 28px)',
-        lineHeight: 'var(--mushaf-line-height, 1.5)',
-        width: 'var(--mushaf-line-width, 100%)',
+        fontSize: 'var(--mushaf-font-size, 34px)',
+        lineHeight: 'var(--mushaf-line-height, 1.55)',
+        width: 'fit-content',
         maxWidth: '100%',
         justifyContent: centerAligned ? 'center' : 'flex-start',
-        columnGap: '0.08em',
+        columnGap: '0.02em',
       }}
     >
       {lineWords.map((word) => {
