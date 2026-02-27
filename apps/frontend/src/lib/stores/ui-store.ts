@@ -1,59 +1,4 @@
 import { create } from "zustand";
-import type { PlaybackState } from "@/types/quran";
-
-// =====================================
-// UI State Store (Non-Persistent)
-// =====================================
-
-interface UIState {
-  // Audio player
-  isAudioPlayerVisible: boolean;
-  isAudioPlayerExpanded: boolean;
-  playback: PlaybackState;
-
-  // Navigation
-  isSidebarOpen: boolean;
-  isSearchOpen: boolean;
-
-  // Reading
-  currentHighlightedAyah: { surahId: number; ayahNumber: number } | null;
-  readingScrollProgress: {
-    surahId: number;
-    currentAyah: number;
-    totalAyahs: number;
-  } | null;
-
-  // Zen mode (distraction-free reading)
-  isZenMode: boolean;
-
-  // Network
-  isOnline: boolean;
-
-  // PWA
-  showInstallPrompt: boolean;
-  deferredInstallPrompt: BeforeInstallPromptEvent | null;
-
-  // Actions
-  setAudioPlayerVisible: (visible: boolean) => void;
-  setAudioPlayerExpanded: (expanded: boolean) => void;
-  setPlayback: (playback: Partial<PlaybackState>) => void;
-  setSidebarOpen: (open: boolean) => void;
-  setSearchOpen: (open: boolean) => void;
-  setHighlightedAyah: (
-    ayah: { surahId: number; ayahNumber: number } | null,
-  ) => void;
-  setReadingScrollProgress: (
-    progress: {
-      surahId: number;
-      currentAyah: number;
-      totalAyahs: number;
-    } | null,
-  ) => void;
-  setZenMode: (zen: boolean) => void;
-  setOnline: (online: boolean) => void;
-  setShowInstallPrompt: (show: boolean) => void;
-  setDeferredInstallPrompt: (prompt: BeforeInstallPromptEvent | null) => void;
-}
 
 // BeforeInstallPromptEvent type for PWA install
 interface BeforeInstallPromptEvent extends Event {
@@ -65,64 +10,51 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
-const DEFAULT_PLAYBACK: PlaybackState = {
-  isPlaying: false,
-  currentSurah: null,
-  currentAyah: null,
-  reciterId: "Alafasy_128kbps",
-  playbackRate: 1.0,
-  repeatMode: "none",
-  repeatCount: 0,
-  volume: 1.0,
-};
+interface UIState {
+  // Navigation
+  isSearchOpen: boolean;
+
+  // Reading
+  currentHighlightedAyah: { chapterId: number; verseNumber: number } | null;
+
+  // Network
+  isOnline: boolean;
+
+  // PWA
+  showInstallPrompt: boolean;
+  deferredInstallPrompt: BeforeInstallPromptEvent | null;
+
+  // Actions
+  setSearchOpen: (open: boolean) => void;
+  setHighlightedAyah: (
+    ayah: { chapterId: number; verseNumber: number } | null,
+  ) => void;
+  setOnline: (online: boolean) => void;
+  setShowInstallPrompt: (show: boolean) => void;
+  setDeferredInstallPrompt: (prompt: BeforeInstallPromptEvent | null) => void;
+}
 
 export const useUIStore = create<UIState>((set) => ({
-  // Initial state
-  isAudioPlayerVisible: false,
-  isAudioPlayerExpanded: false,
-  playback: DEFAULT_PLAYBACK,
-  isSidebarOpen: false,
   isSearchOpen: false,
   currentHighlightedAyah: null,
-  readingScrollProgress: null,
-  isZenMode: false,
   isOnline: typeof navigator !== "undefined" ? navigator.onLine : true,
   showInstallPrompt: false,
   deferredInstallPrompt: null,
 
-  // Actions
-  setAudioPlayerVisible: (visible) => set({ isAudioPlayerVisible: visible }),
-  setAudioPlayerExpanded: (expanded) =>
-    set({ isAudioPlayerExpanded: expanded }),
-  setPlayback: (playback) =>
-    set((state) => ({
-      playback: { ...state.playback, ...playback },
-    })),
-  setSidebarOpen: (open) => set({ isSidebarOpen: open }),
   setSearchOpen: (open) => set({ isSearchOpen: open }),
   setHighlightedAyah: (ayah) => set({ currentHighlightedAyah: ayah }),
-  setReadingScrollProgress: (progress) =>
-    set({ readingScrollProgress: progress }),
-  setZenMode: (zen) => set({ isZenMode: zen }),
   setOnline: (online) => set({ isOnline: online }),
   setShowInstallPrompt: (show) => set({ showInstallPrompt: show }),
   setDeferredInstallPrompt: (prompt) => set({ deferredInstallPrompt: prompt }),
 }));
 
-// =====================================
-// Network Status Hook
-// =====================================
-
+// Network Status Listener
 let networkListenerInitialized = false;
 let networkCleanup: (() => void) | null = null;
 
 export function initializeNetworkListener() {
   if (typeof window === "undefined") return;
-
-  // Prevent duplicate initialization
-  if (networkListenerInitialized) {
-    return networkCleanup;
-  }
+  if (networkListenerInitialized) return networkCleanup;
   networkListenerInitialized = true;
 
   const handleOnline = () => useUIStore.getState().setOnline(true);
@@ -141,37 +73,25 @@ export function initializeNetworkListener() {
   return networkCleanup;
 }
 
-// =====================================
-// PWA Install Prompt Hook
-// =====================================
-
+// PWA Install Prompt
 let pwaListenerInitialized = false;
 let pwaCleanup: (() => void) | null = null;
 
 export function initializePWAInstallListener() {
   if (typeof window === "undefined") return;
-
-  // Prevent duplicate initialization
-  if (pwaListenerInitialized) {
-    return pwaCleanup;
-  }
+  if (pwaListenerInitialized) return pwaCleanup;
   pwaListenerInitialized = true;
 
   const handleBeforeInstallPrompt = (e: Event) => {
     e.preventDefault();
-    useUIStore
-      .getState()
-      .setDeferredInstallPrompt(e as BeforeInstallPromptEvent);
+    useUIStore.getState().setDeferredInstallPrompt(e as BeforeInstallPromptEvent);
     useUIStore.getState().setShowInstallPrompt(true);
   };
 
   window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
   pwaCleanup = () => {
-    window.removeEventListener(
-      "beforeinstallprompt",
-      handleBeforeInstallPrompt,
-    );
+    window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     pwaListenerInitialized = false;
     pwaCleanup = null;
   };

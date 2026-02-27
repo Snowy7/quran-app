@@ -1,179 +1,65 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Menu } from 'lucide-react';
-import { Button } from '@template/ui';
-import { usePrayerTimes, usePrayerNotifications, useOfflineReadingProgress, useOfflineSettings, useReadingHistory } from '@/lib/hooks';
-import { PrayerHero, DailyVerse, QuickActions, PrayerTimesCards, DailyStats, HifzWidget, RamadanBanner } from '@/components/home';
-import { useSidebarContext } from '@/components/layout/app-layout';
-import { useTranslation } from '@/lib/i18n';
-import { SURAHS } from '@/data/surahs';
-import { cn } from '@/lib/utils';
+import { BookOpen, Brain, Clock } from 'lucide-react';
+import { Card, CardContent } from '@template/ui';
+import { AppHeader } from '@/components/layout/app-header';
 
 export default function HomePage() {
-  const sidebar = useSidebarContext();
-  const { t, isRTL } = useTranslation();
-  const { times: prayerTimes, hijriDate } = usePrayerTimes();
-  const { scheduleNotifications, isPermitted, settings: notificationSettings } = usePrayerNotifications(prayerTimes);
-  const { progress } = useOfflineReadingProgress();
-  const { history } = useReadingHistory();
-  const { settings } = useOfflineSettings();
-
-  // Ramadan detection — Hijri month 9 is Ramadan
-  const isRamadan = hijriDate?.monthNumber === 9;
-  const ramadanDay = isRamadan ? parseInt(hijriDate.day, 10) || 1 : 0;
-
-  useEffect(() => {
-    if (prayerTimes && isPermitted && notificationSettings.enabled) {
-      scheduleNotifications(prayerTimes);
-    }
-  }, [
-    prayerTimes,
-    isPermitted,
-    notificationSettings.enabled,
-    scheduleNotifications,
-  ]);
-
-  const todayAyahs = history?.totalAyahs || 0;
-  const dailyGoal = settings.dailyAyahGoal || 10;
-
-  const lastSurah = progress?.lastSurahId
-    ? SURAHS.find((s) => s.id === progress.lastSurahId)
-    : null;
-
   return (
-    <div className="page-container min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* App Bar */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm safe-area-top">
-        <div className="flex items-center justify-between px-5 py-3 md:px-8">
-          <div className="flex items-center gap-3">
-            {isRTL && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 text-primary hover:bg-primary/10 lg:hidden"
-                onClick={sidebar.open}
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
-            )}
-            {!isRTL && (
-              <Link to="/search">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-primary hover:bg-primary/10"
-                >
-                  <Search className="w-5 h-5" />
-                </Button>
-              </Link>
-            )}
-          </div>
+    <div>
+      <AppHeader title="Noor" showSettings />
 
-          <h1 className="font-arabic-ui text-xl font-bold text-primary">
-            {t('noor')}
-          </h1>
+      <div className="px-5 py-4 space-y-4">
+        {/* Continue Reading Card */}
+        <Link to="/quran">
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm">Continue Reading</h3>
+                  <p className="text-xs text-muted-foreground">Start reading the Quran</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
-          <div className="flex items-center gap-3">
-            {isRTL && (
-              <Link to="/search">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-primary hover:bg-primary/10"
-                >
-                  <Search className="w-5 h-5" />
-                </Button>
-              </Link>
-            )}
-            {!isRTL && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 text-primary hover:bg-primary/10 lg:hidden"
-                onClick={sidebar.open}
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+        {/* Hifz Review Card */}
+        <Link to="/hifz">
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
+                  <Brain className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm">Memorization</h3>
+                  <p className="text-xs text-muted-foreground">Track and review your hifz</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
-      {/* Main content */}
-      <div className="px-5 pb-6 md:px-8 lg:pb-10">
-        {/* Top hero section */}
-        <div className="animate-fade-in">
-          <PrayerHero />
-        </div>
-
-        {/* Ramadan Banner — only shown during Ramadan */}
-        {isRamadan && prayerTimes && (
-          <div
-            className="mt-4 animate-slide-up"
-            style={{ animationDelay: '20ms', animationFillMode: 'both' }}
-          >
-            <RamadanBanner
-              hijriDay={ramadanDay}
-              suhoorTime={prayerTimes.Fajr}
-              iftarTime={prayerTimes.Maghrib}
-            />
-          </div>
-        )}
-
-        {/* Daily Verse Carousel */}
-        <div className="mt-5 md:mt-6">
-          <DailyVerse />
-        </div>
-
-        {/* Quick Actions */}
-        <section
-          className="mt-6 md:mt-8 animate-slide-up"
-          style={{ animationDelay: '100ms', animationFillMode: 'both' }}
-        >
-          <SectionHeading>{t('quickAccess')}</SectionHeading>
-          <QuickActions />
-        </section>
-
-        {/* Prayer Times Cards */}
-        <section
-          className="mt-6 md:mt-8 animate-slide-up"
-          style={{ animationDelay: '150ms', animationFillMode: 'both' }}
-        >
-          <SectionHeading>{t('prayerTimes')}</SectionHeading>
-          <PrayerTimesCards />
-        </section>
-
-        {/* Stats + Hifz */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mt-6 md:mt-8">
-          <section
-            className="animate-slide-up"
-            style={{ animationDelay: '200ms', animationFillMode: 'both' }}
-          >
-            <SectionHeading>{t('todaysProgress')}</SectionHeading>
-            <DailyStats
-              streak={progress.currentStreak}
-              todayAyahs={todayAyahs}
-              dailyGoal={dailyGoal}
-            />
-          </section>
-          <section
-            className="animate-slide-up"
-            style={{ animationDelay: '250ms', animationFillMode: 'both' }}
-          >
-            <SectionHeading>{t('memorization')}</SectionHeading>
-            <HifzWidget />
-          </section>
-        </div>
+        {/* Prayer Times Card */}
+        <Link to="/prayer-times">
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
+                  <Clock className="h-5 w-5 text-amber-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm">Prayer Times</h3>
+                  <p className="text-xs text-muted-foreground">View today's prayer schedule</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
-  );
-}
-
-/** Small reusable section heading */
-function SectionHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="text-xs md:text-sm font-semibold text-muted-foreground/70 uppercase tracking-wider mb-3 font-arabic-ui">
-      {children}
-    </h2>
   );
 }

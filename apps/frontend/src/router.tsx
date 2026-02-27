@@ -3,30 +3,23 @@ import { RootLayout } from './layouts/root-layout';
 import { AppLayout } from './components/layout/app-layout';
 import { RouteErrorBoundary } from './components/error-boundary';
 
-// Main pages
 import HomePage from './pages/home';
-import QuranIndexPage from './pages/quran/index';
-import SurahReaderPage from './pages/quran/reader';
-import BookmarksPage from './pages/bookmarks';
-import MemorizePage from './pages/memorize';
-import SettingsPage from './pages/settings';
+import QuranIndexPage from './pages/quran-index';
+import SurahReaderPage from './pages/surah-reader';
+import CollectionsPage from './pages/collections';
+import CollectionDetailPage from './pages/collection-detail';
+import HifzDashboardPage from './pages/hifz-dashboard';
+import HifzDrillPage from './pages/hifz-drill';
 import SearchPage from './pages/search';
+import SettingsPage from './pages/settings';
 import PrayerTimesPage from './pages/prayer-times';
-import QiblaPage from './pages/qibla';
-import OnboardingPage from './pages/onboarding';
 import NotFoundPage from './pages/not-found';
-
-// Auth pages (optional)
-import SignInPage from './pages/sign-in';
-import SignUpPage from './pages/sign-up';
-import SSOCallbackPage from './pages/sso-callback';
 
 export const router = createBrowserRouter([
   {
     element: <RootLayout />,
     errorElement: <RouteErrorBoundary />,
     children: [
-      // Main app routes (wrapped in AppLayout with bottom nav)
       {
         element: <AppLayout />,
         errorElement: <RouteErrorBoundary />,
@@ -36,24 +29,15 @@ export const router = createBrowserRouter([
           { path: '/quran/:surahId', element: <SurahReaderPage /> },
           { path: '/quran/juz/:juzId', element: <SurahReaderPage /> },
           { path: '/quran/page/:pageId', element: <SurahReaderPage /> },
-          { path: '/bookmarks', element: <BookmarksPage /> },
-          { path: '/memorize', element: <MemorizePage /> },
-          { path: '/settings', element: <SettingsPage /> },
+          { path: '/collections', element: <CollectionsPage /> },
+          { path: '/collections/:id', element: <CollectionDetailPage /> },
+          { path: '/hifz', element: <HifzDashboardPage /> },
+          { path: '/hifz/drill', element: <HifzDrillPage /> },
           { path: '/search', element: <SearchPage /> },
+          { path: '/settings', element: <SettingsPage /> },
           { path: '/prayer-times', element: <PrayerTimesPage /> },
-          { path: '/qibla', element: <QiblaPage /> },
         ],
       },
-
-      // Onboarding (outside main layout)
-      { path: '/onboarding', element: <OnboardingPage /> },
-
-      // Auth routes (optional, for cloud sync)
-      { path: '/sign-in/*', element: <SignInPage /> },
-      { path: '/sign-up/*', element: <SignUpPage /> },
-      { path: '/sso-callback', element: <SSOCallbackPage /> },
-
-      // 404
       { path: '*', element: <NotFoundPage /> },
     ],
   },
