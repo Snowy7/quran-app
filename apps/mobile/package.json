@@ -1,0 +1,44 @@
+{
+  "name": "mobile",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "start:clear": "expo start --clear",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "^3.0.1",
+    "@tanstack/react-query": "^5.62.0",
+    "adhan": "^4.4.3",
+    "expo": "~55.0.4",
+    "expo-constants": "^55.0.7",
+    "expo-font": "^55.0.4",
+    "expo-haptics": "^55.0.8",
+    "expo-linking": "^55.0.7",
+    "expo-location": "^55.1.2",
+    "expo-notifications": "^55.0.10",
+    "expo-router": "^55.0.3",
+    "expo-status-bar": "~55.0.4",
+    "expo-system-ui": "^55.0.9",
+    "nativewind": "^4.2.2",
+    "react": "19.2.0",
+    "react-native": "0.83.2",
+    "react-native-gesture-handler": "^2.30.0",
+    "react-native-reanimated": "^4.2.2",
+    "react-native-safe-area-context": "^5.7.0",
+    "react-native-screens": "^4.24.0",
+    "react-native-svg": "^15.15.3",
+    "zustand": "^5.0.10"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "babel-preset-expo": "^55.0.10",
+    "prettier-plugin-tailwindcss": "^0.5.11",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}
