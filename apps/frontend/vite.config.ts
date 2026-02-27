@@ -17,7 +17,7 @@ export default defineConfig({
         name: "Noor - Your Quran Companion",
         short_name: "Noor",
         description:
-          "A beautiful Quran app for reading, listening, and memorizing. Features offline support, prayer times, Qibla compass, and progress tracking.",
+          "A beautiful Quran app for reading, listening, and memorizing with offline support.",
         theme_color: "#D97B2A",
         background_color: "#FAF7F2",
         display: "standalone",
@@ -27,66 +27,16 @@ export default defineConfig({
         lang: "en",
         categories: ["education", "lifestyle", "books"],
         icons: [
-          {
-            src: "/icons/icon-72x72.png",
-            sizes: "72x72",
-            type: "image/png",
-            purpose: "any",
-          },
-          {
-            src: "/icons/icon-96x96.png",
-            sizes: "96x96",
-            type: "image/png",
-            purpose: "any",
-          },
-          {
-            src: "/icons/icon-128x128.png",
-            sizes: "128x128",
-            type: "image/png",
-            purpose: "any",
-          },
-          {
-            src: "/icons/icon-144x144.png",
-            sizes: "144x144",
-            type: "image/png",
-            purpose: "any",
-          },
-          {
-            src: "/icons/icon-152x152.png",
-            sizes: "152x152",
-            type: "image/png",
-            purpose: "any",
-          },
-          {
-            src: "/icons/icon-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "any",
-          },
-          {
-            src: "/icons/icon-384x384.png",
-            sizes: "384x384",
-            type: "image/png",
-            purpose: "any",
-          },
-          {
-            src: "/icons/icon-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any",
-          },
-          {
-            src: "/icons/icon-maskable-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "maskable",
-          },
-          {
-            src: "/icons/icon-maskable-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable",
-          },
+          { src: "/icons/icon-72x72.png", sizes: "72x72", type: "image/png", purpose: "any" },
+          { src: "/icons/icon-96x96.png", sizes: "96x96", type: "image/png", purpose: "any" },
+          { src: "/icons/icon-128x128.png", sizes: "128x128", type: "image/png", purpose: "any" },
+          { src: "/icons/icon-144x144.png", sizes: "144x144", type: "image/png", purpose: "any" },
+          { src: "/icons/icon-152x152.png", sizes: "152x152", type: "image/png", purpose: "any" },
+          { src: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "/icons/icon-384x384.png", sizes: "384x384", type: "image/png", purpose: "any" },
+          { src: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: "/icons/icon-maskable-192x192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
+          { src: "/icons/icon-maskable-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
         shortcuts: [
           {
@@ -101,17 +51,11 @@ export default defineConfig({
             description: "View today's prayer times",
             url: "/prayer-times",
           },
-          {
-            name: "Qibla Compass",
-            short_name: "Qibla",
-            description: "Find Qibla direction",
-            url: "/qibla",
-          },
         ],
       },
       injectManifest: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // 6MB for bundled Quran data
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       },
       devOptions: {
         enabled: true,
@@ -133,15 +77,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (
-            id.includes("quran-arabic.json") ||
-            id.includes("quran-english.json") ||
-            id.includes("quran-pages.json") ||
-            id.includes("quran-meta.json")
-          ) {
-            return "quran-text";
-          }
-          if (id.includes("dexie")) return "quran-core";
+          if (id.includes("dexie")) return "db";
+          if (id.includes("@tanstack")) return "query";
           if (id.includes("framer-motion")) return "animations";
         },
       },
