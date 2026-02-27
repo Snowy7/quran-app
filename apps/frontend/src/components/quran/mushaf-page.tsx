@@ -43,7 +43,7 @@ export function MushafPage({ pageNumber, chapters }: MushafPageProps) {
       className={PAGE_STYLES.container}
       style={{
         width: 'var(--mushaf-page-width, min(96vw, 980px))',
-        aspectRatio: '3 / 4.5',
+        aspectRatio: 'var(--mushaf-page-ratio, 3 / 5.1)',
       }}
       data-page={pageNumber}
       aria-label={`Mushaf page ${pageNumber}`}
@@ -135,7 +135,7 @@ function MushafPageSkeleton({ pageNumber }: { pageNumber: number }) {
       className={`${PAGE_STYLES.container} mx-auto`}
       style={{
         width: 'var(--mushaf-page-width, min(96vw, 980px))',
-        aspectRatio: '3 / 4.5',
+        aspectRatio: 'var(--mushaf-page-ratio, 3 / 5.1)',
       }}
     >
       <div className={PAGE_STYLES.content}>
