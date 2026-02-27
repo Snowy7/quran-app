@@ -42,7 +42,7 @@ export function MushafPage({ pageNumber, chapters }: MushafPageProps) {
     <article
       className={PAGE_STYLES.container}
       style={{
-        width: 'min(96vw, 460px)',
+        width: 'min(98vw, 520px)',
         aspectRatio: '3 / 4.5',
       }}
       data-page={pageNumber}
@@ -132,7 +132,7 @@ function MushafPageSkeleton({ pageNumber }: { pageNumber: number }) {
     <div
       className={`${PAGE_STYLES.container} mx-auto`}
       style={{
-        width: 'min(96vw, 460px)',
+        width: 'min(98vw, 520px)',
         aspectRatio: '3 / 4.5',
       }}
     >

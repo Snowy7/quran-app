@@ -30,8 +30,8 @@ export function MushafLine({
   return (
     <div
       className={cn(
-        'mushaf-line flex flex-nowrap items-start justify-end gap-1.5',
-        'px-2 py-0.5',
+        'mushaf-line flex flex-nowrap items-baseline justify-between',
+        'mx-auto w-full px-1 py-0.5',
       )}
       dir="rtl"
       data-line={lineNumber}
@@ -53,7 +53,7 @@ export function MushafLine({
           <span
             key={`${word.id}-${word.position}-${word.verseKey}`}
             className={cn(
-              'mushaf-word inline-block transition-colors duration-200',
+              'mushaf-word inline-block whitespace-nowrap leading-none transition-colors duration-200',
               isAudioHighlighted && 'text-primary',
               !fontLoaded && 'opacity-40',
             )}
@@ -67,4 +67,3 @@ export function MushafLine({
     </div>
   );
 }
-
