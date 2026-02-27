@@ -26,6 +26,7 @@ export default function SurahReaderPage() {
   const isPageView = location.pathname.includes('/page/');
 
   const chapterId = surahId ? parseInt(surahId, 10) : undefined;
+  const pageNumber = pageId ? parseInt(pageId, 10) : NaN;
   const chapter = chapters?.find((c) => c.id === chapterId);
 
   // Parse initial verse from query param (for scroll-to-verse from bookmarks)
@@ -53,16 +54,15 @@ export default function SurahReaderPage() {
     }
   }, [chapterId, readingMode, initialVerse]);
 
+  const pageTitle = Number.isInteger(pageNumber) ? pageNumber : 'Invalid';
   const headerTitle = isJuzView
     ? `Juz ${juzId}`
     : isPageView
-      ? `Page ${pageId}`
+      ? `Page ${pageTitle}`
       : chapter?.name_simple ?? `Surah ${surahId ?? ''}`;
 
   const headerSubtitle =
-    !isJuzView && !isPageView && chapter
-      ? `${chapter.translated_name.name}`
-      : undefined;
+    !isJuzView && !isPageView && chapter ? `${chapter.translated_name.name}` : undefined;
 
   const handleModeChange = (mode: string) => {
     setReadingMode(mode);
@@ -91,12 +91,10 @@ export default function SurahReaderPage() {
       />
 
       <div className="px-5 md:px-8">
-        {/* Reading mode toggle */}
         <div className="py-3">
           <ReadingModeToggle mode={readingMode} onModeChange={handleModeChange} />
         </div>
 
-        {/* Surah header card */}
         {chaptersLoading && (
           <div className="space-y-3 py-4">
             <Skeleton className="h-6 w-32 mx-auto" />
@@ -105,7 +103,7 @@ export default function SurahReaderPage() {
           </div>
         )}
 
-        {chapter && <SurahHeader chapter={chapter} />}
+        {chapter && !isPageView && <SurahHeader chapter={chapter} />}
       </div>
 
       {/* Translation mode */}
@@ -119,18 +117,31 @@ export default function SurahReaderPage() {
       )}
 
       {/* Mushaf mode */}
-      {readingMode === 'mushaf' && chapterId && (
-        <MushafView chapterId={chapterId} />
+      {readingMode === 'mushaf' && chapterId && <MushafView chapterId={chapterId} />}
+      {readingMode === 'mushaf' && isPageView && Number.isInteger(pageNumber) && !chapterId && (
+        <MushafView startPage={pageNumber} endPage={pageNumber} />
       )}
 
       {/* Error states */}
-      {!chapterId && !chaptersLoading && (
+      {!chapterId && !Number.isInteger(pageNumber) && !chaptersLoading && isPageView && (
+        <div className="px-5 py-12 text-center text-muted-foreground text-sm">Invalid page number.</div>
+      )}
+
+      {!chapterId && !isPageView && !isJuzView && !chaptersLoading && (
         <div className="px-5 py-12 text-center text-muted-foreground text-sm">
-          {isJuzView
-            ? 'Juz view is not yet available.'
-            : isPageView
-              ? 'Page view is not yet available.'
-              : 'Invalid surah ID.'}
+          Invalid surah ID.
+        </div>
+      )}
+
+      {isJuzView && !isPageView && (
+        <div className="px-5 py-12 text-center text-muted-foreground text-sm">
+          Juz-based mode is not yet available.
+        </div>
+      )}
+
+      {isPageView && readingMode !== 'mushaf' && !chaptersLoading && Number.isInteger(pageNumber) && (
+        <div className="px-5 py-12 text-center text-muted-foreground text-sm">
+          Page mode only is available for page-based reading right now.
         </div>
       )}
 

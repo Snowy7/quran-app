@@ -4,9 +4,47 @@ import { useState, useEffect } from 'react';
 const loadedFonts = new Set<number>();
 const loadingFonts = new Map<number, Promise<void>>();
 const listeners = new Set<() => void>();
+const FONT_SUFFIX = '-v2';
+
+type MushafFontFormat = 'woff2' | 'woff' | 'truetype';
+
+type MushafFontCandidate = {
+  src: string;
+  format: MushafFontFormat;
+};
 
 function notifyListeners() {
   listeners.forEach((fn) => fn());
+}
+
+function getFontFamilyName(pageNumber: number): string {
+  return `p${pageNumber}${FONT_SUFFIX}`;
+}
+
+function getFontFileCandidates(pageNumber: number): MushafFontCandidate[] {
+  const pageName = String(pageNumber);
+  return [
+    { src: `/fonts/quran/hafs/v2/woff2/p${pageName}.woff2`, format: 'woff2' },
+    { src: `/fonts/quran/hafs/v2/woff/p${pageName}.woff`, format: 'woff' },
+    { src: `/fonts/quran/hafs/v2/ttf/p${pageName}.ttf`, format: 'truetype' },
+  ];
+}
+
+async function tryLoadFontFace(
+  fontName: string,
+  candidate: MushafFontCandidate,
+): Promise<void> {
+  const source = `url('${candidate.src}') format('${candidate.format}')`;
+  const fontFace = new FontFace(fontName, source);
+  fontFace.display = 'block';
+  try {
+    document.fonts.add(fontFace);
+    await fontFace.load();
+    return;
+  } catch {
+    document.fonts.delete(fontFace);
+    throw new Error(`Failed to load font candidate: ${candidate.src}`);
+  }
 }
 
 /**
@@ -14,7 +52,7 @@ function notifyListeners() {
  * Matches quran.com's naming convention: p{N}-v2
  */
 export function getPageFontFamily(pageNumber: number): string {
-  return `p${pageNumber}-v2`;
+  return getFontFamilyName(pageNumber);
 }
 
 /**
@@ -35,22 +73,26 @@ export async function loadPageFont(pageNumber: number): Promise<void> {
   if (existing) return existing;
 
   const fontName = getPageFontFamily(pageNumber);
-  const fontUrl = `/fonts/quran/hafs/v2/ttf/p${pageNumber}.ttf`;
+  const candidates = getFontFileCandidates(pageNumber);
 
   const promise = (async () => {
     try {
-      const fontFace = new FontFace(
-        fontName,
-        `url('${fontUrl}') format('truetype')`,
-      );
-      fontFace.display = 'block';
-      document.fonts.add(fontFace);
-      await fontFace.load();
-      loadedFonts.add(pageNumber);
-      notifyListeners();
+      for (const candidate of candidates) {
+        try {
+          await tryLoadFontFace(fontName, candidate);
+          loadedFonts.add(pageNumber);
+          notifyListeners();
+          return;
+        } catch {
+          // Continue to next candidate.
+        }
+      }
     } finally {
       loadingFonts.delete(pageNumber);
     }
+
+    // If no font could be loaded, keep the hook fallback path available.
+    return;
   })();
 
   loadingFonts.set(pageNumber, promise);

@@ -4,33 +4,34 @@ import { useChapters } from '@/lib/api/chapters';
 import { useLazyLoad } from '@/lib/hooks/use-lazy-load';
 
 interface MushafViewProps {
-  chapterId: number;
+  chapterId?: number;
   startPage?: number;
   endPage?: number;
 }
 
-/**
- * Mushaf (physical Quran) reading view.
- *
- * Renders a sequence of mushaf pages for the given chapter.
- * Each page is loaded on demand as it enters the viewport.
- * Follows quran.com's approach: per-page QCF V2 fonts,
- * words grouped by line, RTL flex layout.
- */
 export function MushafView({ chapterId, startPage, endPage }: MushafViewProps) {
   const { data: chapters } = useChapters();
-  const chapter = chapters?.find((c) => c.id === chapterId);
+  const chapter = useMemo(
+    () => chapters?.find((c) => c.id === chapterId),
+    [chapters, chapterId],
+  );
 
-  // Get the page range for this chapter
   const pageRange = useMemo(() => {
-    if (startPage && endPage) {
-      return { start: startPage, end: endPage };
+    if (typeof startPage === 'number') {
+      const start = Math.max(1, Math.min(604, startPage));
+      const end = Math.max(start, Math.min(604, endPage ?? start));
+      return { start, end };
     }
+
     if (chapter?.pages && chapter.pages.length >= 2) {
-      return { start: chapter.pages[0], end: chapter.pages[1] };
+      return {
+        start: chapter.pages[0],
+        end: chapter.pages[1],
+      };
     }
+
     return null;
-  }, [chapter, startPage, endPage]);
+  }, [chapter, endPage, startPage]);
 
   if (!pageRange) {
     return (
@@ -47,31 +48,20 @@ export function MushafView({ chapterId, startPage, endPage }: MushafViewProps) {
 
   return (
     <div
-      className="mushaf-view space-y-4 px-3 py-4 sm:px-4"
-      style={
-        {
-          '--mushaf-font-size': '28px',
-          '--mushaf-line-height': 'normal',
-          '--mushaf-line-width': '100%',
-          '--mushaf-page-width': '440px',
-        } as React.CSSProperties
-      }
+      className="mushaf-view min-h-[calc(100vh-120px)] space-y-4 px-3 py-5 sm:px-4"
+      style={{
+        '--mushaf-font-size': '29px',
+        '--mushaf-line-height': '2.0',
+        '--mushaf-line-width': '100%',
+      } as Record<string, string>}
     >
       {pageNumbers.map((pageNumber) => (
-        <MushafPageSlot
-          key={pageNumber}
-          pageNumber={pageNumber}
-          chapters={chapters}
-        />
+        <MushafPageSlot key={pageNumber} pageNumber={pageNumber} chapters={chapters} />
       ))}
     </div>
   );
 }
 
-/**
- * Wraps a MushafPage in a lazy-load slot.
- * The actual page only renders when the slot enters the viewport.
- */
 function MushafPageSlot({
   pageNumber,
   chapters,
@@ -79,7 +69,7 @@ function MushafPageSlot({
   pageNumber: number;
   chapters?: ReturnType<typeof useChapters>['data'];
 }) {
-  const { ref, isVisible } = useLazyLoad({ rootMargin: '600px 0px' });
+  const { ref, isVisible } = useLazyLoad({ rootMargin: '700px 0px' });
 
   return (
     <div ref={ref} data-page-slot={pageNumber}>
@@ -95,15 +85,10 @@ function MushafPageSlot({
 function MushafPagePlaceholder({ pageNumber }: { pageNumber: number }) {
   return (
     <div
-      className="bg-card/50 border border-border/20 rounded-lg mx-auto flex items-center justify-center"
-      style={{
-        maxWidth: 'var(--mushaf-page-width, 440px)',
-        aspectRatio: '3 / 4.5',
-      }}
+      className="mx-auto flex h-full items-center justify-center rounded-xl border border-border/20 bg-card/50"
+      style={{ width: 'min(96vw, 460px)', aspectRatio: '3 / 4.5' }}
     >
-      <span className="text-xs text-muted-foreground/50 tabular-nums">
-        Page {pageNumber}
-      </span>
+      <span className="text-xs text-muted-foreground/60 tabular-nums">Page {pageNumber}</span>
     </div>
   );
 }

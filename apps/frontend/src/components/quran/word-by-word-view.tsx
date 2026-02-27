@@ -96,7 +96,7 @@ function WordCard({ word }: { word: Word }) {
         className="text-xl leading-relaxed text-foreground"
         style={{ fontFamily: "'Scheherazade New', 'quran_common', serif" }}
       >
-        {word.text || word.code_v2}
+        {word.text_uthmani || word.text || word.code_v2}
       </span>
 
       {/* Translation */}

@@ -33,13 +33,15 @@ export interface Word {
   position: number;
   audio_url: string | null;
   char_type_name: 'word' | 'end' | 'pause_mark' | 'sajdah';
+  code_v1?: string;
   code_v2: string;
+  text_uthmani?: string;
+  translation?: { text: string; language_name: string };
+  transliteration?: { text: string; language_name: string };
   v2_page: number;
   page_number: number;
   line_number: number;
   text: string;
-  translation?: { text: string; language_name: string };
-  transliteration?: { text: string; language_name: string };
 }
 
 export interface Verse {
@@ -175,10 +177,11 @@ export interface SearchResult {
 // Query parameter types
 export interface VersesParams {
   page?: number;
-  perPage?: number;
+  perPage?: number | 'all';
   translations?: string;
   words?: boolean;
   wordFields?: string;
   fields?: string;
   language?: string;
+  filterPageWords?: boolean;
 }
