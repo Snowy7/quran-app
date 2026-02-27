@@ -30,8 +30,7 @@ export function MushafLine({
   return (
     <div
       className={cn(
-        'mushaf-line flex flex-nowrap items-baseline justify-between',
-        'mx-auto w-full px-1 py-0.5',
+        'mushaf-line mx-auto flex flex-nowrap items-baseline overflow-hidden px-1 py-0.5 text-center',
       )}
       dir="rtl"
       data-line={lineNumber}
@@ -41,6 +40,7 @@ export function MushafLine({
         fontSize: 'var(--mushaf-font-size, 28px)',
         lineHeight: 'var(--mushaf-line-height, normal)',
         width: 'var(--mushaf-line-width, 100%)',
+        justifyContent: sortedWords.length > 1 ? 'space-between' : 'center',
       }}
     >
       {sortedWords.map((word) => {
