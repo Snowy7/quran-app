@@ -20,17 +20,17 @@ export function SurahHeader({ chapter, className }: SurahHeaderProps) {
         dir="rtl"
         style={{ fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', serif" }}
       >
-        {chapter.nameArabic}
+        {chapter.name_arabic}
       </h2>
 
       {/* English transliteration */}
       <h3 className="text-lg font-semibold text-foreground">
-        {chapter.nameSimple}
+        {chapter.name_simple}
       </h3>
 
       {/* Translation */}
       <p className="text-sm text-muted-foreground mt-0.5">
-        {chapter.translatedName.name}
+        {chapter.translated_name.name}
       </p>
 
       {/* Meta info */}
@@ -38,15 +38,15 @@ export function SurahHeader({ chapter, className }: SurahHeaderProps) {
         <span
           className={cn(
             'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium',
-            chapter.revelationPlace === 'makkah'
+            chapter.revelation_place === 'makkah'
               ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
               : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
           )}
         >
-          {chapter.revelationPlace === 'makkah' ? 'Makki' : 'Madani'}
+          {chapter.revelation_place === 'makkah' ? 'Makki' : 'Madani'}
         </span>
         <span className="text-border">|</span>
-        <span>{chapter.versesCount} verses</span>
+        <span>{chapter.verses_count} verses</span>
       </div>
     </div>
   );

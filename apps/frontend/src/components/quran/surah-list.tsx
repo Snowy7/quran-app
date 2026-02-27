@@ -32,9 +32,9 @@ export function SurahList({ chapters, isLoading, searchQuery }: SurahListProps) 
   const filtered = searchQuery
     ? chapters.filter(
         (c) =>
-          c.nameSimple.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.nameArabic.includes(searchQuery) ||
-          c.translatedName.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.name_simple.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.name_arabic.includes(searchQuery) ||
+          c.translated_name.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           String(c.id) === searchQuery,
       )
     : chapters;
@@ -64,24 +64,24 @@ export function SurahList({ chapters, isLoading, searchQuery }: SurahListProps) 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-sm truncate">
-                {chapter.nameSimple}
+                {chapter.name_simple}
               </span>
               <span className="text-xs text-muted-foreground">
-                {chapter.translatedName.name}
+                {chapter.translated_name.name}
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
               <span
                 className={cn(
                   'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium',
-                  chapter.revelationPlace === 'makkah'
+                  chapter.revelation_place === 'makkah'
                     ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
                     : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
                 )}
               >
-                {chapter.revelationPlace === 'makkah' ? 'Makki' : 'Madani'}
+                {chapter.revelation_place === 'makkah' ? 'Makki' : 'Madani'}
               </span>
-              <span>{chapter.versesCount} verses</span>
+              <span>{chapter.verses_count} verses</span>
             </div>
           </div>
 
@@ -91,7 +91,7 @@ export function SurahList({ chapters, isLoading, searchQuery }: SurahListProps) 
             dir="rtl"
             style={{ fontFamily: "'Amiri', 'Noto Naskh Arabic', serif" }}
           >
-            {chapter.nameArabic}
+            {chapter.name_arabic}
           </span>
         </Link>
       ))}

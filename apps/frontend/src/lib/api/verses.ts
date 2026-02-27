@@ -6,7 +6,7 @@ function buildVersesParams(params: VersesParams = {}) {
   return {
     page: params.page,
     per_page: params.perPage || 10,
-    translations: params.translations || '131', // Sahih International
+    translations: params.translations || '85', // Sahih International
     words: params.words ?? true,
     word_fields: params.wordFields || 'code_v2,v2_page',
     fields: params.fields || 'text_uthmani',
@@ -53,7 +53,7 @@ export function useVersesByChapter(
     queryFn: ({ pageParam = 1 }) =>
       fetchVersesByChapter(chapterId!, { ...params, page: pageParam }),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.pagination.nextPage ?? undefined,
+    getNextPageParam: (lastPage) => lastPage.pagination.next_page ?? undefined,
     enabled: !!chapterId,
     staleTime: 1000 * 60 * 60, // 1 hour
   });
@@ -81,7 +81,7 @@ export function useVersesByJuz(
     queryFn: ({ pageParam = 1 }) =>
       fetchVersesByJuz(juzNumber!, { ...params, page: pageParam }),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.pagination.nextPage ?? undefined,
+    getNextPageParam: (lastPage) => lastPage.pagination.next_page ?? undefined,
     enabled: !!juzNumber,
     staleTime: 1000 * 60 * 60,
   });

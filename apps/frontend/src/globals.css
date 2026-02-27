@@ -1,9 +1,15 @@
+/* Google Fonts - must be first */
+@import url('https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* =====================================
    Noor Quran App - Clean Minimal Design
    ===================================== */
-
-/* Arabic Fonts - Google Fonts (Scheherazade for fallback) */
-@import url('https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;500;600;700&display=swap');
 
 /* Amiri Quran - local, offline-ready (primary Quran text font) */
 @font-face {
@@ -37,14 +43,6 @@
   font-style: normal;
   font-display: swap;
 }
-/* Arabic UI Font (Figma design system) */
-@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
-/* UI Font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 @layer base {
   /* =====================================

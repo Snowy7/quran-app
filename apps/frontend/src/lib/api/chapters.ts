@@ -25,6 +25,6 @@ export function useChapterInfo(chapterId: number | undefined, language = 'en') {
     queryFn: () => fetchChapterInfo(chapterId!, language),
     enabled: !!chapterId,
     staleTime: 1000 * 60 * 60 * 24,
-    select: (data) => data.chapterInfo,
+    select: (data) => data.chapter_info,
   });
 }

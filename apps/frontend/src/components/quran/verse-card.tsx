@@ -18,13 +18,13 @@ export function VerseCard({ verse, chapterNumber }: VerseCardProps) {
         <div className="flex items-center justify-between mb-4">
           {/* Ayah number badge */}
           <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 text-primary text-sm font-semibold">
-            {verse.verseNumber}
+            {verse.verse_number}
           </div>
 
           {/* Action button */}
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
             <MoreHorizontal className="h-4 w-4" />
-            <span className="sr-only">Verse actions for {chapterNumber}:{verse.verseNumber}</span>
+            <span className="sr-only">Verse actions for {chapterNumber}:{verse.verse_number}</span>
           </Button>
         </div>
 
@@ -34,7 +34,7 @@ export function VerseCard({ verse, chapterNumber }: VerseCardProps) {
           dir="rtl"
           style={{ fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', serif" }}
         >
-          {verse.textUthmani}
+          {verse.text_uthmani}
         </p>
 
         {/* Translation */}

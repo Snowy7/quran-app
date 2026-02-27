@@ -26,11 +26,11 @@ export default function SurahReaderPage() {
     ? `Juz ${juzId}`
     : isPageView
       ? `Page ${pageId}`
-      : chapter?.nameSimple ?? `Surah ${surahId ?? ''}`;
+      : chapter?.name_simple ?? `Surah ${surahId ?? ''}`;
 
   const headerSubtitle =
     !isJuzView && !isPageView && chapter
-      ? `${chapter.translatedName.name}`
+      ? `${chapter.translated_name.name}`
       : undefined;
 
   return (

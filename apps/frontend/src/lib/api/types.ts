@@ -1,118 +1,119 @@
 // quran.com API v4 response types
+// All field names match the API's snake_case convention
 
 export interface TranslatedName {
   name: string;
-  languageName: string;
+  language_name: string;
 }
 
 export interface Chapter {
   id: number;
-  revelationPlace: string;
-  revelationOrder: number;
-  bismillahPre: boolean;
-  nameSimple: string;
-  nameComplex: string;
-  nameArabic: string;
-  versesCount: number;
+  revelation_place: string;
+  revelation_order: number;
+  bismillah_pre: boolean;
+  name_simple: string;
+  name_complex: string;
+  name_arabic: string;
+  verses_count: number;
   pages: number[];
-  translatedName: TranslatedName;
+  translated_name: TranslatedName;
 }
 
 export interface ChapterInfo {
   id: number;
-  chapterId: number;
+  chapter_id: number;
   text: string;
-  shortText: string;
-  languageName: string;
+  short_text: string;
+  language_name: string;
   source: string;
 }
 
 export interface Word {
   id: number;
   position: number;
-  audioUrl: string | null;
-  charTypeName: 'word' | 'end' | 'pause_mark' | 'sajdah';
-  pageNumber: number;
-  lineNumber: number;
+  audio_url: string | null;
+  char_type_name: 'word' | 'end' | 'pause_mark' | 'sajdah';
+  code_v2: string;
+  v2_page: number;
+  page_number: number;
+  line_number: number;
   text: string;
-  textUthmani: string;
-  codeV2: string;
-  translation?: { text: string; languageName: string };
-  transliteration?: { text: string; languageName: string };
+  translation?: { text: string; language_name: string };
+  transliteration?: { text: string; language_name: string };
 }
 
 export interface Verse {
   id: number;
-  verseNumber: number;
-  verseKey: string;
-  hizbNumber: number;
-  rubElHizbNumber: number;
-  juzNumber: number;
-  pageNumber: number;
-  textUthmani: string;
-  textImlaei?: string;
+  verse_number: number;
+  verse_key: string;
+  hizb_number: number;
+  rub_el_hizb_number: number;
+  juz_number: number;
+  page_number: number;
+  text_uthmani?: string;
+  text_imlaei?: string;
   words?: Word[];
   translations?: Translation[];
 }
 
 export interface Translation {
   id: number;
-  resourceId: number;
+  resource_id: number;
   text: string;
 }
 
 export interface TranslationResource {
   id: number;
   name: string;
-  authorName: string;
+  author_name: string;
   slug: string;
-  languageName: string;
-  translatedName: TranslatedName;
+  language_name: string;
+  translated_name: TranslatedName;
 }
 
 export interface TafsirResource {
   id: number;
   name: string;
-  authorName: string;
+  author_name: string;
   slug: string;
-  languageName: string;
-  translatedName: TranslatedName;
+  language_name: string;
+  translated_name: TranslatedName;
 }
 
 export interface Tafsir {
   id: number;
-  resourceId: number;
+  resource_id: number;
   text: string;
-  verseKey: string;
-  languageId: number;
-  resourceName: string;
+  verse_key: string;
+  language_id: number;
+  resource_name: string;
 }
 
 export interface Reciter {
   id: number;
-  reciterNameSimple: string;
+  reciter_name_simple: string;
   style: string | null;
-  translatedName: TranslatedName;
+  translated_name: TranslatedName;
 }
 
 export interface AudioFile {
   url: string;
   duration: number;
   format: string;
-  chapterId: number;
+  chapter_id: number;
 }
 
 export interface VerseAudioFile {
-  verseKey: string;
+  verse_key: string;
   url: string;
 }
 
 export interface PaginationMeta {
-  currentPage: number;
-  nextPage: number | null;
-  perPage: number;
-  totalPages: number;
-  totalRecords: number;
+  current_page: number;
+  next_page: number | null;
+  per_page: number;
+  total_pages: number;
+  total_records: number;
 }
 
 // Response wrappers
@@ -121,7 +122,7 @@ export interface ChaptersResponse {
 }
 
 export interface ChapterInfoResponse {
-  chapterInfo: ChapterInfo;
+  chapter_info: ChapterInfo;
 }
 
 export interface VersesResponse {
@@ -146,29 +147,29 @@ export interface RecitersResponse {
 }
 
 export interface ChapterRecitationResponse {
-  audioFile: AudioFile;
+  audio_file: AudioFile;
 }
 
 export interface VerseRecitationResponse {
-  audioFiles: VerseAudioFile[];
+  audio_files: VerseAudioFile[];
 }
 
 export interface SearchResponse {
   search: {
     query: string;
-    totalResults: number;
-    currentPage: number;
-    totalPages: number;
+    total_results: number;
+    current_page: number;
+    total_pages: number;
     results: SearchResult[];
   };
 }
 
 export interface SearchResult {
-  verseKey: string;
-  verseId: number;
+  verse_key: string;
+  verse_id: number;
   text: string;
-  highlightedText: string | null;
-  translations: { text: string; resourceId: number; name: string }[];
+  highlighted: string | null;
+  translations: { text: string; resource_id: number; name: string }[];
 }
 
 // Query parameter types

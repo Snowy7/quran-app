@@ -37,6 +37,6 @@ export function useChapterRecitation(
     queryFn: () => fetchChapterRecitation(reciterId!, chapterId!),
     enabled: !!reciterId && !!chapterId,
     staleTime: 1000 * 60 * 60 * 24,
-    select: (data) => data.audioFile,
+    select: (data) => data.audio_file,
   });
 }
