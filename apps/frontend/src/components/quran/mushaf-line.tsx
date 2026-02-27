@@ -38,8 +38,8 @@ export function MushafLine({
       data-page={pageNumber}
       style={{
         fontFamily,
-        fontSize: 'var(--mushaf-font-size, 42px)',
-        lineHeight: 'var(--mushaf-line-height, 1.88)',
+        fontSize: 'var(--mushaf-font-size, 28px)',
+        lineHeight: 'var(--mushaf-line-height, 1.5)',
         width: 'var(--mushaf-line-width, 100%)',
         maxWidth: '100%',
         justifyContent: centerAligned ? 'center' : 'flex-start',
