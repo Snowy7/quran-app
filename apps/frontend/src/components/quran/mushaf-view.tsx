@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { MushafPage } from './mushaf-page';
 import { useChapters } from '@/lib/api/chapters';
 import { useLazyLoad } from '@/lib/hooks/use-lazy-load';
+import { loadPageFont } from '@/lib/fonts/mushaf-font-loader';
 
 interface MushafViewProps {
   chapterId?: number;
@@ -45,6 +46,13 @@ export function MushafView({ chapterId, startPage, endPage }: MushafViewProps) {
     { length: pageRange.end - pageRange.start + 1 },
     (_, i) => pageRange.start + i,
   );
+
+  useEffect(() => {
+    const prefetchPages = pageNumbers.slice(0, 3);
+    prefetchPages.forEach((p) => {
+      loadPageFont(p).catch(() => {});
+    });
+  }, [pageNumbers]);
 
   return (
     <div
