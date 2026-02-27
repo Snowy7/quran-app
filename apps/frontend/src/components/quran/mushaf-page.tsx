@@ -101,7 +101,7 @@ function MushafChapterHeader({
             className="text-lg font-medium text-primary"
             dir="rtl"
             style={{
-              fontFamily: "'surah_names', serif",
+              fontFamily: "'surah_names', 'Scheherazade New', 'quran_common', serif",
               lineHeight: 'normal',
             }}
           >
@@ -115,7 +115,7 @@ function MushafChapterHeader({
           className="text-center py-1 text-foreground/80"
           dir="rtl"
           style={{
-            fontFamily: "'bismillah', serif",
+            fontFamily: "'Scheherazade New', 'quran_common', serif",
             fontSize: '28px',
             lineHeight: 'normal',
           }}
@@ -153,4 +153,3 @@ function MushafPageSkeleton({ pageNumber }: { pageNumber: number }) {
     </div>
   );
 }
-
