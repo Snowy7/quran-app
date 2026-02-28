@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "../../lib/theme";
 import { useTranslation } from "../../lib/i18n";
 import { getDueReviews, getTotalProgress, getStreak } from "../../lib/db/storage";
-import { AcademicCapIcon, BookOpenIcon } from "./tab-icons";
+import { AcademicCapIcon, BookOpenIcon } from "../../components/icons/tab-icons";
 
 export default function HifzScreen() {
   const insets = useSafeAreaInsets();

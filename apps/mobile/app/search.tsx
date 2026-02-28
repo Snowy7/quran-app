@@ -14,7 +14,7 @@ import { useTranslation } from "../lib/i18n";
 import { useChapters } from "../lib/api/chapters";
 import { useSearchQuran } from "../lib/api/search";
 import type { Chapter, SearchResult } from "../lib/api/types";
-import { ChevronLeftIcon, SearchIcon } from "./(tabs)/tab-icons";
+import { ChevronLeftIcon, SearchIcon } from "../components/icons/tab-icons";
 
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();

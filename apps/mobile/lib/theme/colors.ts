@@ -16,9 +16,10 @@ export interface ColorScheme {
 
 export const colors: { light: ColorScheme; dark: ColorScheme } = {
   light: {
-    background: "#FAF6F3",
-    card: "#FFFFFF",
-    surface: "#F0E6DD",
+    // Matches web warm-cream surface instead of a bright white app background.
+    background: "#FEFBF4",
+    card: "#F7F1E8",
+    surface: "#EFE3D6",
     primary: "#5C4033",
     primaryLight: "#8B6914",
     accent: "#B08968",

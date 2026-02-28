@@ -11,16 +11,22 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "../../lib/theme";
 import { useTranslation, type TranslationKey } from "../../lib/i18n";
 import { useChapters } from "../../lib/api/chapters";
-import { usePrayerTimes, type PrayerName } from "../../lib/hooks/use-prayer-times";
+import {
+  usePrayerTimes,
+  type PrayerName,
+} from "../../lib/hooks/use-prayer-times";
 import { getLastRead, type ReadingHistoryEntry } from "../../lib/db/storage";
 import { FadeInView } from "../../components/fade-in-view";
 import { hapticLight } from "../../lib/haptics";
 import {
   BookOpenIcon,
+  BookmarkIcon,
+  AcademicCapIcon,
   SearchIcon,
   SettingsIcon,
   ChevronRightIcon,
-} from "./tab-icons";
+  ClockIcon,
+} from "../../components/icons/tab-icons";
 
 const GREETING_KEYS: Record<string, TranslationKey> = {
   peace: "greetingPeace",
@@ -50,44 +56,46 @@ const PRAYER_LABEL_KEYS: Record<PrayerName, TranslationKey> = {
 const DAILY_VERSES = [
   {
     key: "2:286",
-    arabic: "\u0644\u0627 \u064A\u0643\u0644\u0641 \u0627\u0644\u0644\u0647 \u0646\u0641\u0633\u064B\u0627 \u0625\u0644\u0627 \u0648\u0633\u0639\u0647\u0627",
+    arabic: "لا يكلف الله نفسًا إلا وسعها",
     translation: "Allah does not burden a soul beyond that it can bear.",
   },
   {
     key: "94:5",
-    arabic: "\u0641\u0625\u0646 \u0645\u0639 \u0627\u0644\u0639\u0633\u0631 \u064A\u0633\u0631\u064B\u0627",
+    arabic: "فإن مع العسر يسرًا",
     translation: "For indeed, with hardship comes ease.",
   },
   {
     key: "2:152",
-    arabic: "\u0641\u0627\u0630\u0643\u0631\u0648\u0646\u064A \u0623\u0630\u0643\u0631\u0643\u0645",
+    arabic: "فاذكروني أذكركم",
     translation: "So remember Me; I will remember you.",
   },
   {
     key: "3:139",
-    arabic: "\u0648\u0644\u0627 \u062A\u0647\u0646\u0648\u0627 \u0648\u0644\u0627 \u062A\u062D\u0632\u0646\u0648\u0627 \u0648\u0623\u0646\u062A\u0645 \u0627\u0644\u0623\u0639\u0644\u0648\u0646",
+    arabic: "ولا تهنوا ولا تحزنوا وأنتم الأعلون",
     translation: "Do not weaken and do not grieve, for you are superior.",
   },
   {
     key: "13:28",
-    arabic: "\u0623\u0644\u0627 \u0628\u0630\u0643\u0631 \u0627\u0644\u0644\u0647 \u062A\u0637\u0645\u0626\u0646 \u0627\u0644\u0642\u0644\u0648\u0628",
+    arabic: "ألا بذكر الله تطمئن القلوب",
     translation: "Verily, in the remembrance of Allah do hearts find rest.",
   },
   {
     key: "65:3",
-    arabic: "\u0648\u0645\u0646 \u064A\u062A\u0648\u0643\u0644 \u0639\u0644\u0649 \u0627\u0644\u0644\u0647 \u0641\u0647\u0648 \u062D\u0633\u0628\u0647",
-    translation: "And whoever relies upon Allah - then He is sufficient for him.",
+    arabic: "ومن يتوكل على الله فهو حسبه",
+    translation:
+      "And whoever relies upon Allah - then He is sufficient for him.",
   },
   {
     key: "39:53",
-    arabic: "\u0644\u0627 \u062A\u0642\u0646\u0637\u0648\u0627 \u0645\u0646 \u0631\u062D\u0645\u0629 \u0627\u0644\u0644\u0647",
+    arabic: "لا تقنطوا من رحمة الله",
     translation: "Do not despair of the mercy of Allah.",
   },
 ];
 
 function getDailyVerse() {
   const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000,
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) /
+      86400000,
   );
   return DAILY_VERSES[dayOfYear % DAILY_VERSES.length];
 }
@@ -106,9 +114,9 @@ export default function HomeScreen() {
   const {
     prayers,
     nextPrayer,
+    nextPrayerTime,
     countdown,
     loading: prayerLoading,
-    location,
   } = usePrayerTimes();
 
   useEffect(() => {
@@ -129,23 +137,24 @@ export default function HomeScreen() {
       contentContainerStyle={{
         paddingTop: insets.top + 8,
         paddingBottom: 100,
-        paddingHorizontal: 20,
       }}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
+      {/* Header - matching web */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
+          paddingHorizontal: 20,
           marginBottom: 16,
         }}
       >
         <Text
           style={{
-            fontSize: 28,
+            fontSize: 24,
             fontWeight: "700",
+            letterSpacing: -0.5,
             color: c.foreground,
             fontFamily: "Poppins",
           }}
@@ -154,390 +163,555 @@ export default function HomeScreen() {
         </Text>
         <View style={{ flexDirection: "row", gap: 4 }}>
           <Pressable
-            onPress={() => router.push("/search")}
+            onPress={() => {
+              hapticLight();
+              router.push("/search");
+            }}
             style={{
               width: 40,
               height: 40,
-              borderRadius: 20,
+              borderRadius: 14,
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <SearchIcon color={c.secondaryText} size={22} />
+            <SearchIcon color={c.secondaryText} size={20} />
           </Pressable>
           <Pressable
-            onPress={() => router.push("/settings")}
+            onPress={() => {
+              hapticLight();
+              router.push("/settings");
+            }}
             style={{
               width: 40,
               height: 40,
-              borderRadius: 20,
+              borderRadius: 14,
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <SettingsIcon color={c.secondaryText} size={22} />
+            <SettingsIcon color={c.secondaryText} size={20} />
           </Pressable>
         </View>
       </View>
 
-      {/* Greeting */}
-      <FadeInView delay={0} slideUp={15}>
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 18, fontWeight: "600", color: c.foreground }}>
-            {t(greetingKey)}
-          </Text>
-          <Text style={{ fontSize: 13, color: c.secondaryText, marginTop: 2 }}>
-            {t("mayDayBeBlessed")}
-          </Text>
-        </View>
-      </FadeInView>
-
-      {/* Last Read / Start Reading Card */}
-      <FadeInView delay={100} slideUp={15}>
-      <Pressable
-        onPress={() => {
-          hapticLight();
-          lastRead
-            ? router.push(`/quran/${lastRead.chapterId}`)
-            : router.push("/(tabs)/quran");
-        }}
-        style={{
-          borderRadius: 20,
-          overflow: "hidden",
-          backgroundColor: c.primary,
-          padding: 20,
-          marginBottom: 16,
-        }}
-      >
-        {lastReadChapter && lastRead ? (
+      <View style={{ paddingHorizontal: 20, gap: 12 }}>
+        {/* Greeting */}
+        <FadeInView delay={0} slideUp={15}>
           <View>
-            <View
+            <Text
               style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 6,
-                marginBottom: 12,
+                fontSize: 18,
+                fontWeight: "600",
+                color: c.foreground,
               }}
             >
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 6,
-                  paddingHorizontal: 10,
-                  paddingVertical: 4,
-                  borderRadius: 12,
-                  backgroundColor: "rgba(255,255,255,0.15)",
-                }}
-              >
-                <BookOpenIcon color="rgba(255,255,255,0.9)" size={14} />
-                <Text
-                  style={{
-                    fontSize: 11,
-                    fontWeight: "500",
-                    color: "rgba(255,255,255,0.9)",
-                  }}
-                >
-                  {t("lastRead")}
-                </Text>
-              </View>
-            </View>
-            <Text
-              style={{ fontSize: 22, fontWeight: "700", color: "#fff" }}
-            >
-              {lastReadChapter.name_simple}
+              {t(greetingKey)}
             </Text>
             <Text
               style={{
-                fontSize: 14,
-                color: "rgba(255,255,255,0.7)",
+                fontSize: 12,
+                color: c.secondaryText,
                 marginTop: 2,
               }}
             >
-              {t("ayah")} {lastRead.verseNumber} /{" "}
-              {lastReadChapter.verses_count}
+              {t("mayDayBeBlessed")}
             </Text>
-            <View
-              style={{
-                height: 6,
-                borderRadius: 3,
-                backgroundColor: "rgba(255,255,255,0.15)",
-                marginTop: 16,
-                overflow: "hidden",
-              }}
-            >
-              <View
-                style={{
-                  height: "100%",
-                  borderRadius: 3,
-                  backgroundColor: "rgba(255,255,255,0.6)",
-                  width: `${Math.round((lastRead.verseNumber / lastReadChapter.verses_count) * 100)}%`,
-                }}
-              />
-            </View>
           </View>
-        ) : (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-            <View
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 16,
-                backgroundColor: "rgba(255,255,255,0.15)",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <BookOpenIcon color="#fff" size={22} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16, fontWeight: "700", color: "#fff" }}>
-                {t("startReading")}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 13,
-                  color: "rgba(255,255,255,0.7)",
-                  marginTop: 2,
-                }}
-              >
-                {t("beginQuranJourney")}
-              </Text>
-            </View>
-            <ChevronRightIcon color="rgba(255,255,255,0.5)" size={22} />
-          </View>
-        )}
-      </Pressable>
-      </FadeInView>
+        </FadeInView>
 
-      {/* Prayer Times Mini Card */}
-      <FadeInView delay={200} slideUp={15}>
-      <Pressable
-        onPress={() => {
-          hapticLight();
-          router.push("/(tabs)/prayer");
-        }}
-        style={{
-          borderRadius: 16,
-          backgroundColor: c.card,
-          padding: 16,
-          marginBottom: 16,
-          borderWidth: 1,
-          borderColor: c.border,
-        }}
-      >
-        {prayerLoading ? (
-          <ActivityIndicator color={c.primary} />
-        ) : nextPrayer ? (
-          <View>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <View>
-                <Text
-                  style={{ fontSize: 12, color: c.secondaryText, marginBottom: 2 }}
-                >
-                  {t("nextPrayer")}
-                </Text>
-                <Text
-                  style={{ fontSize: 20, fontWeight: "700", color: c.foreground }}
-                >
-                  {t(PRAYER_LABEL_KEYS[nextPrayer])}
-                </Text>
-              </View>
-              <View style={{ alignItems: "flex-end" }}>
-                <Text
-                  style={{ fontSize: 12, color: c.secondaryText, marginBottom: 2 }}
-                >
-                  {t("remainingTime")}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 20,
-                    fontWeight: "700",
-                    color: c.accent,
-                    fontVariant: ["tabular-nums"],
-                  }}
-                >
-                  {countdown}
-                </Text>
-              </View>
-            </View>
-            {location && (
-              <Text
-                style={{ fontSize: 11, color: c.muted, marginTop: 8 }}
-              >
-                {location.city}
-                {location.country ? `, ${location.country}` : ""}
-              </Text>
-            )}
-            {/* Mini prayer timeline */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                marginTop: 12,
-                paddingTop: 12,
-                borderTopWidth: 1,
-                borderTopColor: c.border,
-              }}
-            >
-              {prayers.slice(0, 6).map((p) => {
-                const isNext = p.name === nextPrayer;
-                const isPast = p.time < new Date();
-                return (
-                  <View key={p.name} style={{ alignItems: "center" }}>
-                    <Text
-                      style={{
-                        fontSize: 10,
-                        fontWeight: isNext ? "700" : "400",
-                        color: isNext
-                          ? c.primary
-                          : isPast
-                            ? c.muted
-                            : c.secondaryText,
-                        marginBottom: 2,
-                      }}
-                    >
-                      {t(PRAYER_LABEL_KEYS[p.name])}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        fontWeight: isNext ? "600" : "400",
-                        color: isNext
-                          ? c.primary
-                          : isPast
-                            ? c.muted
-                            : c.foreground,
-                        fontVariant: ["tabular-nums"],
-                      }}
-                    >
-                      {formatPrayerTime(p.time)}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        ) : null}
-      </Pressable>
-      </FadeInView>
-
-      {/* Verse of the Day */}
-      <FadeInView delay={300} slideUp={15}>
-      <View
-        style={{
-          borderRadius: 16,
-          backgroundColor: c.card,
-          padding: 20,
-          marginBottom: 16,
-          borderWidth: 1,
-          borderColor: c.border,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 12,
-            fontWeight: "600",
-            color: c.accent,
-            textTransform: "uppercase",
-            letterSpacing: 1,
-            marginBottom: 12,
-          }}
-        >
-          {t("verseOfTheDay")}
-        </Text>
-        <Text
-          style={{
-            fontSize: 24,
-            color: c.foreground,
-            textAlign: "center",
-            lineHeight: 44,
-            fontFamily: "ScheherazadeNew",
-            marginBottom: 12,
-          }}
-        >
-          {dailyVerse.arabic}
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            color: c.secondaryText,
-            textAlign: "center",
-            lineHeight: 22,
-            fontStyle: "italic",
-          }}
-        >
-          {dailyVerse.translation}
-        </Text>
-        <Text
-          style={{
-            fontSize: 11,
-            color: c.muted,
-            textAlign: "center",
-            marginTop: 8,
-          }}
-        >
-          {dailyVerse.key}
-        </Text>
-      </View>
-      </FadeInView>
-
-      {/* Quick Access Grid */}
-      <FadeInView delay={400} slideUp={15}>
-      <Text
-        style={{
-          fontSize: 16,
-          fontWeight: "600",
-          color: c.foreground,
-          marginBottom: 12,
-        }}
-      >
-        {t("quickAccess")}
-      </Text>
-      <View
-        style={{
-          flexDirection: "row",
-          flexWrap: "wrap",
-          gap: 10,
-          marginBottom: 16,
-        }}
-      >
-        {[
-          { label: t("quran"), route: "/(tabs)/quran" as const, icon: "book" },
-          { label: t("search"), route: "/search" as const, icon: "search" },
-          { label: t("saved"), route: "/(tabs)/saved" as const, icon: "bookmark" },
-          { label: t("hifz"), route: "/(tabs)/hifz" as const, icon: "brain" },
-        ].map((item) => (
+        {/* Last Read / Start Reading - matches web gradient card */}
+        <FadeInView delay={100} slideUp={15}>
           <Pressable
-            key={item.route}
             onPress={() => {
               hapticLight();
-              router.push(item.route);
+              lastRead
+                ? router.push(`/quran/${lastRead.chapterId}`)
+                : router.push("/(tabs)/quran");
             }}
             style={{
-              width: "48%",
-              borderRadius: 14,
-              backgroundColor: c.card,
-              padding: 16,
-              borderWidth: 1,
-              borderColor: c.border,
+              borderRadius: 20,
+              overflow: "hidden",
+              backgroundColor: c.primary,
             }}
           >
-            <Text
-              style={{ fontSize: 14, fontWeight: "600", color: c.foreground }}
-            >
-              {item.label}
-            </Text>
+            {/* Decorative circles matching web */}
+            <View
+              style={{
+                position: "absolute",
+                top: -24,
+                right: -24,
+                width: 96,
+                height: 96,
+                borderRadius: 48,
+                backgroundColor: "rgba(255,255,255,0.1)",
+              }}
+            />
+            <View
+              style={{
+                position: "absolute",
+                bottom: -16,
+                right: -8,
+                width: 64,
+                height: 64,
+                borderRadius: 32,
+                backgroundColor: "rgba(255,255,255,0.05)",
+              }}
+            />
+            <View
+              style={{
+                position: "absolute",
+                top: "50%",
+                right: 32,
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: "rgba(255,255,255,0.08)",
+              }}
+            />
+
+            <View style={{ padding: 20, position: "relative" }}>
+              {lastReadChapter && lastRead ? (
+                <>
+                  {/* Badge */}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 6,
+                      marginBottom: 12,
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 6,
+                        paddingHorizontal: 10,
+                        paddingVertical: 4,
+                        borderRadius: 12,
+                        backgroundColor: "rgba(255,255,255,0.15)",
+                      }}
+                    >
+                      <BookOpenIcon
+                        color="rgba(255,255,255,0.9)"
+                        size={12}
+                      />
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: "500",
+                          color: "rgba(255,255,255,0.9)",
+                        }}
+                      >
+                        {t("lastRead")}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text
+                    style={{
+                      fontSize: 20,
+                      fontWeight: "700",
+                      color: "#fff",
+                      marginBottom: 2,
+                    }}
+                  >
+                    {lastReadChapter.name_simple}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      color: "rgba(255,255,255,0.7)",
+                    }}
+                  >
+                    {t("ayah")} {lastRead.verseNumber} /{" "}
+                    {lastReadChapter.verses_count}
+                  </Text>
+
+                  {/* Progress bar */}
+                  <View
+                    style={{
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: "rgba(255,255,255,0.15)",
+                      marginTop: 16,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <View
+                      style={{
+                        height: "100%",
+                        borderRadius: 3,
+                        backgroundColor: "rgba(255,255,255,0.6)",
+                        width: `${Math.round((lastRead.verseNumber / lastReadChapter.verses_count) * 100)}%`,
+                      }}
+                    />
+                  </View>
+                </>
+              ) : (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 16,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 16,
+                      backgroundColor: "rgba(255,255,255,0.15)",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <BookOpenIcon color="#fff" size={20} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: "700",
+                        color: "#fff",
+                      }}
+                    >
+                      {t("startReading")}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        color: "rgba(255,255,255,0.7)",
+                        marginTop: 2,
+                      }}
+                    >
+                      {t("beginQuranJourney")}
+                    </Text>
+                  </View>
+                  <ChevronRightIcon color="rgba(255,255,255,0.5)" size={20} />
+                </View>
+              )}
+            </View>
           </Pressable>
-        ))}
+        </FadeInView>
+
+        {/* Quick Actions - matching web 4-column grid */}
+        <FadeInView delay={150} slideUp={15}>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <QuickAction
+              icon={<BookOpenIcon color={c.primary} size={18} />}
+              label={t("read") || "Read"}
+              bgColor={c.primary + "14"}
+              onPress={() => router.push("/(tabs)/quran")}
+              colors={c}
+            />
+            <QuickAction
+              icon={<BookmarkIcon color="#D97706" size={18} />}
+              label={t("saved")}
+              bgColor="#D9770614"
+              onPress={() => router.push("/(tabs)/saved")}
+              colors={c}
+            />
+            <QuickAction
+              icon={<AcademicCapIcon color="#7C3AED" size={18} />}
+              label={t("hifz")}
+              bgColor="#7C3AED14"
+              onPress={() => router.push("/(tabs)/hifz")}
+              colors={c}
+            />
+            <QuickAction
+              icon={<SearchIcon color="#2563EB" size={18} />}
+              label={t("search")}
+              bgColor="#2563EB14"
+              onPress={() => router.push("/search")}
+              colors={c}
+            />
+          </View>
+        </FadeInView>
+
+        {/* Prayer Times Card - matching web card style */}
+        <FadeInView delay={200} slideUp={15}>
+          <Pressable
+            onPress={() => {
+              hapticLight();
+              router.push("/(tabs)/prayer");
+            }}
+            style={{
+              borderRadius: 16,
+              backgroundColor: c.card,
+              overflow: "hidden",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.05,
+              shadowRadius: 4,
+              elevation: 2,
+            }}
+          >
+            <View style={{ padding: 16 }}>
+              {prayerLoading ? (
+                <ActivityIndicator color={c.primary} />
+              ) : nextPrayer ? (
+                <>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 12,
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 10,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 12,
+                          backgroundColor: "#0EA5E914",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <ClockIcon color="#0EA5E9" size={16} />
+                      </View>
+                      <View>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "600",
+                            color: c.foreground,
+                          }}
+                        >
+                          {t("prayerTimes")}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            color: c.secondaryText,
+                            marginTop: 1,
+                          }}
+                        >
+                          {t("nextPrayer") || "Next"}: {t(PRAYER_LABEL_KEYS[nextPrayer])}
+                        </Text>
+                      </View>
+                    </View>
+                    {nextPrayerTime && (
+                      <View style={{ alignItems: "flex-end" }}>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "700",
+                            color: c.foreground,
+                            fontVariant: ["tabular-nums"],
+                          }}
+                        >
+                          {formatPrayerTime(nextPrayerTime)}
+                        </Text>
+                        {countdown && (
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              fontWeight: "600",
+                              color: c.primary,
+                              fontVariant: ["tabular-nums"],
+                              marginTop: 1,
+                            }}
+                          >
+                            {countdown}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Mini prayer timeline - matching web */}
+                  {prayers.length > 0 && (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      {prayers
+                        .filter((p) => p.name !== "Sunrise")
+                        .map((p) => {
+                          const isPast = p.time < new Date();
+                          const isNext = p.name === nextPrayer;
+                          return (
+                            <View
+                              key={p.name}
+                              style={{ flex: 1, alignItems: "center", gap: 4 }}
+                            >
+                              <View
+                                style={{
+                                  height: 4,
+                                  width: "100%",
+                                  borderRadius: 2,
+                                  backgroundColor: isNext
+                                    ? c.primary
+                                    : isPast
+                                      ? c.primary + "40"
+                                      : c.border + "30",
+                                }}
+                              />
+                              <Text
+                                style={{
+                                  fontSize: 9,
+                                  fontWeight: isNext ? "700" : "500",
+                                  color: isNext
+                                    ? c.primary
+                                    : isPast
+                                      ? c.muted
+                                      : c.secondaryText + "B3",
+                                }}
+                              >
+                                {t(PRAYER_LABEL_KEYS[p.name]).slice(0, 3)}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                    </View>
+                  )}
+                </>
+              ) : (
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: c.secondaryText,
+                    textAlign: "center",
+                  }}
+                >
+                  {t("prayerTimes")}
+                </Text>
+              )}
+            </View>
+          </Pressable>
+        </FadeInView>
+
+        {/* Verse of the Day - matching web card */}
+        <FadeInView delay={300} slideUp={15}>
+          <View
+            style={{
+              borderRadius: 16,
+              backgroundColor: c.card,
+              overflow: "hidden",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.05,
+              shadowRadius: 4,
+              elevation: 2,
+            }}
+          >
+            <View
+              style={{
+                padding: 20,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: "600",
+                  color: c.accent,
+                  marginBottom: 12,
+                }}
+              >
+                ✨ {t("verseOfTheDay")}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 22,
+                  color: c.foreground,
+                  textAlign: "center",
+                  lineHeight: 40,
+                  fontFamily: "ScheherazadeNew",
+                  marginBottom: 12,
+                }}
+              >
+                {dailyVerse.arabic}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: c.secondaryText,
+                  textAlign: "center",
+                  lineHeight: 22,
+                }}
+              >
+                {dailyVerse.translation}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: c.muted,
+                  textAlign: "center",
+                  marginTop: 10,
+                  fontWeight: "500",
+                }}
+              >
+                {t("surah")} {dailyVerse.key}
+              </Text>
+            </View>
+          </View>
+        </FadeInView>
       </View>
-      </FadeInView>
     </ScrollView>
+  );
+}
+
+function QuickAction({
+  icon,
+  label,
+  bgColor,
+  onPress,
+  colors: c,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  bgColor: string;
+  onPress: () => void;
+  colors: ReturnType<typeof useColors>;
+}) {
+  return (
+    <Pressable
+      onPress={() => {
+        hapticLight();
+        onPress();
+      }}
+      style={{
+        flex: 1,
+        alignItems: "center",
+        gap: 6,
+        paddingVertical: 8,
+      }}
+    >
+      <View
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 14,
+          backgroundColor: bgColor,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {icon}
+      </View>
+      <Text
+        style={{
+          fontSize: 11,
+          fontWeight: "500",
+          color: c.secondaryText,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }

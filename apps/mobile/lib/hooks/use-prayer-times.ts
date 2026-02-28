@@ -6,7 +6,7 @@ import {
   type CalculationParameters,
 } from "adhan";
 import * as Location from "expo-location";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from "../storage/async-storage";
 import { schedulePrayerNotifications } from "../notifications/prayer-notifications";
 
 // ---- Public Types ----

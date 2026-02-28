@@ -89,6 +89,8 @@ export const translations = {
   saveToCollection: { ar: "حفظ في مجموعة", en: "Save to Collection" },
   markAsMemorized: { ar: "تعليم كمحفوظة", en: "Mark as Memorized" },
   playAudio: { ar: "تشغيل الصوت", en: "Play Audio" },
+  pauseAudio: { ar: "إيقاف الصوت", en: "Pause Audio" },
+  resumeAudio: { ar: "استئناف الصوت", en: "Resume Audio" },
   viewTafsir: { ar: "عرض التفسير", en: "View Tafsir" },
   hideTafsir: { ar: "إخفاء التفسير", en: "Hide Tafsir" },
   copyVerse: { ar: "نسخ الآية", en: "Copy Verse" },

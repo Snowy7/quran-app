@@ -12,8 +12,8 @@ import {
   requestNotificationPermissions,
   schedulePrayerNotifications,
 } from "../lib/notifications/prayer-notifications";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ChevronLeftIcon } from "./(tabs)/tab-icons";
+import AsyncStorage from "../lib/storage/async-storage";
+import { ChevronLeftIcon } from "../components/icons/tab-icons";
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();

@@ -1,5 +1,6 @@
-import * as Notifications from "expo-notifications";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from "../storage/async-storage";
+import Constants from "expo-constants";
+import { Platform } from "react-native";
 import {
   Coordinates,
   PrayerTimes,
@@ -32,9 +33,40 @@ const PRAYER_ARABIC: Record<PrayerName, string> = {
   Isha: "\u0627\u0644\u0639\u0634\u0627\u0621",
 };
 
+type NotificationsModule = typeof import("expo-notifications");
+
+let notificationsModule: NotificationsModule | null | undefined;
+
+function isAndroidExpoGo(): boolean {
+  return (
+    Platform.OS === "android" &&
+    (Constants.executionEnvironment === "storeClient" ||
+      Constants.appOwnership === "expo")
+  );
+}
+
+function getNotificationsModule(): NotificationsModule | null {
+  if (isAndroidExpoGo()) {
+    return null;
+  }
+
+  if (notificationsModule === undefined) {
+    try {
+      notificationsModule = require("expo-notifications") as NotificationsModule;
+    } catch {
+      notificationsModule = null;
+    }
+  }
+
+  return notificationsModule;
+}
+
 // ---- Notification Configuration ----
 
 export function configureNotifications(): void {
+  const Notifications = getNotificationsModule();
+  if (!Notifications) return;
+
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
@@ -49,6 +81,9 @@ export function configureNotifications(): void {
 // ---- Permissions ----
 
 export async function requestNotificationPermissions(): Promise<boolean> {
+  const Notifications = getNotificationsModule();
+  if (!Notifications) return false;
+
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
 
   if (existingStatus === "granted") return true;
@@ -94,6 +129,9 @@ export async function schedulePrayerNotifications(
   lat: number,
   lng: number,
 ): Promise<void> {
+  const Notifications = getNotificationsModule();
+  if (!Notifications) return;
+
   const enabled = await isNotificationsEnabled();
   if (!enabled) return;
 
@@ -158,17 +196,23 @@ export async function schedulePrayerNotifications(
 // ---- Cancel Notifications ----
 
 export async function cancelAllPrayerNotifications(): Promise<void> {
+  const Notifications = getNotificationsModule();
+
   try {
     const raw = await AsyncStorage.getItem(NOTIF_SCHEDULED_KEY);
     if (raw) {
       const scheduled = JSON.parse(raw) as ScheduledNotification[];
-      for (const notif of scheduled) {
-        await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+      if (Notifications) {
+        for (const notif of scheduled) {
+          await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+        }
       }
     }
     await AsyncStorage.removeItem(NOTIF_SCHEDULED_KEY);
   } catch {
     // If something goes wrong, cancel all notifications as fallback
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    if (Notifications) {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+    }
   }
 }

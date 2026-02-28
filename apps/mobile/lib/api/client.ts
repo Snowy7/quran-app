@@ -6,7 +6,7 @@ export async function fetchApi<T>(
 ): Promise<T> {
   const url = new URL(`${BASE_URL}${endpoint}`);
 
-  if (params) {
+  if (params && typeof params === "object") {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         url.searchParams.set(key, String(value));

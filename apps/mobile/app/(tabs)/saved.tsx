@@ -16,7 +16,7 @@ import {
   type Collection,
   type Bookmark,
 } from "../../lib/db/storage";
-import { BookmarkIcon } from "./tab-icons";
+import { BookmarkIcon } from "../../components/icons/tab-icons";
 
 export default function SavedScreen() {
   const insets = useSafeAreaInsets();

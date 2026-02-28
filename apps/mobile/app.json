@@ -17,7 +17,10 @@
       "bundleIdentifier": "com.noor.quran",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Noor needs your location to calculate accurate prayer times and Qibla direction.",
-        "UIBackgroundModes": ["fetch", "remote-notification"]
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification"
+        ]
       }
     },
     "android": {
@@ -58,7 +61,8 @@
           "icon": "./assets/icon.png",
           "color": "#5C4033"
         }
-      ]
+      ],
+      "expo-video"
     ]
   }
 }
